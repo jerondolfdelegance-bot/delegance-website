@@ -3,28 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Delegance · Every channel. One calm desk.</title>
-<meta name="description" content="Delegance brings Facebook, Instagram, YouTube and LinkedIn posting, comments and messages into one place, with an AI assistant that drafts your replies.">
+<title>Delegance · Good work, delegated elegantly</title>
+<meta name="description" content="Delegance is a virtual service provider. We provide virtual assistants, design and build websites and apps, and look after the everyday work behind them.">
 <link rel="canonical" href="https://delegance.app/">
 <meta name="theme-color" content="#0a0a0b">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Delegance">
-<meta property="og:title" content="Delegance · Every channel. One calm desk.">
-<meta property="og:description" content="Post everywhere, answer everyone, from one place. Now in development.">
+<meta property="og:title" content="Delegance · Good work, delegated elegantly">
+<meta property="og:description" content="Virtual assistants, websites, apps and the everyday work behind them.">
 <meta property="og:url" content="https://delegance.app/">
 <meta property="og:image" content="https://delegance.app/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0a0b; --bg2:#111113; --card:#151518; --line:#26262b; --line2:#34343a;
   --text:#ececee; --muted:#a2a2aa; --dim:#6f6f78;
   --silver:linear-gradient(180deg,#ffffff 0%,#d9dadf 35%,#9a9ba3 60%,#e6e7ea 85%,#b9bac1 100%);
-  --accent:#c9cbd2; --ok:#7fd1a8;
-  --r:16px; --max:1160px;
+  --ok:#7fd1a8; --r:16px; --max:1160px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
@@ -32,23 +34,20 @@ body{background:var(--bg);color:var(--text);font:16px/1.6 Inter,system-ui,-apple
 a{color:inherit;text-decoration:none}
 img,svg{display:block;max-width:100%}
 .wrap{width:100%;max-width:var(--max);margin:0 auto;padding:0 24px}
-.serif{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;letter-spacing:.01em}
+.serif{font-family:Montserrat,Inter,system-ui,sans-serif;font-weight:500;letter-spacing:-.015em}
 .silver{background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
-.eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{font-family:Montserrat,Inter,sans-serif;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted)}
 :focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
 .skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 12px;border-radius:8px;z-index:100}
 .skip:focus{left:8px}
 
-/* Header */
 header{position:sticky;top:0;z-index:50;background:rgba(10,10,11,.78);backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
 header.scrolled{border-bottom-color:var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
-.brand{display:flex;align-items:center;gap:12px}
-.brand .word{font-size:15px;letter-spacing:.32em;font-weight:600}
-.brand .bar{width:1px;height:22px;background:var(--line2)}
+.brand img{height:30px;width:auto}
 .links{display:flex;gap:28px;font-size:14px;color:var(--muted)}
 .links a:hover{color:var(--text)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:14px;transition:transform .2s,background .2s,border-color .2s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;font-weight:600;font-size:14px;transition:transform .2s,border-color .2s}
 .btn-silver{background:var(--silver);color:#111}
 .btn-silver:hover{transform:translateY(-1px)}
 .btn-ghost{border:1px solid var(--line2);color:var(--text)}
@@ -57,78 +56,61 @@ header.scrolled{border-bottom-color:var(--line)}
 .menu-btn span{display:block;width:18px;height:1.5px;background:currentColor;margin:4px auto;transition:transform .25s,opacity .25s}
 .mobile-menu{display:none}
 
-/* Hero */
-.hero{position:relative;padding:96px 0 72px;text-align:center;isolation:isolate}
-.hero::before{content:"";position:absolute;inset:-120px 0 auto;height:620px;background:radial-gradient(ellipse 60% 55% at 50% 30%,rgba(200,202,212,.13),transparent 70%);z-index:-1}
+.hero{position:relative;padding:92px 0 96px;text-align:center;isolation:isolate}
+.hero::before{content:"";position:absolute;inset:-120px 0 auto;height:640px;background:radial-gradient(ellipse 60% 55% at 50% 32%,rgba(200,202,212,.14),transparent 70%);z-index:-1}
+.mark-big{width:132px;height:132px;margin:0 auto 30px;filter:drop-shadow(0 18px 40px rgba(255,255,255,.07))}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--line2);border-radius:999px;font-size:13px;color:var(--muted)}
-.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(127,209,168,.6);animation:pulse 2.4s infinite}
-@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(127,209,168,0)}100%{box-shadow:0 0 0 0 rgba(127,209,168,0)}}
-.hero h1{font-size:clamp(44px,7.4vw,92px);line-height:1.02;margin:22px auto 20px;max-width:900px}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.hero h1{font-size:clamp(40px,6.6vw,84px);line-height:1.05;margin:24px auto 22px;max-width:900px}
 .hero p.lead{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:640px;margin:0 auto 34px}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.mark-big{width:84px;height:84px;margin:0 auto 26px;filter:drop-shadow(0 10px 30px rgba(255,255,255,.08))}
 
-/* Preview mock */
-.preview{margin:64px auto 0;max-width:980px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#141417,#0e0e10);box-shadow:0 40px 120px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.02) inset;overflow:hidden;text-align:left}
-.pv-top{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
-.pv-top b{width:10px;height:10px;border-radius:50%;background:#2c2c31}
-.pv-top em{margin-left:10px;font-style:normal;font-size:12px;color:var(--dim)}
-.pv{display:grid;grid-template-columns:190px 290px 1fr;min-height:360px}
-.pv-side{border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
-.pv-side div{padding:8px 10px;border-radius:9px}
-.pv-side .on{background:#1d1d21;color:var(--text)}
-.pv-side small{margin-left:auto;float:right;font-size:11px;background:#2a2a30;padding:1px 7px;border-radius:99px;color:var(--text)}
-.pv-list{border-right:1px solid var(--line);padding:10px}
-.msg{padding:11px 12px;border-radius:12px;margin-bottom:6px;font-size:13px}
-.msg.on{background:#1b1b1f}
-.msg .who{display:flex;justify-content:space-between;color:var(--text);font-weight:600;font-size:13px}
-.msg .who span{font-weight:400;color:var(--dim);font-size:11px}
-.msg p{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tag{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px;margin-top:6px}
-.pv-chat{padding:18px;display:flex;flex-direction:column;gap:12px}
-.bubble{max-width:82%;padding:10px 14px;border-radius:14px;font-size:13.5px}
-.bubble.in{background:#1e1e22;color:var(--text);border-top-left-radius:4px}
-.ai{border:1px dashed #4a4b52;border-radius:14px;padding:12px 14px;font-size:13.5px;color:var(--text);background:rgba(255,255,255,.02)}
-.ai .lab{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.ai .row{display:flex;gap:8px;margin-top:10px}
-.ai .row span{font-size:12px;padding:6px 12px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
-.ai .row span.send{background:var(--silver);color:#111;border:0;font-weight:600}
-.pv-note{font-size:12px;color:var(--dim);text-align:center;margin-top:14px}
-
-/* Sections */
 section{padding:110px 0}
 .sec-head{max-width:680px;margin-bottom:56px}
-.sec-head h2{font-size:clamp(34px,4.6vw,56px);line-height:1.05;margin:14px 0 16px}
+.sec-head h2{font-size:clamp(30px,4.2vw,50px);line-height:1.1;margin:14px 0 16px}
 .sec-head p{color:var(--muted);font-size:18px}
-.center{text-align:center;margin-left:auto;margin-right:auto}
 .grid{display:grid;gap:18px}
 .g3{grid-template-columns:repeat(3,1fr)}
-.g2{grid-template-columns:repeat(2,1fr)}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px;transition:border-color .3s,transform .3s}
 .card:hover{border-color:var(--line2);transform:translateY(-3px)}
 .card .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#1e1e22;border:1px solid var(--line2);margin-bottom:18px}
-.card h3{font-size:19px;margin-bottom:8px;font-weight:600}
+.card h3{font-family:Montserrat,Inter,sans-serif;font-size:18px;margin-bottom:8px;font-weight:600}
 .card p{color:var(--muted);font-size:15px}
-.card.wide{grid-column:span 2}
 .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent)}
 
 .steps{counter-reset:s}
 .step{padding:28px;border-top:1px solid var(--line2)}
-.step::before{counter-increment:s;content:"0" counter(s);display:block;font-family:"Cormorant Garamond",serif;font-size:44px;line-height:1;margin-bottom:14px;background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
-.step h3{font-size:19px;margin-bottom:8px}
+.step::before{counter-increment:s;content:"0" counter(s);display:block;font-family:Montserrat,sans-serif;font-weight:500;font-size:40px;line-height:1;margin-bottom:14px;background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent}
+.step h3{font-family:Montserrat,Inter,sans-serif;font-size:18px;font-weight:600;margin-bottom:8px}
 .step p{color:var(--muted);font-size:15px}
 
-.nets{display:flex;flex-wrap:wrap;gap:12px}
-.net{display:flex;align-items:center;gap:10px;padding:14px 20px;border:1px solid var(--line);border-radius:14px;background:var(--card);font-weight:500}
-.net i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-.net.soon i{background:#d8b45a}
-.net small{color:var(--dim);font-weight:400;font-size:13px}
-.legend{display:flex;gap:22px;margin-top:18px;font-size:13px;color:var(--dim);flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:8px}
-.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
-
 .princ .card{background:transparent}
-.princ h3{font-family:"Cormorant Garamond",serif;font-size:28px;font-weight:600}
+
+/* Desk preview */
+.desk{display:grid;grid-template-columns:1fr 1.25fr;gap:48px;align-items:center}
+.desk ul{list-style:none;margin-top:22px;display:grid;gap:10px;color:var(--muted)}
+.desk li{display:flex;gap:10px}
+.desk li::before{content:"";flex:0 0 6px;height:6px;margin-top:10px;border-radius:50%;background:var(--silver)}
+.preview{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#141417,#0e0e10);box-shadow:0 40px 120px -40px rgba(0,0,0,.9);overflow:hidden;text-align:left}
+.pv-top{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.pv-top b{width:10px;height:10px;border-radius:50%;background:#2c2c31}
+.pv-top em{margin-left:10px;font-style:normal;font-size:12px;color:var(--dim)}
+.pv{display:grid;grid-template-columns:240px 1fr;min-height:300px}
+.pv-list{border-right:1px solid var(--line);padding:10px}
+.msg{padding:11px 12px;border-radius:12px;margin-bottom:6px;font-size:13px}
+.msg.on{background:#1b1b1f}
+.msg .who{display:flex;justify-content:space-between;color:var(--text);font-weight:600}
+.msg .who span{font-weight:400;color:var(--dim);font-size:11px}
+.msg p{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px;margin-top:6px}
+.pv-chat{padding:18px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:86%;padding:10px 14px;border-radius:14px;font-size:13.5px;background:#1e1e22;border-top-left-radius:4px}
+.ai{border:1px dashed #4a4b52;border-radius:14px;padding:12px 14px;font-size:13.5px;background:rgba(255,255,255,.02)}
+.ai .lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ai .row{display:flex;gap:8px;margin-top:10px}
+.ai .row span{font-size:12px;padding:6px 12px;border-radius:99px;border:1px solid var(--line2);color:var(--muted)}
+.ai .row span.send{background:var(--silver);color:#111;border:0;font-weight:600}
+.pv-note{font-size:12px;color:var(--dim);margin-top:12px}
 
 .faq{max-width:780px}
 details{border-bottom:1px solid var(--line)}
@@ -139,24 +121,23 @@ details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
 details p{color:var(--muted);padding:0 0 22px;max-width:680px}
 
 .final{text-align:center;padding:120px 0}
-.final h2{font-size:clamp(38px,5.4vw,68px);line-height:1.04;margin-bottom:18px}
+.final h2{font-size:clamp(34px,5vw,60px);line-height:1.08;margin-bottom:18px}
 .final p{color:var(--muted);margin-bottom:30px}
+.final img{width:64px;height:64px;margin:0 auto 24px}
 
 footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);font-size:14px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.foot img{height:22px;width:auto}
 .foot nav{display:flex;gap:22px}
 .foot a:hover{color:var(--text)}
 
-/* Reveal */
 .rv{opacity:0;transform:translateY(18px);transition:opacity .8s ease,transform .8s ease}
 .rv.in,.hero .rv{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
 
-/* Responsive */
 @media (max-width:980px){
-  .pv{grid-template-columns:240px 1fr}
-  .pv-side{display:none}
   .g3{grid-template-columns:1fr 1fr}
+  .desk{grid-template-columns:1fr;gap:32px}
 }
 @media (max-width:760px){
   .links,.nav .btn-silver{display:none}
@@ -169,126 +150,88 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
   body.open .menu-btn span:nth-child(2){opacity:0}
   body.open .menu-btn span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
   .wrap{padding:0 16px}
-  .hero{padding:64px 0 48px}
+  .brand img{height:26px}
+  .hero{padding:60px 0 64px}
+  .mark-big{width:104px;height:104px}
   section{padding:76px 0}
-  .g3,.g2{grid-template-columns:1fr}
-  .card.wide{grid-column:auto}
+  .g3{grid-template-columns:1fr}
   .step{padding:26px 0}
   .pv{grid-template-columns:1fr;min-height:0}
   .pv-list{border-right:0;border-bottom:1px solid var(--line)}
   .pv-list .msg:nth-child(n+3){display:none}
-  .bubble{max-width:92%}
   .cta .btn{width:100%}
-  .brand .word{letter-spacing:.24em;font-size:14px}
   .final{padding:84px 0}
 }
 </style>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Delegance","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://delegance.app/","description":"One place to post to Facebook, Instagram, YouTube and LinkedIn and answer every comment and message, with AI-drafted replies."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Delegance","url":"https://delegance.app/","logo":"https://delegance.app/brand/icon-512.png","description":"A virtual service provider: virtual assistants, websites, apps and the everyday work behind them."}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <linearGradient id="met" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/><stop offset=".38" stop-color="#d6d7dc"/>
-      <stop offset=".6" stop-color="#8e8f97"/><stop offset=".82" stop-color="#e9eaed"/><stop offset="1" stop-color="#a9aab2"/>
-    </linearGradient>
-    <symbol id="dmark" viewBox="0 0 64 64">
-      <path fill="url(#met)" fill-rule="evenodd" d="M12 6h20c15.5 0 26 10.6 26 26S47.5 58 32 58H12zM22 15v34h9.5C42 49 48 42.2 48 32S42 15 31.5 15z"/>
-      <path fill="url(#met)" opacity=".55" d="M4 6h5v52H4z"/>
-    </symbol>
-  </defs>
-</svg>
-
 <header id="top">
   <div class="wrap nav">
-    <a class="brand" href="#top" aria-label="Delegance home">
-      <svg width="30" height="30"><use href="#dmark"/></svg>
-      <span class="bar" aria-hidden="true"></span>
-      <span class="word silver">DELEGANCE</span>
-    </a>
+    <a class="brand" href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="158" height="30"></a>
     <nav class="links" aria-label="Main">
-      <a href="#features">Features</a><a href="#how">How it works</a><a href="#networks">Networks</a><a href="#faq">FAQ</a>
+      <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-silver" href="#how">See how it works</a>
+    <a class="btn btn-silver" href="#services">Our services</a>
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mm"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu" id="mm">
-    <a href="#features">Features</a><a href="#how">How it works</a><a href="#networks">Networks</a><a href="#faq">FAQ</a>
-    <a class="btn btn-silver" href="#how">See how it works</a>
+    <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="#faq">FAQ</a>
+    <a class="btn btn-silver" href="#services">Our services</a>
   </div>
 </header>
 
 <main id="main">
   <section class="hero">
     <div class="wrap">
-      <svg class="mark-big rv" viewBox="0 0 64 64" aria-hidden="true"><use href="#dmark"/></svg>
-      <span class="pill rv"><i></i>Now in development</span>
-      <h1 class="serif rv"><span class="silver">Every channel.</span><br>One calm desk.</h1>
-      <p class="lead rv">Delegance brings your Facebook, Instagram, YouTube and LinkedIn posts, comments and messages into one place, with an AI assistant that drafts the replies for you.</p>
+      <img class="mark-big rv" src="/brand/delegance-mark.svg" alt="" width="132" height="132">
+      <span class="pill rv"><i></i>Virtual service provider</span>
+      <h1 class="serif rv"><span class="silver">Good work,</span><br>delegated elegantly.</h1>
+      <p class="lead rv">Delegance provides virtual assistants, builds websites and apps, and looks after the everyday work behind them, so you can stay focused on running your business.</p>
       <div class="cta rv">
-        <a class="btn btn-silver" href="#features">Explore the features</a>
-        <a class="btn btn-ghost" href="#how">How it works</a>
+        <a class="btn btn-silver" href="#services">See what we do</a>
+        <a class="btn btn-ghost" href="#how">How we work</a>
       </div>
-
-      <div class="preview rv" role="img" aria-label="Preview of the Delegance Front Desk: one inbox with comments and messages from several networks and an AI-drafted reply waiting for approval">
-        <div class="pv-top"><b></b><b></b><b></b><em>Front Desk · preview</em></div>
-        <div class="pv">
-          <div class="pv-side">
-            <div class="on">Front Desk <small>12</small></div>
-            <div>Compose</div><div>Calendar</div><div>Accounts</div><div>Knowledge</div>
-          </div>
-          <div class="pv-list">
-            <div class="msg on"><div class="who">Sample customer <span>2m</span></div><p>Hi! What are your opening hours this weekend?</p><span class="tag">Messenger</span></div>
-            <div class="msg"><div class="who">Sample follower <span>9m</span></div><p>Love this post, is it still available?</p><span class="tag">Instagram comment</span></div>
-            <div class="msg"><div class="who">Sample viewer <span>21m</span></div><p>Great video, where can I learn more?</p><span class="tag">YouTube comment</span></div>
-            <div class="msg"><div class="who">Website visitor <span>34m</span></div><p>Can someone call me back about pricing?</p><span class="tag">Website chat</span></div>
-          </div>
-          <div class="pv-chat">
-            <div class="bubble in">Hi! What are your opening hours this weekend?</div>
-            <div class="ai">
-              <div class="lab">✦ AI draft · waiting for you</div>
-              Hi there, thanks for reaching out! We're open Saturday 9am to 1pm and closed Sunday. Is there anything we can help you with before then?
-              <div class="row"><span class="send">Send</span><span>Edit</span><span>Skip</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <p class="pv-note">Illustration with sample messages. The finished app may look different.</p>
     </div>
   </section>
 
   <div class="divider"></div>
 
-  <section id="features">
+  <section id="services">
     <div class="wrap">
       <div class="sec-head rv">
-        <span class="eyebrow">Features</span>
-        <h2 class="serif">Everything social, <span class="silver">in one place.</span></h2>
-        <p>Stop jumping between apps and tabs. Delegance gives your team one screen to publish, listen and respond.</p>
+        <span class="eyebrow">Services</span>
+        <h2 class="serif">Your remote team, <span class="silver">ready when you are.</span></h2>
+        <p>From day-to-day admin to a new website or app, we take on the work and keep things running smoothly.</p>
       </div>
       <div class="grid g3">
         <article class="card rv">
-          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></div>
-          <h3>Compose once</h3><p>Write a post a single time and publish it to every connected page and profile, adjusted for each network.</p>
-        </article>
-        <article class="card rv">
-          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
-          <h3>Plan ahead</h3><p>Schedule posts on a calendar and see what goes out, when, and where, at a glance.</p>
-        </article>
-        <article class="card rv">
-          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><path d="M4 13l2-8h12l2 8v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></svg></div>
-          <h3>The Front Desk</h3><p>Every comment and message from every network lands in one inbox, so nothing slips through the cracks.</p>
-        </article>
-        <article class="card wide rv">
-          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></div>
-          <h3>AI replies, on your terms</h3><p>The assistant learns your business from a simple knowledge sheet and drafts answers to common questions. Start in draft mode and approve every reply with one tap, then switch chosen topics to automatic once you trust it. Complaints and anything it isn't sure about always wait for a person.</p>
-        </article>
-        <article class="card rv">
           <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><path d="M5 5h14v10H9l-4 4z"/></svg></div>
-          <h3>Website chat</h3><p>Add a small chat bubble to your website. Visitor questions join the same Front Desk and get the same quick answers.</p>
+          <h3>Virtual assistants</h3><p>Reliable help with admin, inboxes and calendars, customer support, social media, research and data entry.</p>
         </article>
+        <article class="card rv">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18M8 21h8"/></svg></div>
+          <h3>Websites</h3><p>New sites, redesigns and landing pages that look good, load fast and work on every screen.</p>
+        </article>
+        <article class="card rv">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+          <h3>Web and mobile apps</h3><p>From an idea on paper to a working app, built step by step with you along the way.</p>
+        </article>
+        <article class="card rv">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>Care and maintenance</h3><p>Updates, security checks, backups and quick fixes, so your site stays healthy without you thinking about it.</p>
+        </article>
+        <article class="card rv">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.6 10.7l6.8-3.4M8.6 13.3l6.8 3.4"/></svg></div>
+          <h3>Integrations and automation</h3><p>Connecting the tools you already use and taking repetitive tasks off your plate.</p>
+        </article>
+        <article class="card rv">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d9dadf" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg></div>
+          <h3>Online presence</h3><p>Domains, business email, search visibility and the setup details that help people find you.</p>
+        </article>
+
       </div>
     </div>
   </section>
@@ -296,48 +239,65 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
   <section id="how" style="background:var(--bg2)">
     <div class="wrap">
       <div class="sec-head rv">
-        <span class="eyebrow">How it works</span>
-        <h2 class="serif">Three steps to <span class="silver">calm.</span></h2>
+        <span class="eyebrow">How we work</span>
+        <h2 class="serif">Simple, steady, <span class="silver">and clear.</span></h2>
       </div>
       <div class="grid g3 steps">
-        <div class="step rv"><h3>Connect your accounts</h3><p>Sign in to each network once through its official login. Delegance never sees or stores your passwords.</p></div>
-        <div class="step rv"><h3>Teach it your business</h3><p>Fill in a short knowledge sheet: services, hours, contact details and common questions.</p></div>
-        <div class="step rv"><h3>Post and reply from one desk</h3><p>Publish everywhere, then work through one tidy inbox with replies already drafted.</p></div>
+        <div class="step rv"><h3>Talk it through</h3><p>Tell us what you need and what success looks like. We'll suggest a sensible way forward.</p></div>
+        <div class="step rv"><h3>Get to work</h3><p>We take it on and keep you updated as things take shape, so there are no surprises.</p></div>
+        <div class="step rv"><h3>Keep it running</h3><p>We deliver, check everything carefully, and stay on hand for what comes next.</p></div>
       </div>
     </div>
   </section>
-
-  <section id="networks">
-    <div class="wrap">
-      <div class="sec-head rv">
-        <span class="eyebrow">Networks</span>
-        <h2 class="serif">Built for the channels <span class="silver">you use.</span></h2>
-        <p>Delegance connects through each network's official tools.</p>
-      </div>
-      <div class="nets rv">
-        <div class="net"><i></i>Facebook Pages <small>posts · comments · Messenger</small></div>
-        <div class="net"><i></i>Instagram <small>posts · comments · DMs</small></div>
-        <div class="net"><i></i>YouTube <small>uploads · comments</small></div>
-        <div class="net"><i></i>LinkedIn <small>profile posts</small></div>
-        <div class="net soon"><i></i>LinkedIn Company Pages <small>posts · comments</small></div>
-        <div class="net"><i></i>Website chat <small>your own site</small></div>
-      </div>
-      <div class="legend rv"><span><i style="background:var(--ok)"></i>Planned for first release</span><span><i style="background:#d8b45a"></i>Waiting on network approval</span></div>
-    </div>
-  </section>
-
-  <div class="divider"></div>
 
   <section class="princ">
     <div class="wrap">
       <div class="sec-head rv">
         <span class="eyebrow">Our approach</span>
-        <h2 class="serif">Elegant by design. <span class="silver">Honest by default.</span></h2>
+        <h2 class="serif">Quietly reliable. <span class="silver">Carefully done.</span></h2>
       </div>
       <div class="grid g3">
-        <div class="card rv"><h3>You stay in charge</h3><p>Nothing goes out automatically until you decide it should. Every AI reply can be reviewed first.</p></div>
-        <div class="card rv"><h3>Your data stays yours</h3><p>Connections use official sign-ins you can remove at any time. No selling data, no ads.</p></div>
-        <div class="card rv"><h3>Lean and fast</h3><p>One app, in the browser, installable on your desktop. No heavy setup and nothing to maintain.</p></div>
+        <div class="card rv"><h3>You always know where things stand</h3><p>Clear updates in plain language, and a direct link to see the work for yourself.</p></div>
+        <div class="card rv"><h3>Built to last</h3><p>Fast, secure and mobile-friendly by default, with care taken over the details.</p></div>
+        <div class="card rv"><h3>Straightforward</h3><p>We say what we'll do, then do it. If something isn't a good fit, we'll tell you.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="desk">
+    <div class="wrap desk">
+      <div class="rv">
+        <span class="eyebrow">In the works</span>
+        <h2 class="serif" style="font-size:clamp(30px,4vw,46px);line-height:1.1;margin:14px 0 16px">Delegance <span class="silver">Desk</span></h2>
+        <p style="color:var(--muted);font-size:17px">A tool we're building for ourselves and our clients: one place to post to social media and answer every comment and message.</p>
+        <ul>
+          <li>Facebook Pages, Instagram, YouTube and LinkedIn in one inbox</li>
+          <li>AI-drafted replies you approve with one tap</li>
+          <li>A chat bubble for your own website</li>
+        </ul>
+      </div>
+      <div class="rv">
+        <div class="preview" role="img" aria-label="Preview of Delegance Desk: an inbox with messages from several networks and an AI-drafted reply waiting for approval">
+          <div class="pv-top"><b></b><b></b><b></b><em>Delegance Desk · preview</em></div>
+          <div class="pv">
+            <div class="pv-list">
+              <div class="msg on"><div class="who">Sample customer <span>2m</span></div><p>Hi! What are your opening hours this weekend?</p><span class="tag">Messenger</span></div>
+              <div class="msg"><div class="who">Sample follower <span>9m</span></div><p>Love this post, is it still available?</p><span class="tag">Instagram comment</span></div>
+              <div class="msg"><div class="who">Website visitor <span>34m</span></div><p>Can someone call me back about pricing?</p><span class="tag">Website chat</span></div>
+            </div>
+            <div class="pv-chat">
+              <div class="bubble">Hi! What are your opening hours this weekend?</div>
+              <div class="ai">
+                <div class="lab">✦ AI draft · waiting for you</div>
+                Thanks for reaching out! We're open Saturday 9am to 1pm and closed Sunday. Anything we can help with before then?
+                <div class="row"><span class="send">Send</span><span>Edit</span><span>Skip</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="pv-note">Illustration with sample messages. The finished tool may look different.</p>
       </div>
     </div>
   </section>
@@ -349,20 +309,20 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
         <h2 class="serif">Questions, <span class="silver">answered.</span></h2>
       </div>
       <div class="faq rv">
-        <details><summary>Is Delegance available yet?</summary><p>Not yet. Delegance is in development and this site will be updated as features go live.</p></details>
-        <details><summary>Which networks will it support?</summary><p>Facebook Pages, Instagram, YouTube and LinkedIn, plus a chat bubble for your own website. LinkedIn Company Pages will follow once LinkedIn approves access.</p></details>
-        <details><summary>Will the AI reply without asking me?</summary><p>Only if you switch that on. By default every AI reply is a draft you approve, edit or skip. You can make chosen topics automatic later, and anything unusual always waits for a person.</p></details>
-        <details><summary>Do I need to install anything?</summary><p>No. Delegance runs in your web browser. You can also install it from your browser as a desktop app, using the same account.</p></details>
-        <details><summary>Does Delegance store my social media passwords?</summary><p>No. You sign in through each network's own login page, and the network gives Delegance permission to act for you. You can remove that permission at any time.</p></details>
+        <details><summary>What kind of work do you take on?</summary><p>Virtual assistant support, websites, web and mobile apps, ongoing site care, integrations and the everyday tasks that come with running a business. If you're not sure whether something fits, just ask.</p></details>
+        <details><summary>Is there anything you don't take on?</summary><p>Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist.</p></details>
+        <details><summary>Can you look after a website someone else built?</summary><p>Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend.</p></details>
+        <details><summary>Do you only build new things?</summary><p>No. Plenty of our work is improving, fixing and maintaining what you already have.</p></details>
+        <details><summary>What is Delegance Desk?</summary><p>A social media inbox we're building: one place to post, read comments and messages, and reply with help from AI drafts. It isn't available yet.</p></details>
       </div>
     </div>
   </section>
 
   <section class="final">
     <div class="wrap rv">
-      <svg width="56" height="56" viewBox="0 0 64 64" style="margin:0 auto 22px" aria-hidden="true"><use href="#dmark"/></svg>
-      <h2 class="serif"><span class="silver">Less juggling.</span><br>More conversation.</h2>
-      <p>Delegance is coming soon.</p>
+      <img src="/brand/delegance-mark.svg" alt="" width="64" height="64">
+      <h2 class="serif"><span class="silver">Less on your plate.</span><br>More time for what matters.</h2>
+      <p>Delegance: your virtual team for the work behind your business.</p>
       <a class="btn btn-ghost" href="#top">Back to top</a>
     </div>
   </section>
@@ -370,7 +330,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
 
 <footer>
   <div class="wrap foot">
-    <a class="brand" href="#top" aria-label="Delegance home"><svg width="22" height="22"><use href="#dmark"/></svg><span class="word silver" style="font-size:13px">DELEGANCE</span></a>
+    <a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="116" height="22"></a>
     <nav aria-label="Footer"><a href="/privacy">Privacy</a><a href="#faq">FAQ</a></nav>
     <span>© <span id="y">2026</span> Delegance</span>
   </div>
