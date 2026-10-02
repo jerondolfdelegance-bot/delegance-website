@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://delegance.app/sitemap.xml
