@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="750" viewBox="160 121 750 750" role="img" aria-label="Delegance"><title>Delegance</title><defs><linearGradient id="mg" gradientUnits="userSpaceOnUse" x1="190" y1="120" x2="880" y2="870">
+<stop offset="0" stop-color="#f7f8fa"/><stop offset=".2" stop-color="#cfd1d6"/><stop offset=".42" stop-color="#8d9097"/>
+<stop offset=".58" stop-color="#eceef1"/><stop offset=".78" stop-color="#9fa2a9"/><stop offset="1" stop-color="#dfe1e5"/></linearGradient><filter id="mf" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency=".003 .9" numOctaves="2" seed="7" result="n"/>
+<feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .14 0" result="brush"/>
+<feComposite in="brush" in2="SourceAlpha" operator="in" result="brushIn"/>
+<feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="b"/>
+<feSpecularLighting in="b" surfaceScale="2.4" specularConstant=".9" specularExponent="28" lighting-color="#fff" result="spec"><feDistantLight azimuth="235" elevation="38"/></feSpecularLighting>
+<feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="brushIn"/><feMergeNode in="specIn"/></feMerge></filter></defs><g fill="none" stroke="url(#mg)" stroke-width="56" stroke-linejoin="miter" stroke-miterlimit="10" filter="url(#mf)"><path d="M195 158.5H510C695.4 158.5 847 310.1 847 495.5C847 680.9 695.4 832.5 510 832.5H221.5V273"/><path d="M359.5 302H510C617 302 704.5 390 704.5 497.5C704.5 605 617 693 510 693H359.5Z"/></g></svg>
