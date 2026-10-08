@@ -217,3 +217,14 @@ html{background:var(--bg)}
 .t-hero{padding-top:96px}
 @media (max-width:760px){.t-hero{padding-top:64px}.t-badges span{font-size:12px;padding:7px 12px}}
 @media (prefers-reduced-motion:reduce){.amb i{animation:none}}
+
+/* profile strength meter */
+.meter .mt-pct{font:600 22px Montserrat,Inter,sans-serif}
+.mt-bar{height:8px;border-radius:9px;background:#26262b;overflow:hidden}
+.mt-bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--warn);transition:width .6s cubic-bezier(.2,.7,.2,1),background .3s}
+.mt-bar i.mid{background:var(--silver)}
+.mt-bar i.hi{background:var(--ok)}
+.mt-tips{list-style:none;display:grid;gap:8px}
+.mt-tips:empty{display:none}
+.mt-tips li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--muted)}
+.mt-tips li span{flex:0 0 auto;font-size:11.5px;font-weight:600;color:var(--ok);border:1px solid #294a3b;border-radius:99px;padding:1px 7px}
