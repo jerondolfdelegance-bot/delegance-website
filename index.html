@@ -21,14 +21,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="/img/hero-va.webp" type="image/webp">
-<link rel="stylesheet" href="/assets/site.css?v=3">
+<link rel="preload" as="image" href="/img/hero.webp" imagesrcset="/img/hero-800.webp 800w, /img/hero.webp 1600w" imagesizes="(max-width:1060px) 92vw, 560px" type="image/webp">
+<link rel="stylesheet" href="/assets/site.css?v=3.1">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://delegance.app/#org", "name": "Delegance", "url": "https://delegance.app/", "logo": "https://delegance.app/brand/icon-512.png", "image": "https://delegance.app/og.jpg", "email": "admin@delegance.app", "description": "A virtual service provider: virtual assistants, websites, apps and the everyday work behind them.", "areaServed": "Worldwide", "knowsAbout": ["Virtual assistants", "Website design and development", "Web and mobile app development", "Website care and maintenance", "Integrations and automation", "Social media management"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Virtual assistants"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Websites"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Web and mobile apps"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Care and maintenance"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Integrations and automation"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Online presence"}}]}}, {"@type": "WebSite", "@id": "https://delegance.app/#site", "url": "https://delegance.app/", "name": "Delegance", "publisher": {"@id": "https://delegance.app/#org"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What kind of work do you take on?", "acceptedAnswer": {"@type": "Answer", "text": "Virtual assistant support, websites, web and mobile apps, ongoing site care, integrations and the everyday tasks that come with running a business. If you're not sure whether something fits, just ask."}}, {"@type": "Question", "name": "Is there anything you don't take on?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist."}}, {"@type": "Question", "name": "Can you look after a website someone else built?", "acceptedAnswer": {"@type": "Answer", "text": "Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend."}}, {"@type": "Question", "name": "Do you only build new things?", "acceptedAnswer": {"@type": "Answer", "text": "No. Plenty of our work is improving, fixing and maintaining what you already have."}}, {"@type": "Question", "name": "How do we get started?", "acceptedAnswer": {"@type": "Answer", "text": "Email us at admin@delegance.app with a few lines about what you need, or tap the chat button in the corner. We'll reply with questions or a suggested next step."}}, {"@type": "Question", "name": "What is Delegance Desk?", "acceptedAnswer": {"@type": "Answer", "text": "The tool our team uses to run our clients' social media: planning and scheduling posts, and answering comments and messages with help from AI drafts that a person checks first. Clients don't need to install anything."}}, {"@type": "Question", "name": "Do you need my social media passwords?", "acceptedAnswer": {"@type": "Answer", "text": "No. You add us to your page through the network's own page settings, and you can remove our access at any time."}}]}]}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="amb" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="grain" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+<a class="totop" href="#top" aria-label="Back to top" id="totop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></a>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
@@ -48,14 +50,14 @@
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="158" height="30"></a>
     <nav class="links" aria-label="Main">
-      <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Desk</a><a href="/candidates">Candidates</a><a href="#faq">FAQ</a>
+      <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#desk">Desk</a><a href="/candidates">Candidates</a><a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-silver" href="mailto:admin@delegance.app" data-chat>Talk to us</a>
+    <a class="btn btn-silver" href="#start">Start a request</a>
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mm"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu" id="mm">
-    <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="#faq">FAQ</a>
-    <a class="btn btn-silver" href="mailto:admin@delegance.app" data-chat>Talk to us</a>
+    <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="#faq">FAQ</a>
+    <a class="btn btn-silver" href="#start">Start a request</a>
   </div>
 </header>
 
@@ -68,8 +70,8 @@
         <h1 class="serif rv d1"><span class="silver">Good work,</span><br>delegated <em>elegantly.</em></h1>
         <p class="lead rv d2">Delegance provides virtual assistants, builds websites and apps, and looks after the everyday work behind them, so you can stay focused on running your business.</p>
         <div class="cta rv d3">
-          <a class="btn btn-silver" href="#services">See what we do <svg><use href="#i-arrow"/></svg></a>
-          <a class="btn btn-ghost" href="/candidates">Meet our candidates</a>
+          <a class="btn btn-silver" href="#start">Start a request <svg><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="#services">See what we do</a>
         </div>
         <div class="trust rv d4">
           <span><svg><use href="#i-check"/></svg>No passwords shared</span>
@@ -80,8 +82,8 @@
 
       <div class="collage rv d2" id="collage" aria-hidden="true">
         <div class="stage">
-          <div class="ph main"><img src="/img/hero-va.webp" alt="" width="900" height="600" fetchpriority="high"></div>
-          <div class="ph sub"><img src="/img/hero-sofa-s.webp" alt="" width="560" height="373" loading="lazy"></div>
+          <div class="ph main"><img src="/img/hero.webp" srcset="/img/hero-800.webp 800w, /img/hero.webp 1600w" sizes="(max-width:1060px) 92vw, 560px" alt="" width="1600" height="1068" fetchpriority="high"></div>
+          <div class="ph sub"><img src="/img/hero-sub.webp" alt="" width="1000" height="667" loading="lazy"></div>
           <div class="glass badge-mark"><img src="/brand/delegance-mark.svg" alt=""></div>
           <div class="glass fc c1"><span class="av">AC</span><div><b>New client message</b><small>Drafting a reply <span class="typing"><i></i><i></i><i></i></span></small></div></div>
           <div class="glass fc c4"><div class="stack-av"><span>MJ</span><span>RL</span><span>KS</span></div><div><b>VA team</b><small>Online now</small></div></div>
@@ -109,7 +111,7 @@
       </div>
       <div class="bento">
         <article class="tile photo s3 r2 rv">
-          <img src="/img/va.webp" alt="A virtual assistant smiling while working on a laptop" width="820" height="547" loading="lazy" style="object-position:62% 30%">
+          <img src="/img/va.webp" srcset="/img/va-800.webp 800w, /img/va.webp 1600w" sizes="(max-width:760px) 92vw, 600px" alt="A smiling virtual assistant wearing a headset at her computer" width="1600" height="1067" loading="lazy" style="object-position:70% 30%">
           <div class="in">
             <div class="ic"><svg style="color:#d9dadf"><use href="#i-chat"/></svg></div>
             <h3>Virtual assistants</h3>
@@ -123,7 +125,7 @@
           <h3>Websites</h3><p>New sites, redesigns and landing pages that look good, load fast and work on every screen.</p>
           <div class="mock-browser" aria-hidden="true">
             <div class="bar"><b></b><b></b><b></b><span>yourbusiness.com</span></div>
-            <div class="body"><div><div class="sk t"></div><div class="sk"></div><div class="sk" style="width:85%"></div><div class="sk" style="width:60%"></div><div class="sk btn"></div></div><img src="/img/code-s.webp" alt="" loading="lazy" width="460" height="315"></div>
+            <div class="body"><div><div class="sk t"></div><div class="sk"></div><div class="sk" style="width:85%"></div><div class="sk" style="width:60%"></div><div class="sk btn"></div></div><img src="/img/code.webp" alt="" loading="lazy" width="900" height="600"></div>
           </div>
         </article>
 
@@ -168,10 +170,68 @@
     </div>
   </section>
 
+  <section id="tasks">
+    <div class="wrap">
+      <div class="sec-head c rv">
+        <span class="eyebrow">What a VA can do</span>
+        <h2 class="serif">Hand it over. <span class="silver">Get your hours back.</span></h2>
+        <p>Pick an area to see the everyday work our virtual assistants take off your plate.</p>
+      </div>
+      <div class="vt rv">
+        <div class="vt-tabs" role="tablist" aria-label="Areas of work">
+          <button role="tab" aria-selected="true" aria-controls="vt-inbox" id="tab-inbox" data-t="inbox">Inbox and calendar</button>
+          <button role="tab" aria-selected="false" aria-controls="vt-support" id="tab-support" data-t="support" tabindex="-1">Customer support</button>
+          <button role="tab" aria-selected="false" aria-controls="vt-social" id="tab-social" data-t="social" tabindex="-1">Social media</button>
+          <button role="tab" aria-selected="false" aria-controls="vt-shop" id="tab-shop" data-t="shop" tabindex="-1">Online store</button>
+          <button role="tab" aria-selected="false" aria-controls="vt-data" id="tab-data" data-t="data" tabindex="-1">Research and data</button>
+          <button role="tab" aria-selected="false" aria-controls="vt-admin" id="tab-admin" data-t="admin" tabindex="-1">Admin</button>
+        </div>
+        <div class="vt-panels">
+          <div class="vt-p on" role="tabpanel" id="vt-inbox" aria-labelledby="tab-inbox">
+            <div class="vt-img"><img src="/img/t-inbox.webp" alt="A virtual assistant working at a desk in a home office" width="1200" height="801" loading="lazy"></div>
+            <div class="vt-txt"><h3>Inbox and calendar</h3><p>Start each day with a clean inbox and a calendar that makes sense.</p>
+              <ul><li>Sort, label and archive email every day</li><li>Draft replies for you to approve</li><li>Book meetings and send reminders</li><li>Manage travel and appointment bookings</li><li>Follow up on things that went quiet</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Virtual assistant">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+          <div class="vt-p" role="tabpanel" id="vt-support" aria-labelledby="tab-support" hidden>
+            <div class="vt-img"><img src="/img/t-support.webp" alt="Support staff wearing headsets" width="1200" height="800" loading="lazy"></div>
+            <div class="vt-txt"><h3>Customer support</h3><p>Friendly, fast answers for your customers, in your voice.</p>
+              <ul><li>Answer chats, emails and comments</li><li>Handle orders, returns and simple questions</li><li>Keep an FAQ and saved replies up to date</li><li>Pass anything tricky straight to you</li><li>Log feedback so you can spot patterns</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Virtual assistant">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+          <div class="vt-p" role="tabpanel" id="vt-social" aria-labelledby="tab-social" hidden>
+            <div class="vt-img"><img src="/img/t-social.webp" alt="A phone showing social media apps" width="1200" height="1800" loading="lazy" style="object-position:50% 40%"></div>
+            <div class="vt-txt"><h3>Social media</h3><p>Show up every week without thinking about it, planned in Delegance Desk.</p>
+              <ul><li>Plan and schedule posts across your pages</li><li>Design simple graphics in Canva</li><li>Reply to comments and messages</li><li>Every post checked before it goes live</li><li>A simple monthly summary</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Social media">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+          <div class="vt-p" role="tabpanel" id="vt-shop" aria-labelledby="tab-shop" hidden>
+            <div class="vt-img"><img src="/img/t-shop.webp" alt="Someone shopping online with a card and a laptop" width="1200" height="800" loading="lazy"></div>
+            <div class="vt-txt"><h3>Online store</h3><p>Keep your shop tidy, stocked and answering customers.</p>
+              <ul><li>Add and update products, photos and prices</li><li>Process orders and track deliveries</li><li>Answer customer questions</li><li>Keep stock lists up to date</li><li>Works with Shopify, Wix, WordPress and more</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Virtual assistant">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+          <div class="vt-p" role="tabpanel" id="vt-data" aria-labelledby="tab-data" hidden>
+            <div class="vt-img"><img src="/img/t-data.webp" alt="Hands typing on a laptop showing a spreadsheet" width="1200" height="900" loading="lazy"></div>
+            <div class="vt-txt"><h3>Research and data</h3><p>Clean lists and clear answers, ready when you need them.</p>
+              <ul><li>Research suppliers, leads and competitors</li><li>Data entry and spreadsheet clean-up</li><li>Build simple reports and trackers</li><li>Keep your CRM or contact lists current</li><li>Summaries you can read in two minutes</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Virtual assistant">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+          <div class="vt-p" role="tabpanel" id="vt-admin" aria-labelledby="tab-admin" hidden>
+            <div class="vt-img"><img src="/img/t-admin.webp" alt="A hand writing in a planner next to a keyboard" width="1200" height="1600" loading="lazy" style="object-position:50% 45%"></div>
+            <div class="vt-txt"><h3>Admin</h3><p>The small jobs that eat your week, handled.</p>
+              <ul><li>Document formatting and filing</li><li>Forms, sign-ups and online accounts</li><li>Meeting notes and to-do lists</li><li>Organise shared drives and folders</li><li>Reminders so nothing slips</li></ul>
+              <a class="btn btn-ghost" href="#start" data-pick="Virtual assistant">Get help with this <svg><use href="#i-arrow"/></svg></a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="how" style="background:linear-gradient(180deg,transparent,rgba(255,255,255,.018),transparent)">
     <div class="wrap how">
       <div class="pic rv" aria-hidden="true">
-        <div class="ph"><img src="/img/team.webp" alt="" width="820" height="547" loading="lazy" style="object-position:40% 50%"></div>
+        <div class="ph"><img src="/img/team.webp" srcset="/img/team-800.webp 800w, /img/team.webp 1400w" sizes="(max-width:1060px) 92vw, 560px" alt="" width="1400" height="915" loading="lazy" style="object-position:45% 50%"></div>
         <div class="glass note2"><span class="ico" style="flex:0 0 32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#202026;border:1px solid var(--line2)"><svg style="width:16px;height:16px;color:var(--ok)"><use href="#i-chat"/></svg></span><div><b style="font-size:13px">Update sent</b><small style="display:block;font-size:11.5px;color:var(--muted)">Here's where things stand</small></div></div>
         <div class="glass prog">
           <div class="top"><b>Website project</b><span>In progress</span></div>
@@ -268,7 +328,7 @@
           <div class="cta"><a class="btn btn-silver" href="/candidates">Browse candidates <svg><use href="#i-arrow"/></svg></a><a class="btn btn-ghost" href="/apply">I'm a VA: create my free profile</a></div>
         </div>
         <div class="tshow rv d1" aria-hidden="true">
-          <div class="bg"><img src="/img/cafe-s.webp" alt="" loading="lazy" width="560" height="373"></div>
+          <div class="bg"><img src="/img/loft.webp" alt="" loading="lazy" width="1200" height="800"></div>
           <div class="glass pcard">
             <div class="portx"><span class="mk">DELEGANCE</span><svg class="silh" viewBox="0 0 200 210"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d6f78"/><stop offset="1" stop-color="#2c2d33"/></linearGradient></defs><circle cx="100" cy="70" r="42" fill="url(#sg)"/><path d="M22 210c4-52 38-82 78-82s74 30 78 82z" fill="url(#sg)"/></svg></div>
             <div class="bd"><h4>Your name here</h4><div class="hl">Virtual assistant · Admin and support</div><span class="ok"><svg><use href="#i-shield"/></svg>Reviewed by Delegance</span><div class="act"><span>Message</span><span class="p">Hire</span></div></div>
@@ -282,6 +342,63 @@
     </div>
   </section>
 
+  <section id="start">
+    <div class="wrap">
+      <div class="sr rv">
+        <div class="sr-side">
+          <span class="eyebrow">Start a request</span>
+          <h2 class="serif">Tell us what you need <span class="silver">in under a minute.</span></h2>
+          <p>Tick what applies and add a line or two. We'll reply with questions or a suggested next step. No sign-up, no commitment.</p>
+          <ol class="sr-steps" aria-hidden="true"><li class="on" data-s="1"><b>1</b>What you need</li><li data-s="2"><b>2</b>When and how much</li><li data-s="3"><b>3</b>A few details</li></ol>
+        </div>
+        <form class="sr-card glass" id="srForm" novalidate>
+          <fieldset class="sr-step on" data-s="1">
+            <legend>What do you need help with?</legend>
+            <div class="sr-chips" id="srNeed">
+              <label><input type="checkbox" value="Virtual assistant"><span>Virtual assistant</span></label>
+              <label><input type="checkbox" value="Social media"><span>Social media</span></label>
+              <label><input type="checkbox" value="Website"><span>Website</span></label>
+              <label><input type="checkbox" value="Web or mobile app"><span>Web or mobile app</span></label>
+              <label><input type="checkbox" value="Care and maintenance"><span>Care and maintenance</span></label>
+              <label><input type="checkbox" value="Integrations and automation"><span>Integrations and automation</span></label>
+              <label><input type="checkbox" value="Domains and business email"><span>Domains and business email</span></label>
+              <label><input type="checkbox" value="Not sure yet"><span>Not sure yet</span></label>
+            </div>
+            <p class="sr-err" id="srErr1" hidden>Pick at least one, or "Not sure yet".</p>
+            <div class="sr-nav"><span></span><button type="button" class="btn btn-silver" data-go="2">Next <svg><use href="#i-arrow"/></svg></button></div>
+          </fieldset>
+          <fieldset class="sr-step" data-s="2" hidden>
+            <legend>When would you like to start?</legend>
+            <div class="sr-chips one" id="srWhen">
+              <label><input type="radio" name="when" value="As soon as possible"><span>As soon as possible</span></label>
+              <label><input type="radio" name="when" value="Within a month"><span>Within a month</span></label>
+              <label><input type="radio" name="when" value="Just exploring"><span>Just exploring</span></label>
+            </div>
+            <p class="sr-q">How much help, roughly?</p>
+            <div class="sr-chips one" id="srHow">
+              <label><input type="radio" name="how" value="A few hours a week"><span>A few hours a week</span></label>
+              <label><input type="radio" name="how" value="Part-time"><span>Part-time</span></label>
+              <label><input type="radio" name="how" value="Full-time"><span>Full-time</span></label>
+              <label><input type="radio" name="how" value="A one-off project"><span>A one-off project</span></label>
+            </div>
+            <div class="sr-nav"><button type="button" class="btn btn-ghost" data-go="1">Back</button><button type="button" class="btn btn-silver" data-go="3">Next <svg><use href="#i-arrow"/></svg></button></div>
+          </fieldset>
+          <fieldset class="sr-step" data-s="3" hidden>
+            <legend>A few details</legend>
+            <label class="sr-f"><span>What should we know?</span><textarea id="srMsg" rows="4" maxlength="1500" placeholder="e.g. I need someone to manage my inbox and book appointments, about 10 hours a week."></textarea></label>
+            <div class="sr-two">
+              <label class="sr-f"><span>Your name</span><input id="srName" autocomplete="name" maxlength="80"></label>
+              <label class="sr-f"><span>Business or website (optional)</span><input id="srBiz" maxlength="120"></label>
+            </div>
+            <div class="sr-sum" id="srSum" aria-live="polite"></div>
+            <div class="sr-nav wrapit"><button type="button" class="btn btn-ghost" data-go="2">Back</button><span class="sr-send"><button type="button" class="btn btn-ghost" id="srMail">Send by email</button><button type="button" class="btn btn-silver" id="srChat">Send in chat <svg><use href="#i-arrow"/></svg></button></span></div>
+            <p class="sr-note">Sending opens our chat or your email app with your request filled in. Nothing is sent until you press send there.</p>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+  </section>
+
   <section id="faq">
     <div class="wrap faqg">
       <div>
@@ -290,7 +407,7 @@
           <h2 class="serif">Questions, <span class="silver">answered.</span></h2>
         </div>
         <div class="ask rv d1">
-          <img src="/img/hero-sofa-s.webp" alt="" loading="lazy" width="560" height="373">
+          <img src="/img/smile.webp" alt="" loading="lazy" width="1000" height="665">
           <div class="bd"><h3>Still have a question?</h3><p>Send us a few lines about what you need. A real person will reply.</p>
             <div class="row"><a class="btn btn-silver" href="mailto:admin@delegance.app" data-chat>Chat with us</a><a class="btn btn-ghost" href="mailto:admin@delegance.app">Email</a></div></div>
         </div>
@@ -310,7 +427,7 @@
   <section class="final">
     <div class="wrap">
       <div class="fbox rv">
-        <img src="/img/flatlay.webp" alt="" loading="lazy" width="960" height="640">
+        <img src="/img/desk.webp" alt="" loading="lazy" width="1800" height="1201">
         <img class="mk" src="/brand/delegance-mark.svg" alt="" width="62" height="62" style="position:static;filter:none">
         <h2 class="serif"><span class="silver">Less on your plate.</span><br>More time for what matters.</h2>
         <p>Tell us what you need and we'll get back to you.</p>
@@ -351,6 +468,35 @@ document.addEventListener('click',function(e){var c=e.target.closest('[data-chat
   // gentle 3D tilt on the hero collage
   var col=document.getElementById('collage'),st=col&&col.querySelector('.stage');
   if(st&&fine&&!still){col.addEventListener('pointermove',function(e){var r=col.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;st.style.transform='rotateY('+(x*7)+'deg) rotateX('+(-y*7)+'deg)'});col.addEventListener('pointerleave',function(){st.style.transform=''})}
+  // scroll progress + back to top
+  var prog=document.getElementById('prog'),tt=document.getElementById('totop'),pt=0;
+  function onP(){pt=0;var h=document.documentElement.scrollHeight-innerHeight,y=scrollY;prog.style.transform='scaleX('+(h>0?Math.min(1,y/h):0)+')';tt.classList.toggle('on',y>innerHeight*1.2)}
+  addEventListener('scroll',function(){if(!pt){pt=1;requestAnimationFrame(onP)}},{passive:true});onP();
+  // what a VA can do: tabs (arrow keys move between them)
+  var tabs=[].slice.call(document.querySelectorAll('.vt-tabs [role=tab]'));
+  function pick(t,focus){tabs.forEach(function(b){var on=b===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;var p=document.getElementById(b.getAttribute('aria-controls'));p.hidden=!on;p.classList.toggle('on',on)});if(focus)t.focus();t.scrollIntoView({block:'nearest',inline:'nearest',behavior:still?'auto':'smooth'})}
+  tabs.forEach(function(b,i){b.addEventListener('click',function(){pick(b)});b.addEventListener('keydown',function(e){var k=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(k){e.preventDefault();pick(tabs[(i+k+tabs.length)%tabs.length],true)}})});
+  // start a request
+  var form=document.getElementById('srForm');
+  if(form){
+    var steps=[].slice.call(form.querySelectorAll('.sr-step')),dots=[].slice.call(document.querySelectorAll('.sr-steps li'));
+    var val=function(sel){return [].slice.call(form.querySelectorAll(sel+' input:checked')).map(function(i){return i.value})};
+    function summary(){var n=val('#srNeed'),w=val('#srWhen'),h=val('#srHow'),m=document.getElementById('srMsg').value.trim(),nm=document.getElementById('srName').value.trim(),bz=document.getElementById('srBiz').value.trim();
+      return ['New request from delegance.app','Help with: '+(n.join(', ')||'Not sure yet'),w.length?'Start: '+w[0]:'',h.length?'Amount: '+h[0]:'',nm?'Name: '+nm:'',bz?'Business: '+bz:'',m?'\nDetails: '+m:''].filter(Boolean).join('\n')}
+    function go(n){if(n===2&&!val('#srNeed').length){document.getElementById('srErr1').hidden=false;return}document.getElementById('srErr1').hidden=true;
+      steps.forEach(function(s){var on=s.dataset.s==n;s.hidden=!on;s.classList.toggle('on',on)});
+      dots.forEach(function(d){d.classList.toggle('on',d.dataset.s==n);d.classList.toggle('done',d.dataset.s<n)});
+      if(n==3)document.getElementById('srSum').textContent=summary();
+      var f=form.querySelector('.sr-step.on input, .sr-step.on textarea');if(f&&n!=1)f.focus({preventScroll:true});}
+    form.addEventListener('click',function(e){var b=e.target.closest('[data-go]');if(b)go(+b.dataset.go)});
+    form.addEventListener('input',function(){if(!form.querySelector('[data-s="3"]').hidden)document.getElementById('srSum').textContent=summary()});
+    form.addEventListener('submit',function(e){e.preventDefault()});
+    document.querySelectorAll('[data-pick]').forEach(function(a){a.addEventListener('click',function(){var v=a.dataset.pick;form.querySelectorAll('#srNeed input').forEach(function(i){if(i.value===v)i.checked=true});go(1)})});
+    document.getElementById('srMail').addEventListener('click',function(){location.href='mailto:admin@delegance.app?subject='+encodeURIComponent('New request from delegance.app')+'&body='+encodeURIComponent(summary())});
+    document.getElementById('srChat').addEventListener('click',function(){var w=document.querySelector('.dc-b'),t=summary();if(!w){location.href='mailto:admin@delegance.app?subject='+encodeURIComponent('New request from delegance.app')+'&body='+encodeURIComponent(t);return}
+      var p=document.querySelector('.dc-p');if(!p||!p.classList.contains('o'))w.click();
+      setTimeout(function(){var ta=document.querySelector('.dc-p .dc-f textarea'),nm=document.querySelector('.dc-p .dc-f input:not(.dc-hp)');if(nm&&!nm.value&&document.getElementById('srName').value)nm.value=document.getElementById('srName').value;if(ta){ta.value=t;ta.dispatchEvent(new Event('input',{bubbles:true}));ta.focus()}},250)});
+  }
   // real approved candidates, when there are any
   var row=document.getElementById('liveRow');
   fetch('https://desk.delegance.app/public/candidates').then(function(r){return r.ok?r.json():[]}).then(function(list){
