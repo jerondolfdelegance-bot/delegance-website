@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="/assets/talent.css?v=1">
 </head>
 <body>
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
 <header class="th"><div class="wrap">
   <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
   <nav aria-label="Main"><a href="/" class="hide-m">Home</a><a href="/candidates">Candidates</a></nav>
@@ -28,9 +29,11 @@
 
 <main class="wrap">
   <section class="t-hero" id="intro" style="padding-bottom:10px">
+    <div class="bgimg" aria-hidden="true"><img src="/img/cafe-s.webp" alt="" width="560" height="640"></div>
     <span class="eyebrow" id="eyebrow">Join as a virtual assistant</span>
     <h1 class="h"><span class="silver" id="title">Your professional VA profile. Free.</span></h1>
     <p id="lead">One polished page for your portfolio, experience and skills. Share your Delegance link with any job application, get found by our clients, and get hired through us. Your address, email and phone stay private.</p>
+    <div class="t-badges" id="badges"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Free to join</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Your own portfolio link</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Get hired through Delegance</span></div>
   </section>
 
   <div class="tabs hide" id="tabs" role="tablist">
@@ -253,7 +256,7 @@
     var first = me.name.split(' ')[0], link = 'https://delegance.app/va/' + me.slug, dash = 'https://delegance.app/me#me=' + cred.id + '.' + cred.token;
     document.getElementById('eyebrow').textContent = 'Your Delegance dashboard';
     document.getElementById('title').textContent = 'Hi, ' + first + '.';
-    document.getElementById('lead').textContent = 'Read and answer client messages, keep your profile growing, and share your link with every application.';
+    document.getElementById('badges').classList.add('hide'); document.getElementById('lead').textContent = 'Read and answer client messages, keep your profile growing, and share your link with every application.';
     document.getElementById('tabs').classList.remove('hide');
     document.getElementById('consentRow').classList.add('hide');
     document.getElementById('submitBtn').textContent = 'Save changes';
