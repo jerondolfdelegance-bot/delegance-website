@@ -75,7 +75,7 @@ label.f b{color:var(--text);font-weight:600}
 
 /* gallery */
 .t-hero{padding:72px 0 36px;text-align:center;position:relative;isolation:isolate}
-.t-hero::before{content:"";position:absolute;inset:-120px 0 auto;height:560px;background:radial-gradient(ellipse 60% 55% at 50% 30%,rgba(200,202,212,.12),transparent 70%);z-index:-1}
+.t-hero::before{content:"";position:absolute;inset:-120px 0 auto;height:560px;background:radial-gradient(ellipse 60% 55% at 50% 30%,rgba(200,202,212,.12),transparent 70%);z-index:-1;pointer-events:none}
 .t-hero h1{font-size:clamp(36px,6vw,64px);margin:14px 0 14px}
 .t-hero p{max-width:640px;margin:0 auto;color:var(--muted);font-size:17px}
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:28px 0 18px}
