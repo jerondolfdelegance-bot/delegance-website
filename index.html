@@ -163,7 +163,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
   .final{padding:84px 0}
 }
 </style>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Delegance","url":"https://delegance.app/","logo":"https://delegance.app/brand/icon-512.png","description":"A virtual service provider: virtual assistants, websites, apps and the everyday work behind them."}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://delegance.app/#org", "name": "Delegance", "url": "https://delegance.app/", "logo": "https://delegance.app/brand/icon-512.png", "image": "https://delegance.app/og.jpg", "email": "admin@delegance.app", "description": "A virtual service provider: virtual assistants, websites, apps and the everyday work behind them.", "areaServed": "Worldwide", "knowsAbout": ["Virtual assistants", "Website design and development", "Web and mobile app development", "Website care and maintenance", "Integrations and automation", "Social media management"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Virtual assistants"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Websites"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Web and mobile apps"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Care and maintenance"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Integrations and automation"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Online presence"}}]}}, {"@type": "WebSite", "@id": "https://delegance.app/#site", "url": "https://delegance.app/", "name": "Delegance", "publisher": {"@id": "https://delegance.app/#org"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What kind of work do you take on?", "acceptedAnswer": {"@type": "Answer", "text": "Virtual assistant support, websites, web and mobile apps, ongoing site care, integrations and the everyday tasks that come with running a business. If you're not sure whether something fits, just ask."}}, {"@type": "Question", "name": "Is there anything you don't take on?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist."}}, {"@type": "Question", "name": "Can you look after a website someone else built?", "acceptedAnswer": {"@type": "Answer", "text": "Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend."}}, {"@type": "Question", "name": "Do you only build new things?", "acceptedAnswer": {"@type": "Answer", "text": "No. Plenty of our work is improving, fixing and maintaining what you already have."}}, {"@type": "Question", "name": "How do we get started?", "acceptedAnswer": {"@type": "Answer", "text": "Email us at admin@delegance.app with a few lines about what you need, or tap the chat button in the corner. We'll reply with questions or a suggested next step."}}, {"@type": "Question", "name": "What is Delegance Desk?", "acceptedAnswer": {"@type": "Answer", "text": "The tool our team uses to run our clients' social media: planning and scheduling posts, and answering comments and messages with help from AI drafts that a person checks first. Clients don't need to install anything."}}, {"@type": "Question", "name": "Do you need my social media passwords?", "acceptedAnswer": {"@type": "Answer", "text": "No. You add us to your page through the network's own page settings, and you can remove our access at any time."}}]}]}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -269,14 +269,16 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
   <section id="desk">
     <div class="wrap desk">
       <div class="rv">
-        <span class="eyebrow">In the works</span>
+        <span class="eyebrow">Now in use</span>
         <h2 class="serif" style="font-size:clamp(30px,4vw,46px);line-height:1.1;margin:14px 0 16px">Delegance <span class="silver">Desk</span></h2>
-        <p style="color:var(--muted);font-size:17px">A tool we're building for ourselves and our clients: one place to post to social media and answer every comment and message.</p>
+        <p style="color:var(--muted);font-size:17px">The tool our team uses to look after our clients' social media: one place to plan, post and answer every comment and message.</p>
         <ul>
-          <li>Facebook Pages, Instagram, YouTube and LinkedIn in one inbox</li>
-          <li>AI-drafted replies you approve with one tap</li>
-          <li>A chat bubble for your own website</li>
+          <li>Plan and schedule posts for Facebook Pages, Instagram, TikTok and YouTube from one calendar</li>
+          <li>Comments and website chats in one inbox, with AI-drafted replies we check before they go out</li>
+          <li>Every post reviewed before it's published, and no client passwords shared with our team</li>
+          <li>Runs on any phone or computer</li>
         </ul>
+        <p style="margin-top:18px"><a class="btn btn-ghost" href="/app">Team: get the Desk app</a></p>
       </div>
       <div class="rv">
         <div class="preview" role="img" aria-label="Preview of Delegance Desk: an inbox with messages from several networks and an AI-drafted reply waiting for approval">
@@ -297,7 +299,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
             </div>
           </div>
         </div>
-        <p class="pv-note">Illustration with sample messages. The finished tool may look different.</p>
+        <p class="pv-note">Illustration with sample messages.</p>
       </div>
     </div>
   </section>
@@ -313,8 +315,9 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
         <details><summary>Is there anything you don't take on?</summary><p>Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist.</p></details>
         <details><summary>Can you look after a website someone else built?</summary><p>Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend.</p></details>
         <details><summary>Do you only build new things?</summary><p>No. Plenty of our work is improving, fixing and maintaining what you already have.</p></details>
-        <details><summary>How do we get started?</summary><p>Email us at <a href="mailto:admin@delegance.app" style="color:var(--text);text-decoration:underline">admin@delegance.app</a> with a few lines about what you need. We'll reply with questions or a suggested next step.</p></details>
-        <details><summary>What is Delegance Desk?</summary><p>A social media inbox we're building: one place to post, read comments and messages, and reply with help from AI drafts. It isn't available yet.</p></details>
+        <details><summary>How do we get started?</summary><p>Email us at <a href="mailto:admin@delegance.app" style="color:var(--text);text-decoration:underline">admin@delegance.app</a> with a few lines about what you need, or tap the chat button in the corner. We'll reply with questions or a suggested next step.</p></details>
+        <details><summary>What is Delegance Desk?</summary><p>The tool our team uses to run our clients' social media: planning and scheduling posts, and answering comments and messages with help from AI drafts that a person checks first. Clients don't need to install anything.</p></details>
+        <details><summary>Do you need my social media passwords?</summary><p>No. You add us to your page through the network's own page settings, and you can remove our access at any time.</p></details>
       </div>
     </div>
   </section>
@@ -324,7 +327,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
       <img src="/brand/delegance-mark.svg" alt="" width="64" height="64">
       <h2 class="serif"><span class="silver">Less on your plate.</span><br>More time for what matters.</h2>
       <p>Tell us what you need and we'll get back to you.</p>
-      <a class="btn btn-silver" href="mailto:admin@delegance.app">Email admin@delegance.app</a>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a class="btn btn-silver" href="mailto:admin@delegance.app">Email admin@delegance.app</a><a class="btn btn-ghost" href="mailto:admin@delegance.app" data-chat>Chat with us</a></div>
     </div>
   </section>
 </main>
@@ -332,12 +335,13 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
 <footer>
   <div class="wrap foot">
     <a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="116" height="22"></a>
-    <nav aria-label="Footer"><a href="mailto:admin@delegance.app">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="#faq">FAQ</a></nav>
+    <nav aria-label="Footer"><a href="mailto:admin@delegance.app">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="#faq">FAQ</a><a href="/app">Team app</a></nav>
     <span>© <span id="y">2026</span> Delegance</span>
   </div>
 </footer>
 
 <script>
+document.addEventListener('click',function(e){var c=e.target.closest('[data-chat]');if(!c)return;var w=document.querySelector('.dc-b');if(w){e.preventDefault();w.click();}});
 (function(){
   var b=document.body,h=document.querySelector('header'),m=document.querySelector('.menu-btn');
   document.getElementById('y').textContent=new Date().getFullYear();
