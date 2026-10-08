@@ -209,7 +209,7 @@ footer.tf nav{display:flex;gap:18px}
 body{background:transparent}
 html{background:var(--bg)}
 .t-hero .bgimg{position:absolute;left:50%;top:0;width:min(1400px,100%);height:100%;transform:translateX(-50%);z-index:-1;pointer-events:none;overflow:hidden;-webkit-mask-image:radial-gradient(ellipse 75% 85% at 50% 30%,#000 25%,transparent 78%);mask-image:radial-gradient(ellipse 75% 85% at 50% 30%,#000 25%,transparent 78%)}
-.t-hero .bgimg img{width:100%;height:100%;object-fit:cover;opacity:.22;filter:grayscale(.4) blur(1px)}
+.t-hero .bgimg img{width:100%;height:100%;object-fit:cover;opacity:.26;filter:grayscale(.3)}
 .t-hero .bgimg::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:56px 56px}
 .t-badges{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:26px}
 .t-badges span{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;font-size:13px;color:#d5d6db;background:rgba(22,22,26,.6);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
