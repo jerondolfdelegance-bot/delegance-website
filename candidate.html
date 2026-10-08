@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Virtual assistant profile · Delegance</title>
+<meta name="description" content="A virtual assistant profile on Delegance: portfolio, experience, skills and availability.">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="Delegance">
+<meta property="og:title" content="Virtual assistant profile · Delegance">
+<meta property="og:description" content="Portfolio, experience, skills and availability. Reviewed by Delegance.">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://desk.delegance.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/talent.css?v=1">
+</head>
+<body>
+<header class="th"><div class="wrap">
+  <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
+  <nav aria-label="Main"><a href="/candidates">All candidates</a><a class="btn sm hide-m" href="/apply">Join as a VA</a></nav>
+</div></header>
+
+<main class="wrap" id="pf"><div class="pf"><div class="skel" style="height:450px"></div><div class="stack"><div class="skel" style="height:60px"></div><div class="skel" style="height:220px"></div></div></div></main>
+
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance · Profiles are reviewed by Delegance. Contact details are kept private.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
+
+<script src="/assets/talent.js?v=1"></script>
+<script>
+(function () {
+  var T = window.T, esc = T.esc, I = T.I;
+  var slug = (location.pathname.match(/^\/va\/([a-z0-9-]{3,60})/) || [])[1] || new URLSearchParams(location.search).get('id') || '';
+  var root = document.getElementById('pf'), c = null;
+  var ago = function (iso) { var d = new Date(iso); return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }); };
+  function sec(title, inner) { return inner ? '<section class="sec"><h2>' + title + '</h2>' + inner + '</section>' : ''; }
+  function render() {
+    var d = c.details || {}, first = c.name.split(' ')[0];
+    var link = 'https://delegance.app/va/' + c.slug;
+    document.title = c.name + ' · ' + c.headline + ' · Delegance';
+    root.innerHTML = '<div class="pf"><aside class="pf-side">' + T.port(c.photo, '', true) +
+      '<button class="btn silver-b" id="msgBtn">' + I.chat + ' Message ' + esc(first) + '</button>' +
+      '<button class="btn" id="hireBtn">' + I.brief + ' Hire through Delegance</button>' +
+      '<div class="share-row"><button class="btn sm" id="shareBtn">' + I.share + ' Share</button><button class="btn sm" id="copyBtn">' + I.link + ' Copy link</button></div>' +
+      '<div class="note small"><span class="verified">' + I.shield + ' Reviewed by Delegance</span><br>Contact details are private. Chat here, or let Delegance arrange the work for you.</div></aside>' +
+      '<div><span class="eyebrow">Virtual assistant</span><h1 class="h"><span class="silver">' + esc(c.name) + '</span></h1><p class="hl">' + esc(c.headline) + '</p>' +
+      '<div class="row">' + (c.availability ? '<span class="pill">' + esc(c.availability) + '</span>' : '') + (c.location ? '<span class="pill b">' + esc(c.location) + '</span>' : '') + '</div>' +
+      '<div class="facts">' +
+        '<div class="fact"><b>' + (c.years ? c.years + (c.years > 1 ? ' years' : ' year') : 'New') + '</b><span>Experience</span></div>' +
+        (c.hours ? '<div class="fact"><b>' + esc(c.hours) + '</b><span>Working hours</span></div>' : '') +
+        (c.rate ? '<div class="fact"><b>' + esc(c.rate) + '</b><span>Rate</span></div>' : '') +
+        ((c.languages || []).length ? '<div class="fact"><b>' + esc(c.languages.join(', ')) + '</b><span>Languages</span></div>' : '') +
+      '</div>' +
+      sec('About ' + esc(first), '<p class="about">' + esc(c.about) + '</p>') +
+      sec('Services', (d.services || []).length ? '<div class="chips">' + d.services.map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>' : '') +
+      sec('Skills and tools', '<div class="chips">' + (c.skills || []).concat(c.tools || []).map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>') +
+      sec('Portfolio', (d.projects || []).length ? '<div class="proj-g">' + d.projects.map(function (p) {
+        return '<article class="proj">' + (p.image ? '<div class="im" data-img="' + esc(p.image) + '"><img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy"></div>' : '') +
+          '<div class="b"><b>' + esc(p.title) + '</b>' + (p.summary ? '<span class="small muted">' + esc(p.summary) + '</span>' : '') +
+          ((p.tags || []).length ? '<div class="chips">' + p.tags.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+          (p.url ? '<a class="small" style="text-decoration:underline;margin-top:auto" href="' + esc(T.safe(p.url)) + '" target="_blank" rel="noopener nofollow">View project</a>' : '') + '</div></article>';
+      }).join('') + '</div>' : '') +
+      sec('Experience', (d.experience || []).length ? '<div class="tl">' + d.experience.map(function (x) {
+        return '<div class="it"><b>' + esc(x.role) + '</b>' + (x.company ? ' · ' + esc(x.company) : '') + '<div class="xs dim">' + esc(x.start || '') + (x.current ? ' – Present' : x.end ? ' – ' + esc(x.end) : '') + '</div>' + (x.summary ? '<p class="small muted" style="margin-top:4px">' + esc(x.summary) + '</p>' : '') + '</div>';
+      }).join('') + '</div>' : '') +
+      sec('Education', (d.education || []).length ? '<div class="tl">' + d.education.map(function (x) { return '<div class="it"><b>' + esc(x.course || x.school) + '</b>' + (x.course && x.school ? ' · ' + esc(x.school) : '') + (x.year ? '<div class="xs dim">' + esc(x.year) + '</div>' : '') + '</div>'; }).join('') + '</div>' : '') +
+      sec('Certifications', (d.certifications || []).length ? '<div class="chips">' + d.certifications.map(function (x) { var t = esc(x.name) + (x.issuer ? ' · ' + esc(x.issuer) : '') + (x.year ? ' · ' + esc(x.year) : ''); return x.url ? '<a class="chip" href="' + esc(T.safe(x.url)) + '" target="_blank" rel="noopener nofollow">' + t + '</a>' : '<span class="chip">' + t + '</span>'; }).join('') + '</div>' : '') +
+      sec('Links', (c.portfolio || []).length || d.intro_video ? '<div class="row">' + (d.intro_video ? '<a class="btn sm" href="' + esc(T.safe(d.intro_video)) + '" target="_blank" rel="noopener nofollow">▶ Intro video</a>' : '') + (c.portfolio || []).map(function (x) { return '<a class="btn sm" href="' + esc(T.safe(x.url)) + '" target="_blank" rel="noopener nofollow">' + I.link + ' ' + esc(x.label) + '</a>'; }).join('') + '</div>' : '') +
+      '<p class="xs dim" style="margin-top:30px">Profile updated ' + ago(c.updated_at) + ' · delegance.app/va/' + esc(c.slug) + '</p>' +
+      '</div></div>';
+    document.getElementById('msgBtn').onclick = function () { chat.open(); };
+    document.getElementById('hireBtn').onclick = hireForm;
+    document.getElementById('copyBtn').onclick = function () { navigator.clipboard.writeText(link).then(function () { T.toast('Link copied.'); }, function () { T.toast(link); }); };
+    document.getElementById('shareBtn').onclick = function () { if (navigator.share) navigator.share({ title: c.name + ' · Delegance', text: c.headline, url: link }).catch(function () {}); else document.getElementById('copyBtn').click(); };
+    root.addEventListener('click', function (e) { var im = e.target.closest('[data-img]'); if (!im) return; var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + esc(im.dataset.img) + '" alt="">'; lb.onclick = function () { lb.remove(); }; document.body.appendChild(lb); });
+    chat.mount();
+  }
+
+  function hireForm() {
+    var m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = '<form class="card stack" novalidate><div class="row"><h2 class="h" style="font-size:22px">Hire ' + esc(c.name) + '</h2><span class="sp"></span><button type="button" class="btn sm" data-x>Close</button></div>' +
+      '<p class="small muted">Delegance arranges the work, the agreement and payments, so you are protected. We reply within one business day.</p>' +
+      '<div class="grid2"><label class="f"><b>Your name</b><input class="in" name="name" required autocomplete="name"></label><label class="f"><b>Email</b><input class="in" name="email" type="email" required autocomplete="email"></label></div>' +
+      '<div class="grid2"><label class="f">Company (optional)<input class="in" name="company" autocomplete="organization"></label><label class="f">Hours needed (optional)<input class="in" name="hours" placeholder="e.g. 20 hours a week"></label></div>' +
+      '<label class="f"><b>What do you need help with?</b><textarea class="in" name="message" required></textarea></label>' +
+      '<input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">' +
+      '<button class="btn silver-b" type="submit">Send hire request</button></form>';
+    document.body.appendChild(m);
+    var f = m.querySelector('form'); f.name.focus();
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
+    f.onsubmit = async function (e) {
+      e.preventDefault(); var b = f.querySelector('[type=submit]'); b.disabled = true;
+      try { await T.api('candidates/hire', { body: { slug: c.slug, name: f.name.value, email: f.email.value, company: f.company.value, hours: f.hours.value, message: f.message.value, website: f.website.value } });
+        f.innerHTML = '<h2 class="h" style="font-size:22px">Request sent ' + I.check.replace('<svg', '<svg width="20" height="20" style="display:inline;vertical-align:-3px;color:var(--ok)"') + '</h2><p class="muted">Thanks! Delegance will email you within one business day about working with ' + esc(c.name.split(' ')[0]) + '.</p><button type="button" class="btn" data-x>Close</button>';
+      } catch (err) { T.toast(err.message, true); b.disabled = false; }
+    };
+  }
+
+  // Messenger-style chathead
+  var chat = (function () {
+    var key = 'dlg-va-chat:' + slug, st = null, win = null, head = null, timer = null, seen = 0, msgs = [];
+    try { st = JSON.parse(localStorage.getItem(key) || 'null'); seen = +(localStorage.getItem(key + ':seen') || 0); } catch (e) {}
+    function save() { try { localStorage.setItem(key, JSON.stringify(st)); localStorage.setItem(key + ':seen', String(seen)); } catch (e) {} }
+    function mount() {
+      head = document.createElement('button'); head.className = 'chead'; head.setAttribute('aria-label', 'Chat with ' + c.name);
+      head.innerHTML = T.port(c.photo, 'round') + '<span class="dot"></span>';
+      head.onclick = function () { win ? close() : open(); };
+      document.body.appendChild(head);
+      if (st) poll(true);
+    }
+    function badge() { var unread = msgs.filter(function (m) { return m.from !== 'you'; }).length - seen; var el = head.querySelector('.cnt'); if (unread > 0 && !win) { if (!el) { el = document.createElement('span'); el.className = 'cnt'; head.appendChild(el); } el.textContent = unread; } else if (el) el.remove(); }
+    function bubble(m) { var cls = m.from === 'you' ? 'me' : m.from === 'delegance' ? 'dl' : 'them'; return '<div class="bub ' + cls + '">' + (m.from === 'delegance' ? '<b>Delegance:</b> ' : '') + esc(m.body) + '</div>'; }
+    function paint() {
+      if (!win) return; var box = win.querySelector('.ms');
+      box.innerHTML = '<div class="bub dl">Messages are seen by ' + esc(c.name.split(' ')[0]) + ' and the Delegance team. Emails and phone numbers are hidden for everyone\'s safety.</div>' + (msgs.length ? msgs.map(bubble).join('') : '<div class="bub them">Hi! I\'m ' + esc(c.name.split(' ')[0]) + '. Tell me about the work you need help with.</div>');
+      box.scrollTop = box.scrollHeight;
+      seen = msgs.filter(function (m) { return m.from !== 'you'; }).length; save(); badge();
+    }
+    function open() {
+      if (win) return; win = document.createElement('div'); win.className = 'cwin'; win.setAttribute('role', 'dialog'); win.setAttribute('aria-label', 'Chat with ' + c.name);
+      win.innerHTML = '<div class="hd">' + T.port(c.photo, 'round') + '<div><b>' + esc(c.name) + '</b><span>Usually replies within a day · via Delegance</span></div><button class="x" aria-label="Close chat">×</button></div><div class="ms"></div>' +
+        '<form class="ft">' + (st ? '' : '<div class="grid2" style="gap:8px"><input class="in" name="name" placeholder="Your name" autocomplete="name" required><input class="in" name="email" type="email" placeholder="Your email" autocomplete="email" required></div>') +
+        '<div class="row"><textarea class="in" name="msg" rows="1" placeholder="Write a message…" required></textarea><button class="send" aria-label="Send">' + I.send + '</button></div><div class="safe">' + I.lock.replace('<svg', '<svg width="11" height="11" style="display:inline;vertical-align:-1px"') + ' Protected by Delegance</div>' +
+        '<input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"></form>';
+      document.body.appendChild(win);
+      win.querySelector('.x').onclick = close;
+      var f = win.querySelector('form'), ta = f.msg;
+      ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); f.requestSubmit(); } });
+      ta.addEventListener('input', function () { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; });
+      f.onsubmit = send; paint(); (f.name || ta).focus();
+      if (st) poll(); clearInterval(timer); timer = setInterval(poll, 6000);
+    }
+    function close() { if (win) { win.remove(); win = null; } clearInterval(timer); if (st) timer = setInterval(poll, 45000); badge(); }
+    async function send(e) {
+      e.preventDefault(); var f = e.target, text = f.msg.value.trim(); if (!text) return;
+      var btn = f.querySelector('.send'); btn.disabled = true;
+      try {
+        if (!st) { var r = await T.api('candidates/chat/start', { body: { slug: c.slug, name: f.name.value, email: f.email.value, message: text, website: f.website.value } }); st = { id: r.id, token: r.token }; save(); var g = f.querySelector('.grid2'); if (g) g.remove(); await poll(); }
+        else { var d = await T.api('candidates/chat/send', { body: { id: st.id, token: st.token, message: text } }); msgs = d.messages; paint(); }
+        f.msg.value = ''; f.msg.style.height = 'auto';
+      } catch (err) { T.toast(err.message, true); if (/not found/i.test(err.message)) { st = null; save(); } }
+      btn.disabled = false;
+    }
+    async function poll() {
+      if (!st) return;
+      try { var d = await T.api('candidates/chat/poll', { body: { id: st.id, token: st.token } }); var changed = d.messages.length !== msgs.length; msgs = d.messages; if (win && changed) paint(); else badge(); } catch (e) { if (/not found/i.test(e.message)) { st = null; save(); } }
+    }
+    return { mount: mount, open: open };
+  })();
+
+  if (!slug) { root.innerHTML = '<div class="card" style="margin:60px 0">This profile link is incomplete. <a href="/candidates" style="text-decoration:underline">Browse all candidates</a>.</div>'; return; }
+  T.api('candidates/' + slug).then(function (d) { c = d; render(); }).catch(function () { root.innerHTML = '<div class="card" style="margin:60px 0;text-align:center"><h1 class="h" style="font-size:28px;margin-bottom:8px">Profile not available</h1><p class="muted">This profile is not public right now. <a href="/candidates" style="text-decoration:underline">Browse all candidates</a>.</p></div>'; });
+})();
+</script>
+</body>
+</html>

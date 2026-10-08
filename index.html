@@ -128,7 +128,7 @@ details p{color:var(--muted);padding:0 0 22px;max-width:680px}
 footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);font-size:14px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
 .foot img{height:22px;width:auto}
-.foot nav{display:flex;gap:22px}
+.foot nav{display:flex;gap:10px 22px;flex-wrap:wrap}
 .foot a:hover{color:var(--text)}
 
 .rv{opacity:0;transform:translateY(18px);transition:opacity .8s ease,transform .8s ease}
@@ -172,13 +172,13 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="158" height="30"></a>
     <nav class="links" aria-label="Main">
-      <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="#faq">FAQ</a>
+      <a href="#services">Services</a><a href="#how">How we work</a><a href="/candidates">Candidates</a><a href="#faq">FAQ</a>
     </nav>
     <a class="btn btn-silver" href="#services">Our services</a>
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mm"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu" id="mm">
-    <a href="#services">Services</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="#faq">FAQ</a>
+    <a href="#services">Services</a><a href="#how">How we work</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="#faq">FAQ</a>
     <a class="btn btn-silver" href="#services">Our services</a>
   </div>
 </header>
@@ -304,6 +304,17 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
     </div>
   </section>
 
+  <section id="talent">
+    <div class="wrap">
+      <div class="sec-head rv" style="margin-bottom:24px">
+        <span class="eyebrow">Candidates</span>
+        <h2 class="serif">Meet the people <span class="silver">behind the work.</span></h2>
+        <p>Browse our reviewed virtual assistants, see real portfolios, and message them or hire through Delegance. Contact details stay private, so everyone stays safe.</p>
+      </div>
+      <div class="rv" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px"><a class="btn btn-silver" href="/candidates">Browse candidates</a><a class="btn btn-ghost" href="/apply">I'm a VA: create my free profile</a></div>
+    </div>
+  </section>
+
   <section id="faq" style="background:var(--bg2)">
     <div class="wrap">
       <div class="sec-head rv">
@@ -335,7 +346,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;color:var(--dim);fon
 <footer>
   <div class="wrap foot">
     <a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="116" height="22"></a>
-    <nav aria-label="Footer"><a href="mailto:admin@delegance.app">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="#faq">FAQ</a><a href="/app">Team app</a></nav>
+    <nav aria-label="Footer"><a href="mailto:admin@delegance.app">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="#faq">FAQ</a><a href="/app">Team app</a></nav>
     <span>© <span id="y">2026</span> Delegance</span>
   </div>
 </footer>

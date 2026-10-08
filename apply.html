@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join Delegance as a virtual assistant · Free professional profile</title>
+<meta name="description" content="Create your free Delegance VA profile: portfolio, experience and skills on one professional page you can share with any job application. Get hired through Delegance.">
+<link rel="canonical" href="https://delegance.app/apply">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Delegance">
+<meta property="og:title" content="Join Delegance as a virtual assistant">
+<meta property="og:description" content="A free professional profile you can share with any job application. Get hired through Delegance.">
+<meta property="og:url" content="https://delegance.app/apply">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://desk.delegance.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/talent.css?v=1">
+</head>
+<body>
+<header class="th"><div class="wrap">
+  <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
+  <nav aria-label="Main"><a href="/" class="hide-m">Home</a><a href="/candidates">Candidates</a></nav>
+</div></header>
+
+<main class="wrap">
+  <section class="t-hero" id="intro" style="padding-bottom:10px">
+    <span class="eyebrow" id="eyebrow">Join as a virtual assistant</span>
+    <h1 class="h"><span class="silver" id="title">Your professional VA profile. Free.</span></h1>
+    <p id="lead">One polished page for your portfolio, experience and skills. Share your Delegance link with any job application, get found by our clients, and get hired through us. Your address, email and phone stay private.</p>
+  </section>
+
+  <div class="tabs hide" id="tabs" role="tablist">
+    <button type="button" data-tab="msgs" role="tab">Messages<span class="cnt hide" id="tcnt"></span></button>
+    <button type="button" data-tab="edit" role="tab">Edit profile</button>
+    <button type="button" data-tab="share" role="tab">Share</button>
+  </div>
+  <div id="statusBox"></div>
+
+  <section id="pMsgs" class="hide" style="padding-bottom:50px"></section>
+  <section id="pShare" class="hide" style="padding-bottom:50px"></section>
+
+  <form id="form" class="ap" novalidate>
+    <div class="stack" style="gap:18px">
+
+      <div class="card"><div class="sec-t"><h2>1. Your photo</h2><span class="xs dim">Required</span></div>
+        <div class="row" style="align-items:flex-start;gap:18px;flex-wrap:nowrap" id="photoRow">
+          <div style="width:150px;flex:none" id="photoPrev"></div>
+          <div class="stack" style="gap:10px;flex:1">
+            <p class="small muted">Upload a <b style="color:var(--text)">PNG with the background removed</b> (shoulders up, facing the camera, good light). We place every photo on the same DELEGANCE background so all profiles look consistent.</p>
+            <p class="xs dim">No background remover? Free options include Adobe Express "Remove background" and remove.bg. Download the result as PNG.</p>
+            <label class="drop" id="photoDrop"><input type="file" id="photoFile" accept="image/png" hidden><span id="photoLbl">Choose your no-background PNG</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card stack"><div class="sec-t"><h2>2. The basics</h2><span class="xs dim">Shown on your profile</span></div>
+        <div class="grid2">
+          <label class="f"><b>Display name</b><input class="in" name="name" maxlength="60" placeholder="e.g. Maria S." required><span class="xs dim">First name and last initial is recommended.</span></label>
+          <label class="f"><b>Headline</b><input class="in" name="headline" maxlength="90" placeholder="e.g. Executive and customer support VA" required></label>
+        </div>
+        <div class="grid3">
+          <label class="f">Based in<input class="in" name="location" maxlength="60" placeholder="e.g. Cebu, Philippines"></label>
+          <label class="f">Years of experience<input class="in" name="years" type="number" min="0" max="40" inputmode="numeric" placeholder="0"></label>
+          <label class="f">Availability<select class="in" name="availability"><option value="">Choose</option><option>Full-time</option><option>Part-time</option><option>Project-based</option></select></label>
+        </div>
+        <div class="grid2">
+          <label class="f">Working hours / time zone<input class="in" name="hours" maxlength="60" placeholder="e.g. US Eastern hours, 9am to 5pm"></label>
+          <label class="f">Rate (optional)<input class="in" name="rate" maxlength="40" placeholder="e.g. US$6 per hour"></label>
+        </div>
+      </div>
+
+      <div class="card stack"><div class="sec-t"><h2>3. About you</h2><span class="xs dim" id="aboutCount">0 / 1500</span></div>
+        <label class="f"><b>Introduce yourself to clients</b><textarea class="in" name="about" maxlength="1500" style="min-height:160px" placeholder="What you are great at, the kind of clients you help, results you are proud of, and how you like to work."></textarea></label>
+      </div>
+
+      <div class="card stack"><div class="sec-t"><h2>4. Services, skills and tools</h2></div>
+        <label class="f"><b>Services you offer</b><input class="in" name="services" placeholder="Inbox management, Calendar management, Social media management, Data entry"><span class="xs dim">Separate with commas.</span></label>
+        <label class="f"><b>Skills</b><input class="in" name="skills" placeholder="Customer support, Copywriting, Lead generation, Bookkeeping basics"></label>
+        <div class="grid2">
+          <label class="f">Tools<input class="in" name="tools" placeholder="Google Workspace, Canva, HubSpot, Shopify"></label>
+          <label class="f">Languages<input class="in" name="languages" placeholder="English, Filipino"></label>
+        </div>
+      </div>
+
+      <div class="card stack"><div class="sec-t"><h2>5. Work experience</h2><button type="button" class="btn sm" data-add="experience">+ Add a role</button></div><div class="stack" id="experience"></div></div>
+      <div class="card stack"><div class="sec-t"><h2>6. Portfolio projects</h2><button type="button" class="btn sm" data-add="projects">+ Add a project</button></div>
+        <p class="xs dim" style="margin-top:-6px">Show real work: screenshots of designs, reports, spreadsheets, social posts or websites (hide any private client details). Up to 20.</p>
+        <div class="stack" id="projects"></div></div>
+      <div class="card stack"><div class="sec-t"><h2>7. Education</h2><button type="button" class="btn sm" data-add="education">+ Add</button></div><div class="stack" id="education"></div></div>
+      <div class="card stack"><div class="sec-t"><h2>8. Certifications and courses</h2><button type="button" class="btn sm" data-add="certifications">+ Add</button></div><div class="stack" id="certifications"></div></div>
+
+      <div class="card stack"><div class="sec-t"><h2>9. Links</h2></div>
+        <label class="f">Intro video (YouTube, Loom or Google Drive link)<input class="in" name="intro_video" placeholder="https://"></label>
+        <div class="stack" id="portfolio"></div><button type="button" class="btn sm" data-add="portfolio" style="align-self:flex-start;white-space:normal;text-align:left;height:auto;padding:8px 14px">+ Add a link (portfolio site, Behance, Canva, Google Drive)</button>
+      </div>
+
+      <div class="card stack" style="border-color:#4d4329"><div class="sec-t"><h2>10. Private details</h2><span class="pill y">Locked</span></div>
+        <div class="note lock small">These are never shown on your profile or to clients. Only the Delegance team can see them, stored encrypted, so you won't get spam or scam messages.</div>
+        <div class="grid2">
+          <label class="f"><b>Full legal name</b><input class="in" name="full_name" autocomplete="name" required></label>
+          <label class="f"><b>Email</b><input class="in" name="email" type="email" autocomplete="email" required></label>
+        </div>
+        <div class="grid2">
+          <label class="f">Mobile number<input class="in" name="phone" type="tel" autocomplete="tel"></label>
+          <label class="f">Address<input class="in" name="address" autocomplete="street-address"></label>
+        </div>
+        <label class="f">Anything else for the Delegance team<textarea class="in" name="notes" style="min-height:70px"></textarea></label>
+      </div>
+      <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+    </div>
+
+    <aside class="side stack">
+      <div class="card stack">
+        <b>Preview</b>
+        <div id="sidePrev"></div>
+        <label class="row small muted" id="consentRow" style="flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" name="consent" style="margin-top:4px"> <span>I agree that Delegance shows my public profile to clients and keeps my private details to contact me, as described in the <a href="/privacy" style="text-decoration:underline">Privacy Policy</a>. I can edit or delete my profile at any time.</span></label>
+        <button class="btn silver-b" type="submit" id="submitBtn">Submit my profile</button>
+        <p class="xs dim" id="submitNote">Delegance reviews every profile before it goes live, usually within two business days.</p>
+      </div>
+    </aside>
+  </form>
+</main>
+
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance</span><nav><a href="/candidates">Candidates</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+
+<script src="/assets/talent.js?v=1"></script>
+<script>
+(function () {
+  var T = window.T, esc = T.esc, form = document.getElementById('form');
+  var me = null, cred = null, photo = { id: null, url: null }, projImgs = {};
+  var m = location.hash.match(/(?:me|edit)=(cd[a-f0-9]{20})\.([a-z0-9_]{30,})/i);
+  if (m) cred = { id: m[1], token: m[2] };
+  try { if (!cred) { var saved = JSON.parse(localStorage.getItem('dlg-va-me') || 'null'); if (saved && location.pathname === '/me') cred = saved; } } catch (e) {}
+
+  // ---- repeatable sections ----
+  var REP = {
+    experience: { max: 15, f: [['role', 'Role / job title', 1], ['company', 'Company or type of client'], ['start', 'Start (e.g. Jan 2022)'], ['end', 'End (leave empty if current)'], ['current', 'I work here now', 'check'], ['summary', 'What you did and the results', 'area', 1]] },
+    projects: { max: 20, f: [['title', 'Project title', 1], ['summary', 'What you did, tools used, the result', 'area'], ['url', 'Link (https://, optional)'], ['tags', 'Tags (comma separated)'], ['image_id', 'Image', 'img']] },
+    education: { max: 8, f: [['course', 'Course or degree'], ['school', 'School'], ['year', 'Year']] },
+    certifications: { max: 15, f: [['name', 'Certificate or course', 1], ['issuer', 'Issued by'], ['year', 'Year'], ['url', 'Proof link (https://, optional)']] },
+    portfolio: { max: 8, f: [['label', 'Link name (e.g. Canva portfolio)'], ['url', 'https://', 0, 'full']] },
+  };
+  function addRep(kind, v) {
+    v = v || {}; var box = document.getElementById(kind), cfg = REP[kind];
+    if (box.children.length >= cfg.max) return T.toast('That is the maximum for this section.', true);
+    var el = document.createElement('div'); el.className = 'rep'; el.dataset.kind = kind;
+    var h = '<div class="grid2">';
+    cfg.f.forEach(function (x) {
+      var k = x[0], ph = x[1], t = x[2], val = v[k] == null ? '' : Array.isArray(v[k]) ? v[k].join(', ') : v[k];
+      if (t === 'area') h += '</div><textarea class="in" data-k="' + k + '" placeholder="' + esc(ph) + '" style="min-height:80px">' + esc(val) + '</textarea><div class="grid2">';
+      else if (t === 'check') h += '<label class="row small muted"><input type="checkbox" data-k="' + k + '"' + (v[k] ? ' checked' : '') + '> ' + esc(ph) + '</label>';
+      else if (t === 'img') { var id = 'pi' + Math.random().toString(36).slice(2, 8); if (v.image_id) projImgs[id] = { id: v.image_id, url: v.image }; h += '</div><div class="row" data-img="' + id + '"><label class="btn sm"><input type="file" accept="image/jpeg,image/png,image/webp" hidden>' + (v.image_id ? 'Change image' : 'Add an image') + '</label><span class="xs dim" data-st>' + (v.image ? 'Image added' : 'JPEG or PNG') + '</span>' + (v.image ? '<img src="' + esc(v.image) + '" alt="" style="height:44px;border-radius:6px">' : '') + '</div><div class="grid2">'; }
+      else h += '<input class="in" data-k="' + k + '" placeholder="' + esc(ph) + '" value="' + esc(val) + '"' + (x[3] === 'full' ? ' style="grid-column:1/-1"' : '') + '>';
+    });
+    h += '</div><button type="button" class="rm">Remove</button>';
+    el.innerHTML = h.replace(/<div class="grid2"><\/div>/g, '');
+    box.appendChild(el); preview();
+  }
+  form.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-add]'); if (a) return addRep(a.dataset.add);
+    var r = e.target.closest('.rm'); if (r) { r.closest('.rep').remove(); preview(); }
+  });
+  form.addEventListener('change', async function (e) {
+    var wrap = e.target.closest('[data-img]'); if (!wrap || e.target.type !== 'file' || !e.target.files[0]) return;
+    var st = wrap.querySelector('[data-st]'); st.textContent = 'Uploading…';
+    try { var blob = await shrink(e.target.files[0], 1600, 'image/jpeg', 0.86); var r = await T.api('candidates/photo', { raw: blob, type: 'image/jpeg' }); projImgs[wrap.dataset.img] = { id: r.photo_id, url: r.url };
+      var old = wrap.querySelector('img'); if (old) old.remove(); wrap.insertAdjacentHTML('beforeend', '<img src="' + esc(r.url) + '" alt="" style="height:44px;border-radius:6px">'); st.textContent = 'Image added'; }
+    catch (err) { st.textContent = 'Upload failed'; T.toast(err.message, true); }
+  });
+  function readReps(kind) {
+    return [].slice.call(document.getElementById(kind).children).map(function (el) {
+      var o = {}; el.querySelectorAll('[data-k]').forEach(function (i) { o[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value.trim(); });
+      var im = el.querySelector('[data-img]'); if (im && projImgs[im.dataset.img]) o.image_id = projImgs[im.dataset.img].id;
+      if (o.tags) o.tags = o.tags.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      return o;
+    });
+  }
+
+  // ---- images ----
+  function loadImg(file) { return new Promise(function (ok, no) { var u = URL.createObjectURL(file), im = new Image(); im.onload = function () { ok(im); }; im.onerror = function () { no(new Error('Could not read that image.')); }; im.src = u; }); }
+  async function shrink(file, max, type, q) {
+    var im = await loadImg(file), s = Math.min(1, max / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+    cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+    return new Promise(function (ok) { cv.toBlob(ok, type, q); });
+  }
+  document.getElementById('photoFile').addEventListener('change', async function (e) {
+    var f = e.target.files[0]; if (!f) return; var drop = document.getElementById('photoLbl');
+    try {
+      if (f.type !== 'image/png') throw new Error('Please upload a PNG with the background removed.');
+      var im = await loadImg(f), s = Math.min(1, 1100 / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+      cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); var x = cv.getContext('2d'); x.drawImage(im, 0, 0, cv.width, cv.height);
+      var d = x.getImageData(0, 0, cv.width, cv.height).data, W = cv.width, H = cv.height, edge = 0, edgeT = 0, total = 0, clear = 0;
+      for (var y = 0; y < H; y += 2) for (var xx = 0; xx < W; xx += 2) { var a = d[(y * W + xx) * 4 + 3]; total++; if (a < 20) clear++; if (xx < W * 0.06 || xx > W * 0.94 || y < H * 0.06) { edge++; if (a < 20) edgeT++; } }
+      if (clear / total < 0.12 || edgeT / edge < 0.6) throw new Error('This photo still has a background. Remove the background first, then upload the PNG.');
+      drop.textContent = 'Uploading…';
+      var blob = await new Promise(function (ok) { cv.toBlob(ok, 'image/png'); });
+      var r = await T.api('candidates/photo?kind=portrait', { raw: blob, type: 'image/png' });
+      photo = { id: r.photo_id, url: r.url }; drop.textContent = 'Change photo'; preview(); T.toast('Photo added.');
+    } catch (err) { T.toast(err.message, true); drop.textContent = 'Choose your no-background PNG'; }
+    e.target.value = '';
+  });
+
+  // ---- preview + collect ----
+  var list = function (v) { return String(v || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean); };
+  function preview() {
+    var f = form.elements;
+    document.getElementById('photoPrev').innerHTML = T.port(photo.url, '', true);
+    document.getElementById('sidePrev').innerHTML = '<div class="vcard" style="pointer-events:none">' + T.port(photo.url, '', true) + '<div class="b"><h3>' + esc(f.name.value || 'Your name') + '</h3><div class="hl">' + esc(f.headline.value || 'Your headline') + '</div><div class="meta">' + [f.location.value, f.availability.value].filter(Boolean).map(esc).join(' · ') + '</div><div class="chips">' + list(f.skills.value).slice(0, 4).map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div></div></div>';
+    document.getElementById('aboutCount').textContent = f.about.value.length + ' / 1500';
+  }
+  form.addEventListener('input', preview);
+  function collect() {
+    var f = form.elements;
+    return { name: f.name.value, headline: f.headline.value, location: f.location.value, years: f.years.value, availability: f.availability.value, hours: f.hours.value, rate: f.rate.value, about: f.about.value,
+      skills: list(f.skills.value), tools: list(f.tools.value), languages: list(f.languages.value), photo_id: photo.id,
+      portfolio: readReps('portfolio').filter(function (x) { return x.url; }),
+      details: { services: list(f.services.value), intro_video: f.intro_video.value.trim(), experience: readReps('experience'), projects: readReps('projects'), education: readReps('education'), certifications: readReps('certifications') },
+      full_name: f.full_name.value, email: f.email.value, phone: f.phone.value, address: f.address.value, notes: f.notes.value, consent: f.consent.checked, website: f.website.value };
+  }
+  function fill(c) {
+    var f = form.elements, d = c.details || {};
+    ['name', 'headline', 'location', 'years', 'availability', 'hours', 'rate', 'about', 'full_name', 'email', 'phone', 'address', 'notes'].forEach(function (k) { if (f[k]) f[k].value = c[k] == null ? '' : c[k]; });
+    f.skills.value = (c.skills || []).join(', '); f.tools.value = (c.tools || []).join(', '); f.languages.value = (c.languages || []).join(', ');
+    f.services.value = (d.services || []).join(', '); f.intro_video.value = d.intro_video || '';
+    ['experience', 'projects', 'education', 'certifications', 'portfolio'].forEach(function (k) { document.getElementById(k).innerHTML = ''; ((k === 'portfolio' ? c.portfolio : d[k]) || []).forEach(function (v) { addRep(k, v); }); });
+    photo = { id: c.photo_id, url: c.photo }; if (c.photo) document.getElementById('photoLbl').textContent = 'Change photo';
+    preview();
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault(); var b = document.getElementById('submitBtn'), p = collect();
+    if (!cred && !p.consent) return T.toast('Please tick the agreement box first.', true);
+    b.disabled = true;
+    try {
+      if (cred) { p.id = cred.id; p.token = cred.token; p.action = 'update'; p.consent = true; await T.api('candidates/me', { body: p }); T.toast('Saved. Changes go live after a quick check by Delegance.'); await loadMe(); }
+      else { var r = await T.api('candidates/apply', { body: p }); cred = { id: r.id, token: r.token }; try { localStorage.setItem('dlg-va-me', JSON.stringify(cred)); } catch (e2) {} history.replaceState(null, '', '/me#me=' + r.id + '.' + r.token); await loadMe(true); }
+    } catch (err) { T.toast(err.message, true); }
+    b.disabled = false;
+  });
+
+  // ---- VA dashboard ----
+  var threads = [], openT = null, tab = 'msgs';
+  function setTab(t) { tab = t; document.querySelectorAll('#tabs [data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); });
+    form.classList.toggle('hide', t !== 'edit'); document.getElementById('pMsgs').classList.toggle('hide', t !== 'msgs'); document.getElementById('pShare').classList.toggle('hide', t !== 'share'); if (t === 'msgs') paintThreads(); }
+  document.getElementById('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
+  async function loadMe(justCreated) {
+    me = await T.api('candidates/me', { body: { id: cred.id, token: cred.token } });
+    try { localStorage.setItem('dlg-va-me', JSON.stringify(cred)); } catch (e) {}
+    var first = me.name.split(' ')[0], link = 'https://delegance.app/va/' + me.slug, dash = 'https://delegance.app/me#me=' + cred.id + '.' + cred.token;
+    document.getElementById('eyebrow').textContent = 'Your Delegance dashboard';
+    document.getElementById('title').textContent = 'Hi, ' + first + '.';
+    document.getElementById('lead').textContent = 'Read and answer client messages, keep your profile growing, and share your link with every application.';
+    document.getElementById('tabs').classList.remove('hide');
+    document.getElementById('consentRow').classList.add('hide');
+    document.getElementById('submitBtn').textContent = 'Save changes';
+    document.getElementById('submitNote').textContent = 'Changes go live after a quick check by Delegance.';
+    var S = { pending: ['y', 'Waiting for review', 'Delegance is reviewing your profile. It goes live in the candidate gallery once approved.'], approved: ['', 'Live', 'Your profile is public at ' + link], hidden: ['b', 'Hidden', 'Your profile is hidden from the gallery right now. Contact admin@delegance.app if you have questions.'], rejected: ['y', 'Not approved', 'Your profile was not approved. You can improve it and save again, or email admin@delegance.app.'] }[me.status] || ['', me.status, ''];
+    document.getElementById('statusBox').innerHTML = (justCreated ? '<div class="note ok" style="margin-bottom:14px"><b style="color:var(--text)">Profile submitted!</b> Bookmark this page now. It is your private dashboard link (anyone with it can edit your profile):<div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="in" readonly value="' + esc(dash) + '" style="font-size:13px"><button type="button" class="btn sm" id="copyDash">Copy</button></div></div>' : '') +
+      '<div class="note" style="margin-bottom:14px"><span class="pill ' + S[0] + '">' + esc(S[1]) + '</span> ' + esc(S[2]) + '</div>';
+    if (document.getElementById('copyDash')) document.getElementById('copyDash').onclick = function () { navigator.clipboard.writeText(dash).then(function () { T.toast('Copied. Keep it safe.'); }); };
+    document.getElementById('pShare').innerHTML = '<div class="grid2"><div class="card stack"><h2 class="h" style="font-size:20px">Your portfolio link</h2><p class="small muted">Send this with every application on OnlineJobs, Upwork, Indeed, LinkedIn or by email. It always shows your latest profile.</p><div class="row" style="flex-wrap:nowrap"><input class="in" readonly value="' + esc(link) + '"><button type="button" class="btn sm" data-copy="' + esc(link) + '">Copy</button></div>' + (me.status === 'approved' ? '<a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">Open my public profile</a>' : '<p class="xs dim">It works once your profile is approved.</p>') + '</div>' +
+      '<div class="card stack"><h2 class="h" style="font-size:20px">Private dashboard link</h2><p class="small muted">Only you should have this. It opens this dashboard on any device.</p><div class="row" style="flex-wrap:nowrap"><input class="in" readonly value="' + esc(dash) + '"><button type="button" class="btn sm" data-copy="' + esc(dash) + '">Copy</button></div><button type="button" class="btn sm" id="delMe" style="align-self:flex-start;color:var(--bad)">Delete my profile</button></div></div>';
+    document.querySelectorAll('[data-copy]').forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.copy).then(function () { T.toast('Copied.'); }); }; });
+    document.getElementById('delMe').onclick = async function () { if (!confirm('Delete your Delegance profile, photo and messages for good?')) return; try { await T.api('candidates/me', { body: { id: cred.id, token: cred.token, action: 'delete' } }); localStorage.removeItem('dlg-va-me'); location.href = '/apply'; } catch (err) { T.toast(err.message, true); } };
+    fill(me); await loadThreads(); setTab(justCreated ? 'share' : tab);
+  }
+  async function loadThreads() {
+    try { var d = await T.api('candidates/me', { body: { id: cred.id, token: cred.token, action: 'inbox' } }); threads = d.threads || []; } catch (e) { threads = []; }
+    var seen = {}; try { seen = JSON.parse(localStorage.getItem('dlg-va-seen') || '{}'); } catch (e) {}
+    var unread = threads.reduce(function (n, t) { return n + Math.max(0, t.messages.filter(function (m) { return m.from === 'client'; }).length - (seen[t.id] || 0)); }, 0);
+    var c = document.getElementById('tcnt'); c.textContent = unread; c.classList.toggle('hide', !unread);
+    document.title = (unread ? '(' + unread + ') ' : '') + 'Delegance VA dashboard';
+    if (tab === 'msgs') paintThreads();
+  }
+  function paintThreads() {
+    var box = document.getElementById('pMsgs');
+    if (!threads.length) { box.innerHTML = '<div class="card" style="text-align:center;padding:40px"><h2 class="h" style="font-size:20px;margin-bottom:6px">No messages yet</h2><p class="muted small">When a client messages you from your profile, it shows up here. Share your link to get seen.</p></div>'; return; }
+    if (!openT || !threads.some(function (t) { return t.id === openT; })) openT = threads[0].id;
+    var t = threads.find(function (x) { return x.id === openT; });
+    var seen = {}; try { seen = JSON.parse(localStorage.getItem('dlg-va-seen') || '{}'); seen[t.id] = t.messages.filter(function (m) { return m.from === 'client'; }).length; localStorage.setItem('dlg-va-seen', JSON.stringify(seen)); } catch (e) {}
+    box.innerHTML = '<div class="threads"><div class="ls">' + threads.map(function (x) { var last = x.messages[x.messages.length - 1] || {}; return '<button type="button" data-t="' + x.id + '" class="' + (x.id === openT ? 'on' : '') + '"><b class="small">' + esc(x.client) + '</b><div class="xs dim" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(last.body || '') + '</div></button>'; }).join('') + '</div>' +
+      '<div class="cv"><div class="ms">' + t.messages.map(function (m) { return '<div class="bub ' + (m.from === 'you' ? 'me' : m.from === 'delegance' ? 'dl' : 'them') + '">' + (m.from === 'delegance' ? '<b>Delegance:</b> ' : '') + esc(m.body) + '</div>'; }).join('') + '</div>' +
+      '<form class="ft" id="rf"><textarea class="in" rows="1" placeholder="Reply to ' + esc(t.client) + '…" style="min-height:42px;border-radius:20px;resize:none"></textarea><button class="btn silver-b sm" style="min-height:42px">Send</button></form></div></div>' +
+      '<p class="xs dim" style="margin-top:10px">Emails and phone numbers are hidden automatically. Delegance can see these chats to keep everyone safe and to arrange the hire.</p>';
+    var ms = box.querySelector('.ms'); ms.scrollTop = ms.scrollHeight;
+    box.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { openT = b.dataset.t; paintThreads(); }; });
+    var rf = document.getElementById('rf'), ta = rf.querySelector('textarea');
+    ta.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); rf.requestSubmit(); } });
+    rf.onsubmit = async function (e) { e.preventDefault(); var text = ta.value.trim(); if (!text) return; try { await T.api('candidates/me', { body: { id: cred.id, token: cred.token, action: 'reply', conversation_id: openT, message: text } }); ta.value = ''; await loadThreads(); } catch (err) { T.toast(err.message, true); } };
+    var c = document.getElementById('tcnt'); c.classList.add('hide');
+  }
+
+  addRep('experience'); addRep('projects'); preview();
+  if (cred) { form.classList.add('hide'); loadMe().catch(function (err) { cred = null; try { localStorage.removeItem('dlg-va-me'); } catch (e) {} form.classList.remove('hide'); document.getElementById('statusBox').innerHTML = '<div class="note bad" style="margin-bottom:14px">' + esc(err.message) + '</div>'; });
+    setInterval(function () { if (cred && me && !document.hidden) loadThreads(); }, 30000); }
+})();
+</script>
+</body>
+</html>

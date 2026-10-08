@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hire a virtual assistant · Delegance candidates</title>
+<meta name="description" content="Browse Delegance's vetted virtual assistants: real portfolios, skills, experience and availability. Message a VA or hire through Delegance.">
+<link rel="canonical" href="https://delegance.app/candidates">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Delegance">
+<meta property="og:title" content="Hire a virtual assistant · Delegance">
+<meta property="og:description" content="Vetted virtual assistants with real portfolios. Message them or hire through Delegance.">
+<meta property="og:url" content="https://delegance.app/candidates">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://desk.delegance.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/talent.css?v=1">
+</head>
+<body>
+<header class="th"><div class="wrap">
+  <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
+  <nav aria-label="Main"><a href="/" class="hide-m">Home</a><a href="/candidates" class="on">Candidates</a><a class="btn sm" href="/apply">Join as a VA</a></nav>
+</div></header>
+
+<main>
+  <section class="t-hero"><div class="wrap">
+    <span class="eyebrow">Delegance candidates</span>
+    <h1 class="h"><span class="silver">Find your virtual assistant.</span></h1>
+    <p>Every profile is reviewed by Delegance. Browse real portfolios, message a candidate directly, or let us arrange the hire for you.</p>
+  </div></section>
+
+  <section class="wrap">
+    <div class="filters" role="search">
+      <input class="in" id="q" type="search" placeholder="Search skills, tools or names (e.g. Canva, customer support, Shopify)" aria-label="Search candidates">
+      <select class="in" id="av" aria-label="Availability"><option value="">Any availability</option><option>Full-time</option><option>Part-time</option><option>Project-based</option></select>
+    </div>
+    <div class="chips" id="sk" style="margin-bottom:20px"></div>
+    <div class="gal" id="gal" aria-live="polite">
+      <div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div>
+    </div>
+    <p class="small dim" id="count" style="margin-top:16px"></p>
+
+    <div class="card" style="margin-top:44px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px"><h2 class="h" style="font-size:24px;margin-bottom:6px">Are you a virtual assistant?</h2><p class="muted small">Build a free professional profile with your portfolio, experience and skills. Share your Delegance link with any job application, and get hired through us.</p></div>
+      <a class="btn silver-b" href="/apply">Create my free profile</a>
+    </div>
+  </section>
+</main>
+
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance</span><nav><a href="/">Home</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+
+<script src="/assets/talent.js?v=1"></script>
+<script>
+(function () {
+  var all = [], skill = '', T = window.T;
+  var gal = document.getElementById('gal');
+  function card(c) {
+    return '<a class="vcard" href="/va/' + encodeURIComponent(c.slug) + '">' + T.port(c.photo, '', true) +
+      '<div class="b"><h3>' + T.esc(c.name) + '</h3><div class="hl">' + T.esc(c.headline) + '</div>' +
+      '<div class="meta">' + [c.location, c.availability, c.years ? c.years + (c.years > 1 ? ' years' : ' year') + ' experience' : ''].filter(Boolean).map(T.esc).join(' · ') + '</div>' +
+      '<div class="chips">' + (c.skills || []).slice(0, 4).map(function (s) { return '<span class="chip">' + T.esc(s) + '</span>'; }).join('') + '</div></div></a>';
+  }
+  function render() {
+    var q = document.getElementById('q').value.trim().toLowerCase(), av = document.getElementById('av').value;
+    var list = all.filter(function (c) {
+      if (av && c.availability !== av) return false;
+      if (skill && (c.skills || []).concat(c.tools || []).indexOf(skill) < 0) return false;
+      if (!q) return true;
+      var hay = [c.name, c.headline, c.location, c.about].concat(c.skills || [], c.tools || [], (c.details && c.details.services) || []).join(' ').toLowerCase();
+      return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
+    });
+    gal.innerHTML = list.length ? list.map(card).join('') : '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px">' + (all.length ? 'No candidates match that search yet. Try fewer words.' : 'Our first candidates are being reviewed. Check back soon, or <a href="/apply" style="text-decoration:underline">create your own profile</a>.') + '</div>';
+    document.getElementById('count').textContent = all.length ? list.length + ' of ' + all.length + ' candidate' + (all.length > 1 ? 's' : '') : '';
+  }
+  function chips() {
+    var n = {}; all.forEach(function (c) { (c.skills || []).forEach(function (s) { n[s] = (n[s] || 0) + 1; }); });
+    var top = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; }).slice(0, 14);
+    document.getElementById('sk').innerHTML = top.map(function (s) { return '<button type="button" class="chip' + (s === skill ? ' on' : '') + '" data-s="' + T.esc(s) + '">' + T.esc(s) + '</button>'; }).join('');
+  }
+  document.getElementById('sk').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; skill = skill === b.dataset.s ? '' : b.dataset.s; chips(); render(); });
+  document.getElementById('q').addEventListener('input', render);
+  document.getElementById('av').addEventListener('change', render);
+  T.api('candidates').then(function (d) { all = d; chips(); render(); }).catch(function () { gal.innerHTML = '<div class="card" style="grid-column:1/-1">Could not load candidates right now. Please refresh in a moment.</div>'; });
+})();
+</script>
+</body>
+</html>
