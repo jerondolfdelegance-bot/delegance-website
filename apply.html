@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/talent.css?v=1">
+<link rel="stylesheet" href="/assets/talent.css?v=2">
 </head>
 <body>
 <div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
@@ -117,6 +117,12 @@
     </div>
 
     <aside class="side stack">
+      <div class="card stack meter" id="meter" aria-live="polite">
+        <div class="row" style="justify-content:space-between"><b>Profile strength</b><span class="mt-pct" id="mtPct">0%</span></div>
+        <div class="mt-bar"><i id="mtBar"></i></div>
+        <div class="mt-lvl xs dim" id="mtLvl"></div>
+        <ul class="mt-tips" id="mtTips"></ul>
+      </div>
       <div class="card stack">
         <b>Preview</b>
         <div id="sidePrev"></div>
@@ -214,7 +220,32 @@
     document.getElementById('photoPrev').innerHTML = T.port(photo.url, '', true);
     document.getElementById('sidePrev').innerHTML = '<div class="vcard" style="pointer-events:none">' + T.port(photo.url, '', true) + '<div class="b"><h3>' + esc(f.name.value || 'Your name') + '</h3><div class="hl">' + esc(f.headline.value || 'Your headline') + '</div><div class="meta">' + [f.location.value, f.availability.value].filter(Boolean).map(esc).join(' · ') + '</div><div class="chips">' + list(f.skills.value).slice(0, 4).map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div></div></div>';
     document.getElementById('aboutCount').textContent = f.about.value.length + ' / 1500';
+    strength();
   }
+  // profile strength: what clients look for, and the next thing to add
+  function strength() {
+    var f = form.elements, n = function (k) { return readReps(k).filter(function (x) { return Object.keys(x).some(function (q) { return x[q] && q !== 'current'; }); }).length; };
+    var items = [
+      [15, !!photo.url, 'Add your no-background photo'],
+      [10, f.headline.value.trim().length >= 10, 'Write a clear headline, e.g. "Executive and customer support VA"'],
+      [15, f.about.value.trim().length >= 200, 'Write at least 200 characters about yourself'],
+      [10, list(f.skills.value).length >= 5, 'List at least 5 skills'],
+      [5, list(f.tools.value).length >= 3, 'Add 3 or more tools you use'],
+      [5, list(f.languages.value).length >= 1, 'Add the languages you speak'],
+      [5, !!f.location.value.trim(), 'Add your city and country'],
+      [5, !!f.availability.value, 'Choose your availability'],
+      [10, n('experience') >= 1, 'Add your work experience'],
+      [10, n('projects') + n('portfolio') >= 1, 'Add a project or portfolio link'],
+      [5, n('education') + n('certifications') >= 1, 'Add education or a certificate'],
+      [5, !!f.intro_video.value.trim(), 'Add a short intro video link']
+    ];
+    var pct = items.reduce(function (t, i) { return t + (i[1] ? i[0] : 0); }, 0), todo = items.filter(function (i) { return !i[1]; }).sort(function (a, b) { return b[0] - a[0]; });
+    document.getElementById('mtPct').textContent = pct + '%';
+    var bar = document.getElementById('mtBar'); bar.style.width = pct + '%'; bar.className = pct >= 85 ? 'hi' : pct >= 50 ? 'mid' : '';
+    document.getElementById('mtLvl').textContent = pct >= 85 ? 'Excellent. Your profile stands out to clients.' : pct >= 50 ? 'Good start. A few more details will make it shine.' : 'Clients skip thin profiles. Add the items below.';
+    document.getElementById('mtTips').innerHTML = todo.slice(0, 3).map(function (i) { return '<li><span>+' + i[0] + '%</span>' + esc(i[2]) + '</li>'; }).join('');
+  }
+  form.addEventListener('click', function () { setTimeout(strength, 0); });
   form.addEventListener('input', preview);
   function collect() {
     var f = form.elements;
