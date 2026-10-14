@@ -1,6 +1,7 @@
 // Delegance Accounts + CRM API: one router for /api/*.
 import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwordProblem, json, bad, clean, cleanEmail, parse, body, limited, audit,
-  startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink } from './_lib.js';
+  startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink, checkTotp, newTotpSecret, recoveryCodes, seal, unseal, needsMfa,
+  sendEmail, mailReady, teamInbox, humanOk } from './_lib.js';
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
 const TEAM = ['staff', 'admin', 'super_admin'];
@@ -18,11 +19,13 @@ export async function onRequest(ctx) {
   }
   const ip = req.headers.get('CF-Connecting-IP') || 'local';
   try {
-    const pub = await publicRoutes(path, m, req, env, ip);
+    const pub = await publicRoutes(path, m, req, env, ip, ctx);
     if (pub) return pub;
     const me = await currentUser(env, req);
     if (!me) return bad('Please sign in.', 401);
-    return (await privateRoutes(path, m, req, env, me, url)) || bad('Not found.', 404);
+    // Team accounts must turn on 2-step sign-in before anything else.
+    if (needsMfa(me) && !me.totp_enabled && !/^auth\/(me|logout|totp\/(start|confirm))$/.test(path)) return json({ error: 'Turn on 2-step sign-in to continue.', code: 'mfa_setup' }, 403);
+    return (await privateRoutes(path, m, req, env, me, url, ctx)) || bad('Not found.', 404);
   } catch (e) {
     console.error('api error', path, e && e.stack || e);
     return bad('Something went wrong on our side. Please try again.', 500);
@@ -30,8 +33,10 @@ export async function onRequest(ctx) {
 }
 
 // ---------------- Public: sign in, sign up, links, website requests ----------------
-async function publicRoutes(path, m, req, env, ip) {
+async function publicRoutes(path, m, req, env, ip, ctx) {
   const DB = env.DB;
+  const later = p => ctx && ctx.waitUntil ? ctx.waitUntil(p) : p;
+  if (path === 'config' && m === 'GET') return json({ turnstile: env.TURNSTILE_SITE_KEY || null, email: mailReady(env) });
   if (path === 'auth/login' && m === 'POST') {
     const b = await body(req);
     const email = cleanEmail(b.email), pw = String(b.password || '');
@@ -49,9 +54,47 @@ async function publicRoutes(path, m, req, env, ip) {
       }
       return bad(u && u.status === 'disabled' ? 'This account is turned off. Contact admin@delegance.app.' : 'Email or password is incorrect.', 401);
     }
+    if (u.totp_enabled) {
+      await DB.prepare('UPDATE users SET failed = 0 WHERE id = ?').bind(u.id).run();
+      return json({ mfa: true, ticket: await makeLink(env, u.id, 'mfa', 5 / 60) });
+    }
     const cookie = await startSession(env, req, u);
     await audit(env, email, 'auth.login', ip);
     return json({ ok: true, user: publicUser(u) }, 200, { 'Set-Cookie': cookie });
+  }
+  if (path === 'auth/login-code' && m === 'POST') {
+    const b = await body(req), tid = await sha256(String(b.ticket || ''));
+    if (await limited(env, 'mfa-ip:' + ip, 30, 900) || await limited(env, 'mfa:' + tid, 6, 600)) return bad('Too many tries. Sign in again in a few minutes.', 429);
+    const row = await DB.prepare("SELECT t.id tid, t.expires_at, t.used_at, u.* FROM auth_tokens t JOIN users u ON u.id = t.user_id WHERE t.id = ? AND t.kind = 'mfa'").bind(tid).first();
+    if (!row || row.used_at || row.expires_at < Date.now() || row.status !== 'active') return bad('That sign-in expired. Please enter your password again.', 410);
+    const code = String(b.code || '').trim().toLowerCase();
+    let ok = false;
+    const step = await checkTotp(await unseal(env, row.totp_secret), code, row.totp_step);
+    if (step) { ok = true; await DB.prepare('UPDATE users SET totp_step = ? WHERE id = ?').bind(step, row.id).run(); }
+    else if (/^[a-z2-7]{4}-?[a-z2-7]{4}$/.test(code)) {
+      const h = await sha256(code.replace('-', '')), list = parse(row.recovery, []);
+      if (list.includes(h)) { ok = true; await DB.prepare('UPDATE users SET recovery = ? WHERE id = ?').bind(JSON.stringify(list.filter(x => x !== h)), row.id).run(); await audit(env, row.email, 'auth.recovery_code_used', ip); }
+    }
+    if (!ok) { await audit(env, row.email, 'auth.code_failed', ip); return bad('That code is not right. Check the time on your phone and try the newest code.', 401); }
+    await DB.prepare('UPDATE auth_tokens SET used_at = ? WHERE id = ?').bind(now(), row.tid).run();
+    const cookie = await startSession(env, req, row);
+    await audit(env, row.email, 'auth.login', ip + ' (2-step)');
+    return json({ ok: true }, 200, { 'Set-Cookie': cookie });
+  }
+  if (path === 'auth/forgot' && m === 'POST') {
+    const b = await body(req), email = cleanEmail(b.email);
+    const done = json({ ok: true, email: mailReady(env) });
+    if (await limited(env, 'forgot-ip:' + ip, 8, 3600)) return bad('Too many requests. Please wait an hour.', 429);
+    if (!email || await limited(env, 'forgot:' + email, 3, 3600)) return done;
+    if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
+    const u = await DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+    if (!u || u.status === 'disabled') return done;
+    const invite = !u.pass_hash, link = await makeLink(env, u.id, invite ? 'invite' : 'reset', invite ? 24 * 7 : 1, 'self');
+    later(sendEmail(env, invite
+      ? { to: email, subject: 'Finish setting up your Delegance account', intro: `Hi ${u.name.split(' ')[0]},\n\nYou asked for a sign-in link. Choose a password to finish setting up your account.`, button: 'Set my password', link, outro: 'This link works once and expires in 7 days. If you did not ask for it, you can ignore this email.' }
+      : { to: email, subject: 'Reset your Delegance password', intro: `Hi ${u.name.split(' ')[0]},\n\nSomeone (hopefully you) asked to reset the password for ${email}.`, button: 'Choose a new password', link, outro: 'This link works once and expires in 1 hour. If you did not ask for it, ignore this email: your password stays the same.' }));
+    await audit(env, email, 'auth.forgot', ip);
+    return done;
   }
   if (path === 'auth/signup' && m === 'POST') {
     const b = await body(req);
@@ -61,11 +104,13 @@ async function publicRoutes(path, m, req, env, ip) {
     if (!name || !email) return bad('Enter your name and a valid email.');
     if (!b.consent) return bad('Please agree to the terms and privacy policy.');
     const p = passwordProblem(b.password, email); if (p) return bad(p);
+    if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
     if (await DB.prepare('SELECT 1 FROM users WHERE email = ?').bind(email).first()) return bad('That email already has an account. Sign in instead, or ask us to reset your password.', 409);
     const h = await hashPassword(String(b.password)), t = now();
     const u = { id: uid('u_'), email, name, role: 'member', status: 'active' };
     await DB.prepare('INSERT INTO users (id, email, name, role, status, pass_hash, pass_salt, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(u.id, email, name, 'member', 'active', h.hash, h.salt, t, t).run();
     await audit(env, email, 'auth.signup', ip);
+    later(sendEmail(env, { to: email, subject: 'Welcome to Delegance', intro: `Hi ${name.split(' ')[0]},\n\nYour free Delegance member account is ready. Read our guides, get updates from the team, and send us a request whenever you are ready to delegate.`, button: 'Open my dashboard', link: 'https://delegance.app/dashboard', outro: 'Questions? Just reply to this email.' }));
     return json({ ok: true }, 201, { 'Set-Cookie': await startSession(env, req, u) });
   }
   if (path === 'auth/logout' && m === 'POST') { await endSession(env, req); return json({ ok: true }, 200, { 'Set-Cookie': clearCookie }); }
@@ -92,6 +137,7 @@ async function publicRoutes(path, m, req, env, ip) {
     if (await limited(env, 'req:' + ip, 5, 3600)) return bad('Too many requests from this connection. Please email admin@delegance.app.', 429);
     const name = clean(b.name, 80), email = cleanEmail(b.email);
     if (!name || !email) return bad('Add your name and email so we can reply.');
+    if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
     const needs = (Array.isArray(b.needs) ? b.needs : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 10);
     const details = [needs.length ? 'Needs: ' + needs.join(', ') : '', b.when ? 'Start: ' + clean(b.when, 60) : '', b.how ? 'Amount: ' + clean(b.how, 60) : '', clean(b.message, 1500)].filter(Boolean).join('\n');
     const contactId = await upsertLead(env, { name, email, company: clean(b.company, 120), source: 'Website request' });
@@ -99,6 +145,10 @@ async function publicRoutes(path, m, req, env, ip) {
     await DB.prepare('INSERT INTO crm_requests (id, contact_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
       .bind(uid('rq_'), contactId, needs.length ? needs.slice(0, 3).join(', ') : 'New request', details, 'new', t, t).run();
     await audit(env, email, 'crm.web_request', contactId);
+    later(Promise.all([
+      sendEmail(env, { to: email, subject: 'We got your request', intro: `Hi ${name.split(' ')[0]},\n\nThanks for reaching out to Delegance. Your request is with our team and we will reply to this email, usually within one business day.\n\nWhat you sent:\n${details || 'New request'}`, button: 'Create a free account', link: 'https://delegance.app/login', outro: 'With an account you can follow your requests and message the team in one place.' }),
+      sendEmail(env, { to: teamInbox(env), subject: `New request: ${name}${b.company ? ' (' + clean(b.company, 80) + ')' : ''}`, intro: `${name} <${email}> sent a request from the website.\n\n${details}`, button: 'Open in the CRM', link: 'https://delegance.app/dashboard#contact/' + contactId, replyTo: email }),
+    ]));
     return json({ ok: true }, 201);
   }
   return null;
@@ -113,11 +163,64 @@ async function upsertLead(env, { name, email, company, source }) {
 }
 
 // ---------------- Signed in ----------------
-async function privateRoutes(path, m, req, env, me, url) {
+async function privateRoutes(path, m, req, env, me, url, ctx) {
   const DB = env.DB, p = path.split('/'), isTeam = can(me, 'staff');
   const who = me.email;
+  const later = x => ctx && ctx.waitUntil ? ctx.waitUntil(x) : x;
+  const first = n => String(n || '').split(' ')[0];
 
-  if (path === 'auth/me') return json({ user: publicUser(me) });
+  // ----- 2-step sign-in -----
+  if (path === 'auth/totp/start' && m === 'POST') {
+    if (me.totp_enabled) return bad('2-step sign-in is already on.');
+    const secret = newTotpSecret();
+    await DB.prepare('UPDATE users SET totp_pending = ? WHERE id = ?').bind(await seal(env, secret), me.id).run();
+    return json({ secret, uri: `otpauth://totp/Delegance:${encodeURIComponent(me.email)}?secret=${secret}&issuer=Delegance&digits=6&period=30` });
+  }
+  if (path === 'auth/totp/confirm' && m === 'POST') {
+    const b = await body(req);
+    if (await limited(env, 'totpc:' + me.id, 10, 900)) return bad('Too many tries. Please wait a little.', 429);
+    if (!me.totp_pending) return bad('Start the setup again.');
+    const secret = await unseal(env, me.totp_pending), step = await checkTotp(secret, b.code, 0);
+    if (!step) return bad('That code is not right. Type the newest 6-digit code from the app.');
+    const codes = recoveryCodes();
+    await DB.prepare('UPDATE users SET totp_secret = ?, totp_pending = NULL, totp_enabled = 1, totp_step = ?, recovery = ?, updated_at = ? WHERE id = ?')
+      .bind(me.totp_pending, step, JSON.stringify(await Promise.all(codes.map(c => sha256(c.replace('-', ''))))), now(), me.id).run();
+    await audit(env, who, 'auth.2step_on');
+    later(sendEmail(env, { to: me.email, subject: '2-step sign-in is on', intro: `Hi ${first(me.name)},\n\n2-step sign-in is now on for your Delegance account. From now on you will enter a 6-digit code from your authenticator app after your password.`, outro: 'If this was not you, contact admin@delegance.app right away.' }));
+    return json({ ok: true, recovery: codes });
+  }
+  if (path === 'auth/totp/recovery' && m === 'POST') {
+    const b = await body(req);
+    if (!me.totp_enabled) return bad('Turn on 2-step sign-in first.');
+    if (await limited(env, 'totpc:' + me.id, 10, 900)) return bad('Too many tries. Please wait a little.', 429);
+    const step = await checkTotp(await unseal(env, me.totp_secret), b.code, me.totp_step);
+    if (!step) return bad('That code is not right.');
+    const codes = recoveryCodes();
+    await DB.prepare('UPDATE users SET recovery = ?, totp_step = ? WHERE id = ?').bind(JSON.stringify(await Promise.all(codes.map(c => sha256(c.replace('-', ''))))), step, me.id).run();
+    await audit(env, who, 'auth.recovery_codes_new');
+    return json({ ok: true, recovery: codes });
+  }
+  if (path === 'auth/totp/disable' && m === 'POST') {
+    const b = await body(req);
+    if (needsMfa(me)) return bad('Team accounts must keep 2-step sign-in on.');
+    if (await limited(env, 'totpc:' + me.id, 10, 900)) return bad('Too many tries. Please wait a little.', 429);
+    const step = me.totp_enabled && await checkTotp(await unseal(env, me.totp_secret), b.code, me.totp_step);
+    if (!step) return bad('That code is not right.');
+    await DB.prepare('UPDATE users SET totp_enabled = 0, totp_secret = NULL, recovery = NULL WHERE id = ?').bind(me.id).run();
+    await audit(env, who, 'auth.2step_off');
+    return json({ ok: true });
+  }
+  if (path === 'auth/sessions' && m === 'GET') {
+    const { results } = await DB.prepare('SELECT id, created_at, last_seen, ua, place FROM sessions WHERE user_id = ? AND expires_at > ? ORDER BY COALESCE(last_seen, created_at) DESC').bind(me.id, Date.now()).all();
+    return json({ items: results.map(x => ({ id: x.id.slice(0, 16), current: x.id === me.sid, created_at: x.created_at, last_seen: x.last_seen || x.created_at, place: x.place, device: device(x.ua) })) });
+  }
+  if (p[0] === 'auth' && p[1] === 'sessions' && p[2] && m === 'DELETE') {
+    await DB.prepare('DELETE FROM sessions WHERE user_id = ? AND substr(id, 1, 16) = ? AND id != ?').bind(me.id, p[2], me.sid).run();
+    return json({ ok: true });
+  }
+  if (path === 'auth/notify' && m === 'POST') { const b = await body(req); await DB.prepare('UPDATE users SET notify = ? WHERE id = ?').bind(b.on ? 1 : 0, me.id).run(); return json({ ok: true }); }
+
+  if (path === 'auth/me') return json({ user: { ...publicUser(me), notify: !!me.notify }, email: mailReady(env) });
   if (path === 'auth/password' && m === 'POST') {
     const b = await body(req);
     if (await limited(env, 'pw:' + me.id, 10, 3600)) return bad('Too many tries. Please wait.', 429);
@@ -168,11 +271,18 @@ async function privateRoutes(path, m, req, env, me, url) {
     }
   }
 
+  if (path === 'contacts.csv' && can(me, 'admin')) {
+    const { results } = await DB.prepare('SELECT c.name, c.company, c.email, c.phone, c.country, c.source, c.stage, c.kind, c.value_usd, u.name owner, c.created_at, c.updated_at FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.created_at').all();
+    const cols = ['name', 'company', 'email', 'phone', 'country', 'source', 'stage', 'kind', 'value_usd', 'owner', 'created_at', 'updated_at'];
+    const cell = v => { v = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    await audit(env, who, 'crm.export', results.length + ' contacts');
+    return new Response([cols.join(','), ...results.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="delegance-contacts-${now().slice(0, 10)}.csv"`, 'Cache-Control': 'no-store' } });
+  }
   // ----- Contacts / pipeline (team) -----
-  if (p[0] === 'contacts' && isTeam) return contacts(p, m, req, env, me, url);
+  if (p[0] === 'contacts' && isTeam) return contacts(p, m, req, env, me, url, ctx);
 
   // ----- Tasks -----
-  if (p[0] === 'tasks') return tasks(p, m, req, env, me, url);
+  if (p[0] === 'tasks') return tasks(p, m, req, env, me, url, ctx);
 
   // ----- Requests -----
   if (p[0] === 'requests') {
@@ -192,11 +302,14 @@ async function privateRoutes(path, m, req, env, me, url) {
       await DB.prepare('INSERT INTO crm_requests (id, contact_id, user_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)').bind(uid('rq_'), cid, me.id, title, details || null, 'new', t, t).run();
       await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(t, cid).run();
       await audit(env, who, 'request.create', title);
+      later(sendEmail(env, { to: teamInbox(env), subject: `New request from ${me.name}: ${title}`, intro: `${me.name} (${ROLE_NAMES[me.role]}) sent a request from their dashboard.\n\n${title}${details ? '\n\n' + details : ''}`, button: 'Open in the CRM', link: 'https://delegance.app/dashboard#contact/' + cid, replyTo: me.email }));
       return json({ ok: true }, 201);
     }
     if (p[1] && m === 'PATCH' && isTeam) {
       const b = await body(req); if (!['new', 'in_progress', 'done', 'closed'].includes(b.status)) return bad('Unknown status.');
       await DB.prepare('UPDATE crm_requests SET status = ?, updated_at = ? WHERE id = ?').bind(b.status, now(), p[1]).run();
+      const r = await DB.prepare("SELECT r.title, u.email, u.name, u.notify FROM crm_requests r JOIN users u ON u.id = r.user_id WHERE r.id = ? AND u.status = 'active'").bind(p[1]).first();
+      if (r && r.notify && ['in_progress', 'done'].includes(b.status)) later(sendEmail(env, { to: r.email, subject: b.status === 'done' ? `Done: ${r.title}` : `We are working on: ${r.title}`, intro: `Hi ${first(r.name)},\n\n${b.status === 'done' ? 'Your request is done' : 'Your request is now in progress'}: "${r.title}".`, button: 'See your requests', link: 'https://delegance.app/dashboard#requests' }));
       return json({ ok: true });
     }
   }
@@ -210,6 +323,8 @@ async function privateRoutes(path, m, req, env, me, url) {
       if (await limited(env, 'msg:' + me.id, 60, 3600)) return bad('Slow down a little, please.', 429);
       await DB.prepare("INSERT INTO crm_notes (id, contact_id, author_id, author_name, visibility, body, created_at) VALUES (?,?,?,?, 'client', ?, ?)").bind(uid('nt_'), me.contact_id, me.id, me.name, text, now()).run();
       await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(now(), me.contact_id).run();
+      const owner = await DB.prepare("SELECT u.email FROM crm_contacts c JOIN users u ON u.id = c.owner_id WHERE c.id = ? AND u.status = 'active' AND u.notify = 1").bind(me.contact_id).first();
+      later(sendEmail(env, { to: owner ? owner.email : teamInbox(env), subject: `Message from ${me.name}`, intro: `${me.name} wrote:\n\n${text}`, button: 'Reply in the CRM', link: 'https://delegance.app/dashboard#contact/' + me.contact_id, replyTo: me.email }));
       return json({ ok: true }, 201);
     }
   }
@@ -281,7 +396,8 @@ async function users(p, m, req, env, me) {
     await DB.prepare("INSERT INTO users (id, email, name, role, status, title, candidate_id, contact_id, created_at, updated_at) VALUES (?,?,?,?, 'invited', ?,?,?,?,?)").bind(id, email, name, role, clean(b.title, 80) || null, role === 'va' ? (b.candidate_id || null) : null, role === 'client' ? contact : null, t, t).run();
     const link = await makeLink(env, id, 'invite', 24 * 7, me.email);
     await audit(env, me.email, 'user.invite', `${email} as ${role}`);
-    return json({ ok: true, id, link }, 201);
+    const emailed = await sendEmail(env, { to: email, subject: `${me.name} invited you to Delegance`, intro: `Hi ${name.split(' ')[0]},\n\n${me.name} added you to Delegance as ${ROLE_NAMES[role]}. Choose a password to open your dashboard.`, button: 'Accept the invite', link, outro: 'This link works once and expires in 7 days.' });
+    return json({ ok: true, id, link, emailed }, 201);
   }
   const u = p[1] && await DB.prepare('SELECT * FROM users WHERE id = ?').bind(p[1]).first();
   if (!u) return bad('Person not found.', 404);
@@ -304,7 +420,15 @@ async function users(p, m, req, env, me) {
   if (p[2] === 'link' && m === 'POST') {
     const link = await makeLink(env, u.id, u.pass_hash ? 'reset' : 'invite', u.pass_hash ? 24 : 24 * 7, me.email);
     await audit(env, me.email, 'user.link', u.email);
-    return json({ ok: true, link });
+    const emailed = await sendEmail(env, u.pass_hash
+      ? { to: u.email, subject: 'Reset your Delegance password', intro: `Hi ${first(u.name)},\n\n${me.name} sent you a link to choose a new password.`, button: 'Choose a new password', link, outro: 'This link works once and expires in 24 hours.' }
+      : { to: u.email, subject: `${me.name} invited you to Delegance`, intro: `Hi ${first(u.name)},\n\nYou were added to Delegance as ${ROLE_NAMES[u.role]}. Choose a password to open your dashboard.`, button: 'Accept the invite', link, outro: 'This link works once and expires in 7 days.' });
+    return json({ ok: true, link, emailed });
+  }
+  if (p[2] === 'mfa' && m === 'DELETE') {
+    await DB.batch([DB.prepare('UPDATE users SET totp_enabled = 0, totp_secret = NULL, totp_pending = NULL, recovery = NULL WHERE id = ?').bind(u.id), DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(u.id)]);
+    await audit(env, me.email, 'user.2step_reset', u.email);
+    return json({ ok: true });
   }
   if (p[2] === 'sessions' && m === 'DELETE') { await DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(u.id).run(); await audit(env, me.email, 'user.signout_all', u.email); return json({ ok: true }); }
   if (!p[2] && m === 'DELETE' && sup) {
@@ -317,8 +441,8 @@ async function users(p, m, req, env, me) {
 }
 
 // ---------------- Contacts ----------------
-async function contacts(p, m, req, env, me, url) {
-  const DB = env.DB;
+async function contacts(p, m, req, env, me, url, ctx) {
+  const DB = env.DB, later = x => ctx && ctx.waitUntil ? ctx.waitUntil(x) : x;
   if (!p[1] && m === 'GET') {
     const q = clean(url.searchParams.get('q'), 80), st = url.searchParams.get('stage');
     const where = [], args = [];
@@ -375,6 +499,10 @@ async function contacts(p, m, req, env, me, url) {
     const b = await body(req); const text = clean(b.body, 3000); if (!text) return bad('Write a note first.');
     await DB.prepare('INSERT INTO crm_notes (id, contact_id, author_id, author_name, visibility, body, created_at) VALUES (?,?,?,?,?,?,?)').bind(uid('nt_'), c.id, me.id, me.name, b.visibility === 'client' ? 'client' : 'internal', text, now()).run();
     await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(now(), c.id).run();
+    if (b.visibility === 'client') {
+      const { results: ppl } = await DB.prepare("SELECT email, name FROM users WHERE contact_id = ? AND status = 'active' AND notify = 1").bind(c.id).all();
+      later(Promise.all(ppl.map(x => sendEmail(env, { to: x.email, subject: `New message from ${me.name} at Delegance`, intro: `Hi ${x.name.split(' ')[0]},\n\n${me.name} wrote:\n\n${text}`, button: 'Reply in your dashboard', link: 'https://delegance.app/dashboard#messages', replyTo: me.email }))));
+    }
     return json({ ok: true }, 201);
   }
   if (p[2] === 'assign' && m === 'POST') {
@@ -390,8 +518,8 @@ async function contacts(p, m, req, env, me, url) {
 }
 
 // ---------------- Tasks ----------------
-async function tasks(p, m, req, env, me, url) {
-  const DB = env.DB, isTeam = can(me, 'staff');
+async function tasks(p, m, req, env, me, url, ctx) {
+  const DB = env.DB, isTeam = can(me, 'staff'), later = x => ctx && ctx.waitUntil ? ctx.waitUntil(x) : x;
   if (!p[1] && m === 'GET') {
     if (me.role === 'client' || me.role === 'member') {
       if (!me.contact_id) return json({ items: [] });
@@ -406,9 +534,10 @@ async function tasks(p, m, req, env, me, url) {
     const b = await body(req); const title = clean(b.title, 200);
     if (!title) return bad('Write the task first.');
     if (me.role === 'va' && b.contact_id && !(await DB.prepare('SELECT 1 FROM va_assignments WHERE va_id = ? AND contact_id = ?').bind(me.id, b.contact_id).first())) return bad('That client is not assigned to you.');
-    const t = now();
+    const t = now(), assignee = isTeam ? (b.assignee_id || me.id) : me.id;
+    if (assignee !== me.id) { const a = await DB.prepare("SELECT email, name FROM users WHERE id = ? AND status = 'active' AND notify = 1").bind(assignee).first(); if (a) later(sendEmail(env, { to: a.email, subject: `New task: ${title}`, intro: `Hi ${a.name.split(' ')[0]},\n\n${me.name} gave you a task: "${title}"${/^\d{4}-\d{2}-\d{2}$/.test(b.due) ? ', due ' + b.due : ''}.`, button: 'Open my tasks', link: 'https://delegance.app/dashboard#tasks' })); }
     await DB.prepare('INSERT INTO crm_tasks (id, title, contact_id, assignee_id, due, status, client_visible, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(
-      uid('tk_'), title, b.contact_id || null, isTeam ? (b.assignee_id || me.id) : me.id, /^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null, 'open', b.client_visible ? 1 : 0, me.id, t, t).run();
+      uid('tk_'), title, b.contact_id || null, assignee, /^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null, 'open', b.client_visible ? 1 : 0, me.id, t, t).run();
     return json({ ok: true }, 201);
   }
   const t = p[1] && await DB.prepare('SELECT * FROM crm_tasks WHERE id = ?').bind(p[1]).first();
@@ -475,4 +604,11 @@ async function dashboard(env, me) {
     out.hours_month = cid ? (await one('SELECT COALESCE(SUM(minutes),0) m FROM timesheets WHERE contact_id = ? AND day >= ?', cid, now().slice(0, 8) + '01')).m : 0;
   }
   return out;
+}
+
+function device(ua) {
+  ua = String(ua || '');
+  const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : /Linux/.test(ua) ? 'Linux' : 'Unknown device';
+  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+  return br ? br + ' on ' + os : os;
 }
