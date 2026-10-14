@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="/img/hero.webp" imagesrcset="/img/hero-800.webp 800w, /img/hero.webp 1600w" imagesizes="(max-width:1060px) 92vw, 560px" type="image/webp">
-<link rel="stylesheet" href="/assets/site.css?v=3.2">
+<link rel="stylesheet" href="/assets/site.css?v=3.3">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://delegance.app/#org", "name": "Delegance", "url": "https://delegance.app/", "logo": "https://delegance.app/brand/icon-512.png", "image": "https://delegance.app/og.jpg", "email": "admin@delegance.app", "description": "A virtual service provider: virtual assistants, websites, apps and the everyday work behind them.", "areaServed": "Worldwide", "knowsAbout": ["Virtual assistants", "Website design and development", "Web and mobile app development", "Website care and maintenance", "Integrations and automation", "Social media management"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Virtual assistants"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Websites"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Web and mobile apps"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Care and maintenance"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Integrations and automation"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Online presence"}}]}}, {"@type": "WebSite", "@id": "https://delegance.app/#site", "url": "https://delegance.app/", "name": "Delegance", "publisher": {"@id": "https://delegance.app/#org"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What kind of work do you take on?", "acceptedAnswer": {"@type": "Answer", "text": "Virtual assistant support, websites, web and mobile apps, ongoing site care, integrations and the everyday tasks that come with running a business. If you're not sure whether something fits, just ask."}}, {"@type": "Question", "name": "Is there anything you don't take on?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist."}}, {"@type": "Question", "name": "Can you look after a website someone else built?", "acceptedAnswer": {"@type": "Answer", "text": "Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend."}}, {"@type": "Question", "name": "Do you only build new things?", "acceptedAnswer": {"@type": "Answer", "text": "No. Plenty of our work is improving, fixing and maintaining what you already have."}}, {"@type": "Question", "name": "How do we get started?", "acceptedAnswer": {"@type": "Answer", "text": "Email us at admin@delegance.app with a few lines about what you need, or tap the chat button in the corner. We'll reply with questions or a suggested next step."}}, {"@type": "Question", "name": "What is Delegance Desk?", "acceptedAnswer": {"@type": "Answer", "text": "The tool our team uses to run our clients' social media: planning and scheduling posts, and answering comments and messages with help from AI drafts that a person checks first. Clients don't need to install anything."}}, {"@type": "Question", "name": "Do you need my social media passwords?", "acceptedAnswer": {"@type": "Answer", "text": "No. You add us to your page through the network's own page settings, and you can remove our access at any time."}}]}]}</script>
 </head>
 <body>
@@ -50,13 +50,13 @@
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="158" height="30"></a>
     <nav class="links" aria-label="Main">
-      <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#desk">Desk</a><a href="/candidates">Candidates</a><a href="/guides">Guides</a>
+      <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#desk">Desk</a><a href="/candidates">Candidates</a><a href="/guides">Guides</a><a href="/login">Sign in</a>
     </nav>
     <a class="btn btn-silver" href="#start">Start a request</a>
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mm"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile-menu" id="mm">
-    <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/guides">Guides</a><a href="#faq">FAQ</a>
+    <a href="#services">Services</a><a href="#tasks">What a VA does</a><a href="#how">How we work</a><a href="#desk">Delegance Desk</a><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/guides">Guides</a><a href="#faq">FAQ</a><a href="/login">Sign in</a>
     <a class="btn btn-silver" href="#start">Start a request</a>
   </div>
 </header>
@@ -389,11 +389,14 @@
             <label class="sr-f"><span>What should we know?</span><textarea id="srMsg" rows="4" maxlength="1500" placeholder="e.g. I need someone to manage my inbox and book appointments, about 10 hours a week."></textarea></label>
             <div class="sr-two">
               <label class="sr-f"><span>Your name</span><input id="srName" autocomplete="name" maxlength="80"></label>
-              <label class="sr-f"><span>Business or website (optional)</span><input id="srBiz" maxlength="120"></label>
+              <label class="sr-f"><span>Email</span><input id="srEmail" type="email" autocomplete="email" maxlength="254"></label>
             </div>
+            <label class="sr-f"><span>Business or website (optional)</span><input id="srBiz" maxlength="120"></label>
+            <input id="srHp" class="sr-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="sr-sum" id="srSum" aria-live="polite"></div>
-            <div class="sr-nav wrapit"><button type="button" class="btn btn-ghost" data-go="2">Back</button><span class="sr-send"><button type="button" class="btn btn-ghost" id="srMail">Send by email</button><button type="button" class="btn btn-silver" id="srChat">Send in chat <svg><use href="#i-arrow"/></svg></button></span></div>
-            <p class="sr-note">Sending opens our chat or your email app with your request filled in. Nothing is sent until you press send there.</p>
+            <div class="sr-nav wrapit"><button type="button" class="btn btn-ghost" data-go="2">Back</button><span class="sr-send"><button type="button" class="btn btn-ghost" id="srChat">Chat instead</button><button type="button" class="btn btn-silver" id="srSend">Send request <svg><use href="#i-arrow"/></svg></button></span></div>
+            <p class="sr-err" id="srErr3" role="alert" hidden></p>
+            <p class="sr-note">Send request goes straight to the Delegance team, and we reply by email. Prefer email? <button type="button" class="sr-link" id="srMail">Open it in your email app</button>.</p>
           </fieldset>
         </form>
       </div>
@@ -454,7 +457,7 @@
       <div><a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="137" height="26"></a><p>Virtual assistants, websites, apps and the everyday work behind them. Good work, delegated elegantly.</p></div>
       <div><h4>Services</h4><nav aria-label="Services"><a href="#services">Virtual assistants</a><a href="#services">Websites and apps</a><a href="#services">Care and maintenance</a><a href="#desk">Delegance Desk</a></nav></div>
       <div><h4>Candidates</h4><nav aria-label="Candidates"><a href="/candidates">Browse candidates</a><a href="/apply">Join as a VA</a><a href="/me">VA dashboard</a></nav></div>
-      <div><h4>Company</h4><nav aria-label="Company"><a href="mailto:admin@delegance.app">Contact</a><a href="/guides">Guides</a><a href="#faq">FAQ</a><a href="/app">Team app</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
+      <div><h4>Company</h4><nav aria-label="Company"><a href="mailto:admin@delegance.app">Contact</a><a href="/guides">Guides</a><a href="#faq">FAQ</a><a href="/login">Sign in</a><a href="/app">Team app</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
     </div>
     <div class="fbot"><span>© <span id="y">2026</span> Delegance</span><span>admin@delegance.app</span></div>
   </div>
@@ -503,6 +506,10 @@ document.addEventListener('click',function(e){var c=e.target.closest('[data-chat
     form.addEventListener('input',function(){if(!form.querySelector('[data-s="3"]').hidden)document.getElementById('srSum').textContent=summary()});
     form.addEventListener('submit',function(e){e.preventDefault()});
     document.querySelectorAll('[data-pick]').forEach(function(a){a.addEventListener('click',function(){var v=a.dataset.pick;form.querySelectorAll('#srNeed input').forEach(function(i){if(i.value===v)i.checked=true});go(1)})});
+    document.getElementById('srSend').addEventListener('click',async function(){var b=this,er=document.getElementById('srErr3'),nm=document.getElementById('srName').value.trim(),em=document.getElementById('srEmail').value.trim();er.hidden=true;
+      if(!nm||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){er.textContent='Add your name and email so we can reply.';er.hidden=false;return}
+      b.disabled=true;try{var r=await fetch('/api/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,email:em,company:document.getElementById('srBiz').value,needs:val('#srNeed'),when:val('#srWhen')[0]||'',how:val('#srHow')[0]||'',message:document.getElementById('srMsg').value,website:document.getElementById('srHp').value})});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Could not send. Please email admin@delegance.app.');
+        form.querySelector('[data-s="3"]').innerHTML='<legend>Thank you, '+nm.replace(/[<>&"]/g,'')+'.</legend><p class="sr-done">Your request is with the Delegance team. We will reply to your email, usually within one business day. Want updates in one place? <a href="/login">Create a free account</a>.</p>'}catch(x){er.textContent=x.message;er.hidden=false;b.disabled=false}});
     document.getElementById('srMail').addEventListener('click',function(){location.href='mailto:admin@delegance.app?subject='+encodeURIComponent('New request from delegance.app')+'&body='+encodeURIComponent(summary())});
     document.getElementById('srChat').addEventListener('click',function(){var w=document.querySelector('.dc-b'),t=summary();if(!w){location.href='mailto:admin@delegance.app?subject='+encodeURIComponent('New request from delegance.app')+'&body='+encodeURIComponent(t);return}
       var p=document.querySelector('.dc-p');if(!p||!p.classList.contains('o'))w.click();

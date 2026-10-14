@@ -1,0 +1,9 @@
+name = "delegance"
+pages_build_output_dir = "."
+compatibility_date = "2026-10-02"
+
+# Same database as Delegance Desk: candidates, chats and the CRM live together.
+[[d1_databases]]
+binding = "DB"
+database_name = "delegance-desk"
+database_id = "097da0af-d866-4776-b262-035190467e52"

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Delegance</title>
+<meta name="description" content="Sign in to your Delegance dashboard: clients, virtual assistants, members and the Delegance team.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://delegance.app/login">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/dash.css?v=1">
+</head>
+<body class="auth">
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+<main class="auth-wrap">
+  <section class="auth-art" aria-hidden="true">
+    <img src="/img/team-800.webp" alt="" width="800" height="1000">
+    <div class="auth-art-in">
+      <img class="auth-logo" src="/brand/delegance-logo-horizontal-flat.svg" alt="" width="158" height="30">
+      <p class="auth-quote">One sign-in for everyone who makes the work happen.</p>
+      <ul class="auth-roles"><li>Clients</li><li>Virtual assistants</li><li>Members</li><li>The Delegance team</li></ul>
+    </div>
+  </section>
+  <section class="auth-card glass">
+    <a class="auth-home" href="/"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance home" width="132" height="25"></a>
+    <div id="modeTabs" class="seg" role="tablist" aria-label="Sign in or create an account">
+      <button role="tab" aria-selected="true" data-mode="in">Sign in</button>
+      <button role="tab" aria-selected="false" data-mode="up">Create account</button>
+    </div>
+    <form id="fIn" class="af" novalidate>
+      <h1>Welcome back</h1>
+      <p class="lead">Sign in to your dashboard.</p>
+      <label class="fld"><span>Email</span><input name="email" type="email" autocomplete="username" required></label>
+      <label class="fld"><span>Password</span><span class="pw"><input name="password" type="password" autocomplete="current-password" required><button type="button" class="eye" aria-label="Show password">Show</button></span></label>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-silver wide" type="submit">Sign in</button>
+      <p class="fine">Forgot your password? Message us at <a href="mailto:admin@delegance.app?subject=Password%20reset">admin@delegance.app</a> and we'll send you a reset link.</p>
+    </form>
+    <form id="fUp" class="af" novalidate hidden>
+      <h1>Create your account</h1>
+      <p class="lead">Free member account. Get guides, updates, and send requests to the team. Clients and virtual assistants get their own dashboards when we add them to a project.</p>
+      <label class="fld"><span>Your name</span><input name="name" autocomplete="name" maxlength="80" required></label>
+      <label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+      <label class="fld"><span>Password</span><span class="pw"><input name="password" type="password" autocomplete="new-password" minlength="10" required><button type="button" class="eye" aria-label="Show password">Show</button></span><small>At least 10 characters.</small></label>
+      <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="chk"><input type="checkbox" name="consent"> <span>I agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</span></label>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-silver wide" type="submit">Create account</button>
+    </form>
+    <form id="fSet" class="af" novalidate hidden>
+      <h1 id="setTitle">Set your password</h1>
+      <p class="lead" id="setLead"></p>
+      <label class="fld"><span>Your name</span><input name="name" autocomplete="name" maxlength="80"></label>
+      <label class="fld"><span>New password</span><span class="pw"><input name="password" type="password" autocomplete="new-password" minlength="10" required><button type="button" class="eye" aria-label="Show password">Show</button></span><small>At least 10 characters. A short sentence works well.</small></label>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-silver wide" type="submit">Save and continue</button>
+    </form>
+    <p class="fine sec">Protected sign-in: passwords are hashed, sessions expire, and repeated wrong tries pause the account.</p>
+  </section>
+</main>
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  function show(id){['fIn','fUp','fSet'].forEach(function(f){document.getElementById(f).hidden=f!==id});$('#modeTabs').hidden=id==='fSet';document.querySelectorAll('#modeTabs button').forEach(function(b){b.setAttribute('aria-selected',String((b.dataset.mode==='in')===(id==='fIn')))});var i=document.querySelector('#'+id+' input');if(i)i.focus()}
+  async function post(u,d){var r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(d)});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Something went wrong. Please try again.');return j}
+  function go(){var n=new URLSearchParams(location.search).get('next');location.replace(n&&/^\/(?!\/)[a-z0-9\-\/#]*$/i.test(n)?n:'/dashboard')}
+  function wire(form,fn){form.addEventListener('submit',async function(e){e.preventDefault();var b=form.querySelector('button[type=submit]'),er=form.querySelector('.err');er.textContent='';b.disabled=true;try{await fn(Object.fromEntries(new FormData(form)))}catch(x){er.textContent=x.message;b.disabled=false}})}
+  document.querySelectorAll('#modeTabs button').forEach(function(b){b.onclick=function(){show(b.dataset.mode==='in'?'fIn':'fUp')}});
+  document.querySelectorAll('.eye').forEach(function(b){b.onclick=function(){var i=b.previousElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide';b.setAttribute('aria-label',i.type==='password'?'Show password':'Hide password')}});
+  wire($('#fIn'),async function(d){await post('/api/auth/login',d);go()});
+  wire($('#fUp'),async function(d){d.consent=!!d.consent;await post('/api/auth/signup',d);go()});
+  var m=location.hash.match(/^#(invite|reset)=([A-Za-z0-9_-]{20,})$/),tok=m&&m[2];
+  if(m){history.replaceState(null,'',location.pathname);show('fSet');
+    post('/api/auth/link',{token:tok}).then(function(i){$('#setTitle').textContent=i.kind==='invite'?'Welcome to Delegance':'Choose a new password';$('#setLead').textContent=(i.kind==='invite'?'You were invited as '+i.role_name+'. ':'')+'Account: '+i.email;$('#fSet [name=name]').value=i.name||'';if(i.kind!=='invite')$('#fSet [name=name]').closest('.fld').hidden=true}).catch(function(x){$('#fSet .err').textContent=x.message;$('#fSet button[type=submit]').disabled=true});
+    wire($('#fSet'),async function(d){d.token=tok;await post('/api/auth/set-password',d);go()});
+  } else fetch('/api/auth/me',{credentials:'same-origin'}).then(function(r){if(r.ok)go()}).catch(function(){});
+})();
+</script>
+</body>
+</html>
