@@ -27,7 +27,7 @@
   var hrs = function (m) { return (Math.round((m || 0) / 6) / 10).toLocaleString() + 'h'; };
   var empty = function (t) { return '<p class="empty">' + esc(t) + '</p>'; };
   var today = function () { return new Date().toISOString().slice(0, 10); };
-  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline">' + (actions || '') + '<button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
+  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline tright">' + (actions || '') + (TEAM ? '<button class="ibtn" id="srchBtn" aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)">' + I.search + '</button>' : '') + '<button class="ibtn" id="bell" aria-label="Notifications" title="Notifications" data-n="0">' + I.bell + '<span class="dot" hidden></span></button><button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
   function opts(list, sel, blank) { return (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') + list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(sel == null ? '' : sel) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join(''); }
   function modal(html, onSubmit) {
     dlg.innerHTML = '<form method="dialog" novalidate>' + html + '<p class="err" role="alert"></p><div class="acts"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn btn-acc" value="ok" id="dlgOk">Save</button></div></form>';
@@ -62,6 +62,9 @@
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>',
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12" width="3" height="5" rx="1"/><rect x="12" y="8" width="3" height="9" rx="1"/><rect x="17" y="5" width="3" height="12" rx="1"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
     va: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7"/><path d="M16 4.5l1.5-1.5"/></svg>'
   };
@@ -75,7 +78,7 @@
   };
   function navFor(r) {
     var n = [['home', 'Home', 'home']];
-    if (TEAM) n.push(['pipeline', 'Pipeline', 'pipe'], ['contacts', 'Contacts', 'book'], ['tasks', 'Tasks', 'task'], ['requests', 'Requests', 'inbox']);
+    if (TEAM) n.push(['pipeline', 'Pipeline', 'pipe'], ['contacts', 'Contacts', 'book'], ['tasks', 'My day', 'task'], ['requests', 'Requests', 'inbox'], ['reports', 'Reports', 'chart']);
     if (ADMIN) n.push(['people', 'People', 'people'], ['vas', 'VA applications', 'va'], ['hours', 'Hours', 'clock'], ['news', 'Announcements', 'mega']);
     if (SUPER) n.push(['audit', 'Security log', 'shield']);
     if (r === 'va') n.push(['clients', 'My clients', 'people'], ['tasks', 'Tasks', 'task'], ['hours', 'Timesheet', 'clock'], ['news', 'Updates', 'mega']);
@@ -87,6 +90,7 @@
   function drawNav() {
     var cur = (location.hash.slice(1) || 'home').split('/')[0];
     if (cur === 'contact') cur = 'contacts';
+    if (cur === 'deal') cur = 'pipeline';
     document.getElementById('nav').innerHTML = navFor(ROLE).map(function (x) { return '<a href="#' + x[0] + '"' + (x[0] === cur ? ' aria-current="page"' : '') + '>' + I[x[2]] + '<span>' + esc(x[1]) + '</span></a>'; }).join('');
   }
 
@@ -111,12 +115,15 @@
     var kpis = [['Contacts', c.contacts, c.new_this_week + ' new this week'], ['Open requests', c.open_requests, 'New or in progress', c.open_requests > 0], ['My open tasks', c.my_tasks, c.overdue ? c.overdue + ' overdue across the team' : 'Nothing overdue', c.overdue > 0], ['Website chats', c.chats_week, 'Last 7 days']];
     if (ADMIN) kpis[3] = ['VA applications', d.pending_vas, 'Waiting for review', d.pending_vas > 0];
     var html = hero + '<div class="grid g4" style="margin-bottom:16px">' + kpis.map(function (k) { return '<div class="card kpi' + (k[3] ? ' hot' : '') + '"><span>' + esc(k[0]) + '</span><b>' + esc(k[1] || 0) + '</b><small>' + esc(k[2]) + '</small></div>'; }).join('') + '</div>';
-    var pipe = STAGES.map(function (s) { var r = (d.pipeline || []).find(function (x) { return x.stage === s[0]; }) || { n: 0, v: 0 }; return [s[1], r.n, r.v]; });
+    var pipe = DSTAGES.map(function (s) { var r = (d.pipeline || []).find(function (x) { return x.stage === s[0]; }) || { n: 0, v: 0 }; return [s[1], r.n, r.v]; });
+    var fc = d.forecast || { w: 0, v: 0 }, td = d.today || {};
+    html += '<div class="grid g3" style="margin-bottom:16px"><a class="card kpi gold" href="#reports" style="text-decoration:none"><span>Weighted forecast</span><b>' + (money(Math.round(fc.w)) || 'US$0') + '</b><small>' + (money(fc.v) || 'US$0') + ' in open deals</small></a><a class="card kpi gold" href="#reports" style="text-decoration:none"><span>Won this month</span><b>' + (money((d.won_month || {}).v) || 'US$0') + '</b><small>' + ((d.won_month || {}).n || 0) + ' deals</small></a><a class="card kpi' + (td.overdue ? ' hot' : '') + '" href="#tasks" style="text-decoration:none"><span>My day</span><b>' + (td.today || 0) + ' due today</b><small>' + (td.overdue ? td.overdue + ' overdue, start there' : 'Nothing overdue') + '</small></a></div>';
+    if ((d.stale || []).length) html += '<div class="card stale" style="margin-bottom:16px"><h2>Deals going quiet <a href="#pipeline">Pipeline</a></h2><ul class="list">' + d.stale.map(function (x) { return '<li><a class="row" href="#deal/' + esc(x.id) + '"><div class="t"><b>' + esc(x.title) + '</b><span>' + esc(DSTAGE[x.stage] + ' · no activity since ' + day(x.updated_at)) + '</span></div></a>' + (x.value_usd ? '<b class="goldtxt">' + money(x.value_usd) + '</b>' : '') + '</li>'; }).join('') + '</ul></div>';
     var mx = Math.max.apply(null, pipe.map(function (p) { return p[1]; }).concat([1]));
     html += '<div class="grid g21" style="margin-bottom:16px"><div class="card"><h2>Pipeline <a href="#pipeline">Board</a></h2><ul class="list stagebars">' + pipe.map(function (p) { return '<li><span>' + esc(p[0]) + '</span><div class="bar"><i style="width:' + (p[1] / mx * 100) + '%"></i></div><b>' + p[1] + '</b></li>'; }).join('') + '</ul></div>';
     html += '<div class="card"><h2>My tasks <a href="#tasks">All</a></h2>' + (d.my_tasks.length ? '<ul class="list">' + d.my_tasks.map(function (t) { return '<li><div class="t"><b>' + esc(t.title) + '</b><span>' + esc([t.contact_name, t.due ? 'Due ' + day(t.due) : ''].filter(Boolean).join(' · ')) + '</span></div>' + pill(t.status) + '</li>'; }).join('') + '</ul>' : empty('No open tasks. Nice.')) + '</div></div>';
     html += '<div class="grid g3"><div class="card"><h2>New requests <a href="#requests">All</a></h2>' + (d.requests.length ? '<ul class="list">' + d.requests.map(function (r) { return '<li><a class="row" href="#contact/' + esc(r.contact_id) + '"><div class="t"><b>' + esc(r.title) + '</b><span>' + esc(r.contact_name) + ' · ' + esc(ago(r.created_at)) + '</span></div></a>' + pill(r.status) + '</li>'; }).join('') + '</ul>' : empty('No open requests.')) + '</div>';
-    html += '<div class="card"><h2>Recently active <a href="#contacts">Contacts</a></h2>' + (d.recent.length ? '<ul class="list">' + d.recent.map(function (r) { return '<li><a class="row" href="#contact/' + esc(r.id) + '"><span class="av">' + initials(r.name) + '</span><div class="t"><b>' + esc(r.name) + '</b><span>' + esc(r.company || '') + '</span></div></a>' + pill(r.stage, STAGE[r.stage]) + '</li>'; }).join('') + '</ul>' : empty('No contacts yet. Website requests land here automatically.')) + '</div>';
+    html += '<div class="card"><h2>Recently active <a href="#contacts">Contacts</a></h2>' + (d.recent.length ? '<ul class="list">' + d.recent.map(function (r) { return '<li><a class="row" href="#contact/' + esc(r.id) + '"><span class="av">' + initials(r.name) + '</span><div class="t"><b>' + esc(r.name) + '</b><span>' + esc(r.company || '') + '</span></div></a>' + pill(r.kind === 'client' ? 'won' : r.kind === 'partner' ? 'call' : 'new', { lead: 'Lead', client: 'Client', partner: 'Partner' }[r.kind] || 'Lead') + '</li>'; }).join('') + '</ul>' : empty('No contacts yet. Website requests land here automatically.')) + '</div>';
     if (SUPER) html += '<div class="card"><h2>Security <a href="#audit">Log</a></h2><div class="grid g2" style="margin-bottom:12px"><div><span class="sub" style="color:var(--dim);font-size:12px">Active sessions</span><b style="display:block;font:600 22px Montserrat">' + d.sessions + '</b></div><div><span style="color:var(--dim);font-size:12px">Failed sign-ins (7d)</span><b style="display:block;font:600 22px Montserrat;color:' + (d.failed_logins > 10 ? 'var(--bad)' : 'inherit') + '">' + d.failed_logins + '</b></div></div><ul class="list feed">' + d.audit.slice(0, 5).map(function (a) { return '<li><div class="t"><b>' + esc(a.action) + '</b><span>' + esc(a.actor) + ' · ' + esc(ago(a.created_at)) + '</span></div></li>'; }).join('') + '</ul></div>';
     else if (ADMIN) html += '<div class="card"><h2>People <a href="#people">Manage</a></h2><ul class="list">' + ['admin', 'staff', 'va', 'client', 'member'].map(function (r) { var n = (d.people || []).filter(function (p) { return p.role === r; }).reduce(function (a, p) { return a + p.n; }, 0); return '<li><div class="t"><b>' + esc(ROLE_NAME[r]) + 's</b></div><b>' + n + '</b></li>'; }).join('') + '<li><div class="t"><b>VA hours this week</b></div><b>' + hrs(d.hours_week) + '</b></li></ul></div>';
     else html += announceCard(d.announcements);
@@ -157,73 +164,201 @@
     modal('<h2>Log hours</h2><div class="row2"><label class="fld"><span>Day</span><input type="date" name="day" value="' + today() + '" max="' + today() + '"></label><label class="fld"><span>Hours</span><input type="number" name="hours" min="0.1" max="16" step="0.25" required></label></div><label class="fld"><span>Client</span><select name="contact_id">' + opts((clients || []).map(function (c) { return [c.id, c.company || c.name]; }), '', 'General / internal') + '</select></label><label class="fld"><span>What did you work on?</span><input name="note" maxlength="300"></label>', async function (f) { await api('timesheets', 'POST', f); toast('Hours saved.'); route(); });
   }
 
+  // ================= CRM v2 =================
+  var DSTAGES = [['new', 'New'], ['contacted', 'Contacted'], ['call', 'Discovery call'], ['proposal', 'Proposal sent'], ['negotiation', 'Negotiation'], ['won', 'Won'], ['lost', 'Lost']];
+  var DSTAGE = Object.fromEntries(DSTAGES);
+  var KIND_ICON = { note: '✎', call: '☎', meeting: '◷', email: '✉', system: '•' };
+  var KIND_NAME = { note: 'Note', call: 'Call', meeting: 'Meeting', email: 'Email', system: 'Update' };
+  var TEAMLIST = null;
+  async function teamList() { if (!TEAMLIST) { try { TEAMLIST = (await api('team')).items; } catch (e) { TEAMLIST = [{ id: ME.id, name: ME.name, role: ROLE }]; } } return TEAMLIST; }
+  function dealCard(d) {
+    return '<a class="deal' + (d.rotting ? ' rot' : '') + '" draggable="true" data-id="' + esc(d.id) + '" href="#deal/' + esc(d.id) + '"><b>' + esc(d.title) + '</b><span>' + esc([d.contact_name, d.company && d.company !== d.contact_name ? d.company : ''].filter(Boolean).join(' · ')) + '</span><div class="dmeta">' + (d.value_usd ? '<span class="v">' + money(d.value_usd) + '</span>' : '<span class="muted">No value</span>') + (d.owner_name ? '<span class="av xs" title="' + esc(d.owner_name) + '">' + initials(d.owner_name) + '</span>' : '') + '</div>' + (d.rotting ? '<i class="flag" title="No activity for ' + d.idle_days + ' days">Idle ' + d.idle_days + 'd</i>' : d.overdue ? '<i class="flag" title="Close date passed">Past close date</i>' : '') + '</a>';
+  }
+
   V.pipeline = async function () {
-    var d = await api('contacts');
-    var html = top('Pipeline', 'Drag a card to move it to the next stage.', '<button class="btn btn-acc" id="addC">Add contact</button>') + '<div class="board">' + STAGES.map(function (s) {
-      var items = d.items.filter(function (c) { return c.stage === s[0]; }), sum = items.reduce(function (a, c) { return a + (c.value_usd || 0); }, 0);
-      return '<section class="col" data-stage="' + s[0] + '" aria-label="' + esc(s[1]) + '"><h3><span>' + esc(s[1]) + '</span><span>' + items.length + (sum ? ' · ' + money(sum) : '') + '</span></h3>' + items.map(function (c) { return '<a class="deal" draggable="true" data-id="' + esc(c.id) + '" href="#contact/' + esc(c.id) + '"><b>' + esc(c.name) + '</b><span>' + esc([c.company, c.source].filter(Boolean).join(' · ')) + '</span>' + (c.value_usd ? '<div class="v">' + money(c.value_usd) + '</div>' : '') + '</a>'; }).join('') + '</section>';
+    var mine = sessionStorage.getItem('pmine') === '1', d = await api('deals' + (mine ? '?mine=1' : ''));
+    var open = d.items.filter(function (x) { return x.stage !== 'won' && x.stage !== 'lost'; });
+    var total = open.reduce(function (a, x) { return a + (x.value_usd || 0); }, 0), weighted = open.reduce(function (a, x) { return a + x.weighted; }, 0);
+    var html = top('Pipeline', open.length + ' open deals · ' + money(total || 0) + ' total · ' + money(weighted || 0) + ' weighted', '<button class="btn btn-acc" id="addD">New deal</button>');
+    html += '<div class="tools"><div class="seg" style="max-width:280px;margin:0"><button data-m="0" aria-selected="' + !mine + '">All deals</button><button data-m="1" aria-selected="' + mine + '">My deals</button></div><span class="hint">Drag a card to another stage. Gold flags mean a deal has gone quiet.</span></div>';
+    html += '<div class="board">' + DSTAGES.map(function (s) {
+      var items = d.items.filter(function (x) { return x.stage === s[0]; }), sum = items.reduce(function (a, x) { return a + (x.value_usd || 0); }, 0);
+      var show = (s[0] === 'won' || s[0] === 'lost') ? items.slice(0, 12) : items;
+      return '<section class="col ' + s[0] + '" data-stage="' + s[0] + '" aria-label="' + esc(s[1]) + '"><h3><span>' + esc(s[1]) + '</span><span>' + items.length + '</span></h3><div class="colsum">' + (sum ? money(sum) : '&nbsp;') + '</div>' + show.map(dealCard).join('') + (items.length > show.length ? '<p class="hint">+' + (items.length - show.length) + ' more in Reports</p>' : '') + '</section>';
     }).join('') + '</div>';
     setTimeout(function () {
-      document.getElementById('addC').onclick = addContact;
-      document.querySelectorAll('.deal').forEach(function (el) { el.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', el.dataset.id); }); });
+      document.getElementById('addD').onclick = function () { addDeal(); };
+      document.querySelectorAll('.seg button[data-m]').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('pmine', b.dataset.m); route(); }; });
+      document.querySelectorAll('.deal').forEach(function (el) { el.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', el.dataset.id); el.classList.add('dragging'); }); el.addEventListener('dragend', function () { el.classList.remove('dragging'); }); });
       document.querySelectorAll('.col').forEach(function (col) {
         col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); });
         col.addEventListener('dragleave', function () { col.classList.remove('over'); });
-        col.addEventListener('drop', async function (e) { e.preventDefault(); col.classList.remove('over'); var id = e.dataTransfer.getData('text/plain'); try { await api('contacts/' + id, 'PATCH', { stage: col.dataset.stage }); route(); } catch (x) { toast(x.message, true); } });
+        col.addEventListener('drop', async function (e) {
+          e.preventDefault(); col.classList.remove('over'); var id = e.dataTransfer.getData('text/plain'), st = col.dataset.stage;
+          if (st === 'lost') return lostDialog(id);
+          try { await api('deals/' + id, 'PATCH', { stage: st }); if (st === 'won') celebrate(); route(); } catch (x) { toast(x.message, true); }
+        });
       });
     });
     return html;
   };
+  function celebrate() { toast('Deal won. Nicely done!'); var c = document.createElement('div'); c.className = 'confetti'; c.setAttribute('aria-hidden', 'true'); for (var i = 0; i < 24; i++) { var s = document.createElement('i'); s.style.left = (Math.random() * 100) + '%'; s.style.animationDelay = (Math.random() * .4) + 's'; c.appendChild(s); } document.body.appendChild(c); setTimeout(function () { c.remove(); }, 2200); }
+  function lostDialog(id) {
+    modal('<h2>Mark as lost</h2><label class="fld"><span>Why was it lost?</span><select name="lost_reason">' + opts([['Price', 'Price'], ['Went with someone else', 'Went with someone else'], ['No budget', 'No budget'], ['Bad timing', 'Bad timing'], ['No reply', 'No reply'], ['Not a fit', 'Not a fit'], ['Other', 'Other']], 'No reply') + '</select></label>', async function (f) { await api('deals/' + id, 'PATCH', { stage: 'lost', lost_reason: f.lost_reason }); route(); });
+    document.getElementById('dlgOk').textContent = 'Mark lost';
+  }
+  async function addDeal(contact) {
+    var team = await teamList();
+    modal('<h2>New deal</h2><label class="fld"><span>Deal name</span><input name="title" required maxlength="140" placeholder="e.g. Acme · VA 20h/week"></label>' + (contact ? '<p class="lead">For ' + esc(contact.name) + '</p>' : '<div class="row2"><label class="fld"><span>Contact name</span><input name="contact_name" maxlength="120" required></label><label class="fld"><span>Company</span><input name="company" maxlength="120"></label></div><label class="fld"><span>Contact email</span><input name="email" type="email"></label>') + '<div class="row2"><label class="fld"><span>Value (USD)</span><input name="value_usd" type="number" min="0" step="1"></label><label class="fld"><span>Expected close</span><input name="close_date" type="date"></label></div><div class="row2"><label class="fld"><span>Stage</span><select name="stage">' + opts(DSTAGES.slice(0, 5), 'new') + '</select></label><label class="fld"><span>Owner</span><select name="owner_id">' + opts(team.filter(function (t) { return t.role !== 'va'; }).map(function (t) { return [t.id, t.name]; }), ME.id) + '</select></label></div>', async function (f) { if (contact) f.contact_id = contact.id; var r = await api('deals', 'POST', f); location.hash = '#deal/' + r.id; });
+  }
+
+  // Activity composer shared by contact and deal pages
+  function composer(ctx) {
+    return '<div class="card composer" style="margin-bottom:16px"><div class="ctabs" role="tablist">' + [['note', 'Note'], ['call', 'Log call'], ['meeting', 'Log meeting'], ['email', 'Email'], ['task', 'Task']].map(function (t, i) { return '<button role="tab" data-k="' + t[0] + '" aria-selected="' + (i === 0) + '">' + (KIND_ICON[t[0]] || '✓') + ' ' + t[1] + '</button>'; }).join('') + '</div><div id="cbody"></div></div>';
+  }
+  function bindComposer(ctx, reload) {
+    var bodyEl = document.getElementById('cbody');
+    function draw(k) {
+      document.querySelectorAll('.ctabs button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.k === k)); });
+      if (k === 'email') {
+        if (!ctx.email) { bodyEl.innerHTML = '<p class="empty">Add an email address to this contact first.</p>'; return; }
+        bodyEl.innerHTML = '<form id="cF"><div class="inline" style="margin-bottom:10px;flex-wrap:wrap"><select id="tpl" aria-label="Template" style="width:auto;flex:1"><option value="">Start from a template…</option></select><button type="button" class="btn btn-sm" id="saveTpl">Save as template</button></div><label class="fld"><span>To</span><input value="' + esc(ctx.name + ' <' + ctx.email + '>') + '" readonly></label><label class="fld"><span>Subject</span><input name="subject" required maxlength="160"></label><label class="fld"><span>Message</span><textarea name="body" required maxlength="8000" style="min-height:150px" placeholder="Hi {{first_name}},"></textarea><small>Merge fields: {{first_name}}, {{name}}, {{company}}, {{my_name}}. Replies come back to ' + esc(ME.email) + '.</small></label><div class="inline" style="justify-content:flex-end"><button class="btn btn-acc">Send email</button></div></form>';
+        api('templates').then(function (r) { var s = document.getElementById('tpl'); if (!s) return; r.items.forEach(function (t) { var o = document.createElement('option'); o.value = t.id; o.textContent = t.name; s.appendChild(o); }); s.onchange = function () { var t = r.items.find(function (x) { return x.id === s.value; }); if (t) { document.querySelector('#cF [name=subject]').value = t.subject; document.querySelector('#cF [name=body]').value = t.body; } }; }).catch(function () {});
+        document.getElementById('saveTpl').onclick = function () { var f = document.getElementById('cF'); if (!f.subject.value || !f.body.value) return toast('Write a subject and message first.', true); modal('<h2>Save template</h2><label class="fld"><span>Template name</span><input name="name" required maxlength="80"></label>', async function (x) { await api('templates', 'POST', { name: x.name, subject: f.subject.value, body: f.body.value }); toast('Template saved.'); draw('email'); }); };
+        document.getElementById('cF').onsubmit = async function (e) { e.preventDefault(); var b = e.target.querySelector('.btn-acc'); b.disabled = true; try { await api('contacts/' + ctx.contact_id + '/email', 'POST', { subject: e.target.subject.value, body: e.target.body.value, deal_id: ctx.deal_id || null }); toast('Email sent and logged.'); reload(); } catch (x) { toast(x.message, true); b.disabled = false; } };
+        return;
+      }
+      if (k === 'task') {
+        bodyEl.innerHTML = '<form id="cF"><label class="fld"><span>Task</span><input name="title" required maxlength="200" placeholder="e.g. Send proposal"></label><div class="row2"><label class="fld"><span>Due</span><input type="date" name="due"></label><label class="fld"><span>Assign to</span><select name="assignee_id" id="tAs"></select></label></div><div class="inline" style="justify-content:space-between;flex-wrap:wrap"><span class="inline" style="gap:16px;flex-wrap:wrap"><label class="chk" style="margin:0"><input type="checkbox" name="priority"> <span>High priority</span></label><label class="chk" style="margin:0"><input type="checkbox" name="client_visible"> <span>Client can see it</span></label></span><button class="btn btn-acc">Add task</button></div></form>';
+        teamList().then(function (t) { document.getElementById('tAs').innerHTML = opts(t.map(function (u) { return [u.id, u.name]; }), ME.id); });
+        document.getElementById('cF').onsubmit = async function (e) { e.preventDefault(); var f = Object.fromEntries(new FormData(e.target)); f.priority = !!f.priority; f.client_visible = !!f.client_visible; f.contact_id = ctx.contact_id; f.deal_id = ctx.deal_id || null; try { await api('tasks', 'POST', f); toast('Task added.'); reload(); } catch (x) { toast(x.message, true); } };
+        return;
+      }
+      var ph = { note: 'What should the team know? Type @name to notify a teammate.', call: 'Who did you speak to and what was agreed? Next step?', meeting: 'Meeting notes, decisions and next steps.' }[k];
+      bodyEl.innerHTML = '<form id="cF"><textarea name="body" required maxlength="3000" placeholder="' + esc(ph) + '"></textarea><div class="inline" style="justify-content:space-between;margin-top:10px;flex-wrap:wrap">' + (k === 'note' && ctx.portal ? '<label class="chk" style="margin:0"><input type="checkbox" name="client"> <span>Also send to the client\'s Messages</span></label>' : '<span></span>') + '<button class="btn btn-acc">Save ' + esc(KIND_NAME[k].toLowerCase()) + '</button></div></form>';
+      document.getElementById('cF').onsubmit = async function (e) { e.preventDefault(); var f = Object.fromEntries(new FormData(e.target)); try { await api('activities', 'POST', { kind: k, body: f.body, contact_id: ctx.contact_id, deal_id: ctx.deal_id || null, visibility: f.client ? 'client' : 'internal' }); reload(); } catch (x) { toast(x.message, true); } };
+    }
+    document.querySelectorAll('.ctabs button').forEach(function (b) { b.onclick = function () { draw(b.dataset.k); }; });
+    draw('note');
+  }
+  function timeline(notes) {
+    if (!notes.length) return empty('Calls, emails, notes and stage changes appear here.');
+    var groups = {}; notes.forEach(function (n) { var k = n.created_at.slice(0, 10); (groups[k] = groups[k] || []).push(n); });
+    return Object.keys(groups).map(function (k) { return '<h4 class="tday">' + esc(k === today() ? 'Today' : day(k)) + '</h4><ul class="timeline">' + groups[k].map(function (n) { var kd = n.kind || 'note'; return '<li class="' + esc(kd) + (n.visibility === 'client' ? ' client' : '') + '"><span class="ticon" aria-hidden="true">' + (KIND_ICON[kd] || '•') + '</span><div class="meta">' + esc(KIND_NAME[kd] || 'Note') + ' · ' + esc(n.author_name || 'Client') + ' · ' + esc(new Date(n.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + (n.visibility === 'client' ? ' · shared with client' : '') + '</div><p>' + esc(n.body).replace(/@([A-Za-z][\w.-]{1,30})/g, '<b class="mention">@$1</b>') + '</p></li>'; }).join('') + '</ul>'; }).join('');
+  }
+
+  V.deal = async function (id) {
+    var d = await api('deals/' + encodeURIComponent(id)), x = d.deal, c = d.contact;
+    var idx = DSTAGES.findIndex(function (s) { return s[0] === x.stage; });
+    var html = top(x.title, [c ? c.name : 'No contact', c && c.company].filter(Boolean).join(' · '), '<a class="btn" href="#pipeline">Pipeline</a>');
+    html += '<div class="dealhead card"><div class="dh-val"><span>Value</span><b>' + (x.value_usd ? money(x.value_usd) : '—') + '</b><small>' + x.probability + '% chance · ' + money(x.weighted || 0) + ' weighted</small></div><div class="dh-st">' + (x.stage === 'won' ? '<span class="pill won big">Won ' + esc(day(x.closed_at)) + '</span>' : x.stage === 'lost' ? '<span class="pill lost big">Lost' + (x.lost_reason ? ': ' + esc(x.lost_reason) : '') + '</span>' : '<button class="btn btn-acc" id="win">Won</button><button class="btn btn-danger" id="lose">Lost</button>') + '</div></div>';
+    html += '<ol class="stepper" aria-label="Deal stage">' + DSTAGES.slice(0, 5).map(function (s, i) { return '<li><button data-st="' + s[0] + '" class="' + (i < idx || x.stage === 'won' ? 'done' : i === idx ? 'cur' : '') + '"' + (i === idx ? ' aria-current="step"' : '') + '>' + esc(s[1]) + '</button></li>'; }).join('') + '</ol>';
+    html += '<div class="split"><div>' + composer() + '<div class="card" style="margin-bottom:16px"><h2>Tasks</h2>' + (d.tasks.length ? '<ul class="list">' + d.tasks.map(taskRow).join('') + '</ul>' : empty('No tasks yet. Add one above so nothing slips.')) + '</div><div class="card"><h2>Activity</h2>' + timeline(d.notes) + '</div></div>';
+    html += '<div><div class="card" style="margin-bottom:16px"><h2>Details <button class="btn btn-sm" id="editD">Edit</button></h2><dl class="kv"><dt>Owner</dt><dd><select id="dOwner" aria-label="Owner">' + opts(d.team.filter(function (t) { return t.role !== 'va'; }).map(function (t) { return [t.id, t.name]; }), x.owner_id, 'Nobody') + '</select></dd><dt>Close date</dt><dd>' + esc(x.close_date ? day(x.close_date) : '—') + (x.overdue ? ' <span class="pill gold">past</span>' : '') + '</dd><dt>Source</dt><dd>' + esc(x.source || '—') + '</dd><dt>Created</dt><dd>' + esc(day(x.created_at)) + '</dd><dt>In stage</dt><dd>' + esc(ago(x.stage_changed_at).replace(' ago', '')) + (x.rotting ? ' <span class="pill gold">idle ' + x.idle_days + 'd</span>' : '') + '</dd></dl></div>';
+    html += c ? '<div class="card"><h2>Contact <a href="#contact/' + esc(c.id) + '">Open</a></h2><div class="person"><span class="av">' + initials(c.name) + '</span><div><b>' + esc(c.name) + '</b><div style="color:var(--muted);font-size:13px">' + esc(c.company || '') + '</div></div></div><dl class="kv" style="margin-top:14px"><dt>Email</dt><dd>' + (c.email ? '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '—') + '</dd><dt>Phone</dt><dd>' + (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>' : '—') + '</dd></dl></div>' : '';
+    if (ADMIN) html += '<p style="margin-top:14px"><button class="btn btn-sm btn-danger" id="delD">Delete deal</button></p>';
+    html += '</div></div>';
+    setTimeout(function () {
+      var reload = function () { route(); };
+      bindComposer({ contact_id: c && c.id, deal_id: x.id, email: c && c.email, name: c && c.name }, reload);
+      bindTasks(reload);
+      document.querySelectorAll('.stepper button').forEach(function (b) { b.onclick = async function () { try { await api('deals/' + x.id, 'PATCH', { stage: b.dataset.st }); reload(); } catch (e) { toast(e.message, true); } }; });
+      var w = document.getElementById('win'); if (w) w.onclick = async function () { try { await api('deals/' + x.id, 'PATCH', { stage: 'won' }); celebrate(); reload(); } catch (e) { toast(e.message, true); } };
+      var l = document.getElementById('lose'); if (l) l.onclick = function () { lostDialog(x.id); };
+      document.getElementById('dOwner').onchange = async function (e) { try { await api('deals/' + x.id, 'PATCH', { owner_id: e.target.value }); toast('Owner updated.'); } catch (er) { toast(er.message, true); } };
+      document.getElementById('editD').onclick = function () { modal('<h2>Edit deal</h2><label class="fld"><span>Deal name</span><input name="title" required value="' + esc(x.title) + '"></label><div class="row2"><label class="fld"><span>Value (USD)</span><input name="value_usd" type="number" min="0" value="' + esc(x.value_usd == null ? '' : x.value_usd) + '"></label><label class="fld"><span>Expected close</span><input name="close_date" type="date" value="' + esc(x.close_date || '') + '"></label></div><label class="fld"><span>Chance of winning (%)</span><input name="probability" type="number" min="0" max="100" value="' + esc(x.probability) + '"><small>Leave as is to use the stage default.</small></label>', async function (f) { await api('deals/' + x.id, 'PATCH', f); reload(); }); };
+      var del = document.getElementById('delD'); if (del) del.onclick = function () { modal('<h2>Delete this deal?</h2><p class="lead">Its notes and tasks stay on the contact.</p>', async function () { await api('deals/' + x.id, 'DELETE'); location.hash = '#pipeline'; }); document.getElementById('dlgOk').textContent = 'Delete'; };
+    });
+    return html;
+  };
+
   function addContact() {
-    modal('<h2>Add contact</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required maxlength="120"></label><label class="fld"><span>Company</span><input name="company" maxlength="120"></label></div><div class="row2"><label class="fld"><span>Email</span><input name="email" type="email"></label><label class="fld"><span>Phone</span><input name="phone" maxlength="40"></label></div><div class="row2"><label class="fld"><span>Country</span><input name="country" maxlength="60"></label><label class="fld"><span>Source</span><input name="source" maxlength="60" placeholder="Referral, LinkedIn…"></label></div><div class="row2"><label class="fld"><span>Stage</span><select name="stage">' + opts(STAGES, 'new') + '</select></label><label class="fld"><span>Deal value (USD, private)</span><input name="value_usd" type="number" min="0" step="1"></label></div>', async function (f) { var r = await api('contacts', 'POST', f); location.hash = '#contact/' + r.id; });
+    modal('<h2>Add contact</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required maxlength="120"></label><label class="fld"><span>Company</span><input name="company" maxlength="120"></label></div><div class="row2"><label class="fld"><span>Email</span><input name="email" type="email"></label><label class="fld"><span>Phone</span><input name="phone" maxlength="40"></label></div><div class="row2"><label class="fld"><span>Country</span><input name="country" maxlength="60"></label><label class="fld"><span>Source</span><input name="source" maxlength="60" placeholder="Referral, LinkedIn…"></label></div><label class="fld"><span>Type</span><select name="kind">' + opts([['lead', 'Lead'], ['client', 'Client'], ['partner', 'Partner']], 'lead') + '</select></label>', async function (f) { var r = await api('contacts', 'POST', f); location.hash = '#contact/' + r.id; });
+  }
+  function parseCsv(text) {
+    var rows = [], row = [], cell = '', q = false;
+    for (var i = 0; i < text.length; i++) { var ch = text[i]; if (q) { if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (ch === '"') q = false; else cell += ch; } else if (ch === '"') q = true; else if (ch === ',') { row.push(cell); cell = ''; } else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += ch; }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    var head = (rows.shift() || []).map(function (h) { return h.trim().toLowerCase().replace(/[^a-z]/g, ''); });
+    var map = { name: ['name', 'fullname', 'contact', 'contactname'], email: ['email', 'emailaddress'], company: ['company', 'business', 'organization', 'organisation'], phone: ['phone', 'mobile', 'phonenumber'], country: ['country'], source: ['source', 'leadsource'], tags: ['tags', 'tag', 'labels'], kind: ['kind', 'type'] };
+    return rows.filter(function (r) { return r.some(function (x) { return x.trim(); }); }).map(function (r) { var o = {}; Object.keys(map).forEach(function (k) { var i = head.findIndex(function (h) { return map[k].includes(h); }); if (i >= 0) o[k] = (r[i] || '').trim(); }); if (!o.name && head.includes('firstname')) o.name = [r[head.indexOf('firstname')], r[head.indexOf('lastname')]].filter(Boolean).join(' ').trim(); return o; });
   }
 
   V.contacts = async function () {
-    var q = sessionStorage.getItem('dq') || '';
-    var d = await api('contacts' + (q ? '?q=' + encodeURIComponent(q) : ''));
-    var html = top('Contacts', d.items.length + ' people and companies', (ADMIN ? '<a class="btn" href="/api/contacts.csv" download>Export CSV</a>' : '') + '<button class="btn btn-acc" id="addC">Add contact</button>') + '<div class="tools"><input type="search" id="q" placeholder="Search name, company or email" value="' + esc(q) + '" aria-label="Search contacts"></div>';
-    html += d.items.length ? '<div class="tblwrap"><table class="tbl"><thead><tr><th>Name</th><th class="hide-sm">Source</th><th>Stage</th><th class="hide-sm">Owner</th><th class="hide-sm">Updated</th></tr></thead><tbody>' + d.items.map(function (c) { return '<tr class="click" data-href="#contact/' + esc(c.id) + '"><td><a href="#contact/' + esc(c.id) + '" style="text-decoration:none"><b>' + esc(c.name) + '</b></a><span class="sub">' + esc([c.company, c.email].filter(Boolean).join(' · ')) + '</span></td><td class="hide-sm">' + esc(c.source || '') + '</td><td>' + pill(c.stage, STAGE[c.stage]) + '</td><td class="hide-sm">' + esc(c.owner_name || '') + '</td><td class="hide-sm">' + esc(ago(c.updated_at)) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="card">' + empty(q ? 'Nothing matches that search.' : 'No contacts yet. Requests from the website "Start a request" form appear here automatically.') + '</div>';
+    var F = JSON.parse(sessionStorage.getItem('cf') || '{}'), qs = new URLSearchParams();
+    ['q', 'kind', 'tag', 'owner'].forEach(function (k) { if (F[k]) qs.set(k, F[k]); });
+    var d = await api('contacts' + (qs.toString() ? '?' + qs : ''));
+    var html = top('Contacts', d.items.length + ' people and companies', (ADMIN ? '<a class="btn" href="/api/contacts.csv" download>Export</a>' : '') + '<label class="btn" style="cursor:pointer">Import CSV<input type="file" id="imp" accept=".csv,text/csv" hidden></label><button class="btn btn-acc" id="addC">Add contact</button>');
+    html += '<div class="tools"><input type="search" id="q" placeholder="Search name, company, email or phone" value="' + esc(F.q || '') + '" aria-label="Search contacts"><select id="fk" aria-label="Type">' + opts([['lead', 'Leads'], ['client', 'Clients'], ['partner', 'Partners']], F.kind, 'All types') + '</select><select id="ft" aria-label="Tag">' + opts(d.tags.map(function (t) { return [t, '#' + t]; }), F.tag, 'All tags') + '</select><select id="fo" aria-label="Owner">' + opts([['me', 'Mine']], F.owner, 'Any owner') + '</select></div>';
+    html += '<div class="bulk" id="bulk" hidden><b id="bn">0 selected</b><select id="ba" aria-label="Bulk action">' + opts([['tag', 'Add tag…'], ['untag', 'Remove tag…'], ['owner', 'Set owner…'], ['kind', 'Set type…']].concat(ADMIN ? [['delete', 'Delete']] : []), '', 'Choose an action') + '</select><button class="btn btn-sm btn-acc" id="bgo">Apply</button><button class="btn btn-sm" id="bclr">Clear</button></div>';
+    html += d.items.length ? '<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:34px"><input type="checkbox" id="all" aria-label="Select all"></th><th>Name</th><th class="hide-sm">Type</th><th class="hide-sm">Open deals</th><th class="hide-sm">Owner</th><th>Last activity</th></tr></thead><tbody>' + d.items.map(function (c) { return '<tr class="click" data-href="#contact/' + esc(c.id) + '"><td><input type="checkbox" class="sel" value="' + esc(c.id) + '" aria-label="Select ' + esc(c.name) + '"></td><td><a href="#contact/' + esc(c.id) + '" style="text-decoration:none"><b>' + esc(c.name) + '</b></a><span class="sub">' + esc([c.company, c.email].filter(Boolean).join(' · ')) + '</span>' + (c.tags.length ? '<span class="chips" style="margin-top:4px">' + c.tags.map(function (t) { return '<span class="tag">#' + esc(t) + '</span>'; }).join('') + '</span>' : '') + '</td><td class="hide-sm">' + pill(c.kind === 'client' ? 'won' : c.kind === 'partner' ? 'call' : 'new', { lead: 'Lead', client: 'Client', partner: 'Partner' }[c.kind]) + '</td><td class="hide-sm">' + (c.open_deals ? c.open_deals + (c.open_value ? ' · ' + money(c.open_value) : '') : '—') + '</td><td class="hide-sm">' + esc(c.owner_name || '') + '</td><td>' + esc(ago(c.last_activity || c.updated_at)) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="card">' + empty(F.q || F.kind || F.tag ? 'Nothing matches these filters.' : 'No contacts yet. Website requests land here automatically, or import a CSV.') + '</div>';
     setTimeout(function () {
+      var save = function () { sessionStorage.setItem('cf', JSON.stringify(F)); route(); };
       document.getElementById('addC').onclick = addContact;
-      var t; document.getElementById('q').addEventListener('input', function (e) { clearTimeout(t); t = setTimeout(function () { sessionStorage.setItem('dq', e.target.value); route().then(function () { var i = document.getElementById('q'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 350); });
-      document.querySelectorAll('tr.click').forEach(function (tr) { tr.onclick = function (e) { if (e.target.tagName !== 'A') location.hash = tr.dataset.href; }; });
+      var t; document.getElementById('q').addEventListener('input', function (e) { clearTimeout(t); t = setTimeout(function () { F.q = e.target.value; sessionStorage.setItem('cf', JSON.stringify(F)); route().then(function () { var i = document.getElementById('q'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }); }, 350); });
+      document.getElementById('fk').onchange = function (e) { F.kind = e.target.value; save(); };
+      document.getElementById('ft').onchange = function (e) { F.tag = e.target.value; save(); };
+      document.getElementById('fo').onchange = function (e) { F.owner = e.target.value; save(); };
+      document.querySelectorAll('tr.click').forEach(function (tr) { tr.onclick = function (e) { if (e.target.tagName !== 'A' && e.target.tagName !== 'INPUT') location.hash = tr.dataset.href; }; });
+      var sels = function () { return [].slice.call(document.querySelectorAll('.sel:checked')).map(function (x) { return x.value; }); };
+      var sync = function () { var n = sels().length; document.getElementById('bulk').hidden = !n; document.getElementById('bn').textContent = n + ' selected'; };
+      document.querySelectorAll('.sel').forEach(function (x) { x.onchange = sync; });
+      var all = document.getElementById('all'); if (all) all.onchange = function () { document.querySelectorAll('.sel').forEach(function (x) { x.checked = all.checked; }); sync(); };
+      document.getElementById('bclr').onclick = function () { document.querySelectorAll('.sel').forEach(function (x) { x.checked = false; }); if (all) all.checked = false; sync(); };
+      document.getElementById('bgo').onclick = async function () {
+        var a = document.getElementById('ba').value, ids = sels(); if (!a) return toast('Choose an action.', true);
+        var team = a === 'owner' ? await teamList() : null;
+        var field = a === 'owner' ? '<select name="value">' + opts(team.filter(function (u) { return u.role !== 'va'; }).map(function (u) { return [u.id, u.name]; }), ME.id) + '</select>' : a === 'kind' ? '<select name="value">' + opts([['lead', 'Lead'], ['client', 'Client'], ['partner', 'Partner']], 'lead') + '</select>' : a === 'delete' ? '<p class="lead">This deletes ' + ids.length + ' contacts with their notes and requests. Deals stay without a contact.</p><input type="hidden" name="value" value="x">' : '<input name="value" maxlength="30" required placeholder="e.g. vip">';
+        modal('<h2>' + esc({ tag: 'Add a tag', untag: 'Remove a tag', owner: 'Set owner', kind: 'Set type', delete: 'Delete contacts' }[a]) + ' (' + ids.length + ')</h2><label class="fld">' + field + '</label>', async function (f) { var r = await api('contacts/bulk', 'POST', { ids: ids, action: a, value: f.value }); toast(r.count + ' contacts updated.'); route(); });
+        if (a === 'delete') document.getElementById('dlgOk').textContent = 'Delete';
+      };
+      document.getElementById('imp').onchange = function (e) {
+        var file = e.target.files[0]; if (!file) return;
+        var rd = new FileReader(); rd.onload = function () {
+          var rows = parseCsv(String(rd.result)); var ok = rows.filter(function (r) { return r.name; });
+          modal('<h2>Import ' + ok.length + ' contacts?</h2><p class="lead">We found columns for: ' + esc(Object.keys(rows[0] || {}).join(', ') || 'nothing we recognise') + '. Rows without a name, and emails already in the CRM, are skipped.</p>' + (ok.length ? '<div class="tblwrap" style="max-height:220px;overflow:auto"><table class="tbl"><tbody>' + ok.slice(0, 6).map(function (r) { return '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.email || '') + '</td><td>' + esc(r.company || '') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="err">Your file needs a "Name" column (or First name and Last name).</p>'), async function () { if (!ok.length) throw new Error('Nothing to import.'); var r = await api('contacts/import', 'POST', { rows: ok }); toast(r.added + ' added, ' + r.skipped + ' skipped.'); route(); });
+          document.getElementById('dlgOk').textContent = 'Import';
+        }; rd.readAsText(file);
+      };
     });
     return html;
   };
 
   V.contact = async function (id) {
     var d = await api('contacts/' + encodeURIComponent(id)), c = d.contact;
-    var html = top(c.name, [c.company, c.kind === 'client' ? 'Client' : c.kind === 'partner' ? 'Partner' : 'Lead'].filter(Boolean).join(' · '), '<a class="btn" href="#contacts">Back</a>');
-    html += '<div class="split"><div>';
-    html += '<div class="card" style="margin-bottom:16px"><h2>Add a note</h2><form id="noteF"><textarea name="body" maxlength="3000" required placeholder="Call notes, next steps, anything the team should know."></textarea><div class="inline" style="justify-content:space-between;margin-top:10px;flex-wrap:wrap"><label class="chk" style="margin:0"><input type="checkbox" name="client"> <span>Send to the client\'s Messages' + (d.portal.length ? '' : ' (no client sign-in yet)') + '</span></label><button class="btn btn-acc btn-sm">Save note</button></div></form></div>';
-    html += '<div class="card" style="margin-bottom:16px"><h2>Tasks <button class="btn btn-sm" id="addT">Add task</button></h2>' + (d.tasks.length ? '<ul class="list">' + d.tasks.map(taskRow).join('') + '</ul>' : empty('No tasks for this contact.')) + '</div>';
-    html += '<div class="card" style="margin-bottom:16px"><h2>Requests</h2>' + (d.requests.length ? '<ul class="list">' + d.requests.map(function (r) { return '<li><div class="t"><b>' + esc(r.title) + '</b><span style="white-space:pre-wrap">' + esc(r.details || '') + '</span><span>' + esc(ago(r.created_at)) + '</span></div><select class="reqSt" data-id="' + esc(r.id) + '" aria-label="Request status" style="width:auto">' + opts([['new', 'New'], ['in_progress', 'In progress'], ['done', 'Done'], ['closed', 'Closed']], r.status) + '</select></li>'; }).join('') + '</ul>' : empty('No requests.')) + '</div>';
-    html += '<div class="card"><h2>Timeline</h2>' + (d.notes.length ? '<ul class="timeline">' + d.notes.map(function (n) { return '<li class="' + (n.visibility === 'client' ? 'client' : '') + '"><div class="meta">' + esc(n.author_name || 'Client') + ' · ' + esc(ago(n.created_at)) + (n.visibility === 'client' ? ' · shared with client' : '') + '</div><p>' + esc(n.body) + '</p></li>'; }).join('') + '</ul>' : empty('Notes and stage changes appear here.')) + '</div>';
-    html += '</div><div>';
-    html += '<div class="card" style="margin-bottom:16px"><h2>Details <button class="btn btn-sm" id="editC">Edit</button></h2><dl class="kv"><dt>Stage</dt><dd><select id="stageSel" aria-label="Stage">' + opts(STAGES, c.stage) + '</select></dd><dt>Email</dt><dd>' + (c.email ? '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '—') + '</dd><dt>Phone</dt><dd>' + esc(c.phone || '—') + '</dd><dt>Country</dt><dd>' + esc(c.country || '—') + '</dd><dt>Source</dt><dd>' + esc(c.source || '—') + '</dd><dt>Value</dt><dd>' + esc(money(c.value_usd) || '—') + '</dd><dt>Owner</dt><dd><select id="ownerSel" aria-label="Owner">' + opts(d.team.filter(function (t) { return t.role !== 'va'; }).map(function (t) { return [t.id, t.name]; }), c.owner_id, 'Nobody') + '</select></dd><dt>Added</dt><dd>' + esc(day(c.created_at)) + '</dd></dl></div>';
+    var html = top(c.name, [c.company, { lead: 'Lead', client: 'Client', partner: 'Partner' }[c.kind]].filter(Boolean).join(' · '), '<a class="btn" href="#contacts">Back</a>');
+    html += '<div class="split"><div>' + composer();
+    html += '<div class="card" style="margin-bottom:16px"><h2>Deals <button class="btn btn-sm" id="addD">New deal</button></h2>' + (d.deals.length ? '<ul class="list">' + d.deals.map(function (x) { return '<li><a class="row" href="#deal/' + esc(x.id) + '"><div class="t"><b>' + esc(x.title) + '</b><span>' + esc([x.value_usd ? money(x.value_usd) : '', x.owner_name, x.close_date ? 'Close ' + day(x.close_date) : ''].filter(Boolean).join(' · ')) + '</span></div></a>' + pill(x.stage === 'won' ? 'won' : x.stage === 'lost' ? 'lost' : 'call', DSTAGE[x.stage]) + '</li>'; }).join('') + '</ul>' : empty('No deals yet.')) + '</div>';
+    html += '<div class="card" style="margin-bottom:16px"><h2>Tasks</h2>' + (d.tasks.length ? '<ul class="list">' + d.tasks.map(taskRow).join('') + '</ul>' : empty('No tasks for this contact.')) + '</div>';
+    if (d.requests.length) html += '<div class="card" style="margin-bottom:16px"><h2>Requests</h2><ul class="list">' + d.requests.map(function (r) { return '<li><div class="t"><b>' + esc(r.title) + '</b><span style="white-space:pre-wrap">' + esc(r.details || '') + '</span><span>' + esc(ago(r.created_at)) + '</span></div><select class="reqSt" data-id="' + esc(r.id) + '" aria-label="Request status" style="width:auto">' + opts([['new', 'New'], ['in_progress', 'In progress'], ['done', 'Done'], ['closed', 'Closed']], r.status) + '</select></li>'; }).join('') + '</ul></div>';
+    html += '<div class="card"><h2>Activity</h2>' + timeline(d.notes) + '</div></div><div>';
+    html += '<div class="card" style="margin-bottom:16px"><h2>Details <button class="btn btn-sm" id="editC">Edit</button></h2><dl class="kv"><dt>Email</dt><dd>' + (c.email ? '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' : '—') + '</dd><dt>Phone</dt><dd>' + (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + '</a>' : '—') + '</dd><dt>Country</dt><dd>' + esc(c.country || '—') + '</dd><dt>Source</dt><dd>' + esc(c.source || '—') + '</dd><dt>Owner</dt><dd><select id="ownerSel" aria-label="Owner">' + opts(d.team.filter(function (t) { return t.role !== 'va'; }).map(function (t) { return [t.id, t.name]; }), c.owner_id, 'Nobody') + '</select></dd><dt>Added</dt><dd>' + esc(day(c.created_at)) + '</dd><dt>Tags</dt><dd><div class="chips" id="tags">' + c.tags.map(function (t) { return '<button class="tag rm" data-t="' + esc(t) + '" title="Remove">#' + esc(t) + ' ×</button>'; }).join('') + '<button class="tag add" id="addTag">+ tag</button></div></dd></dl></div>';
     html += '<div class="card" style="margin-bottom:16px"><h2>Virtual assistants</h2>' + (d.vas.length ? '<ul class="list">' + d.vas.map(function (v) { return '<li><span class="av">' + initials(v.name) + '</span><div class="t"><b>' + esc(v.name) + '</b></div><button class="btn btn-sm unassign" data-va="' + esc(v.id) + '">Remove</button></li>'; }).join('') + '</ul>' : empty('No VA assigned.')) + (d.all_vas.length ? '<div class="inline" style="margin-top:10px"><select id="vaSel" aria-label="Virtual assistant">' + opts(d.all_vas.filter(function (v) { return !d.vas.some(function (x) { return x.id === v.id; }); }).map(function (v) { return [v.id, v.name]; }), '', 'Pick a VA') + '</select><button class="btn btn-sm" id="assign">Assign</button></div>' : '<p class="fine">Invite VAs from People to assign them.</p>') + '</div>';
     html += '<div class="card"><h2>Client sign-in</h2>' + (d.portal.length ? '<ul class="list">' + d.portal.map(function (u) { return '<li><div class="t"><b>' + esc(u.name) + '</b><span>' + esc(u.email) + '</span></div>' + pill(u.status) + '</li>'; }).join('') + '</ul>' : empty('This contact has no dashboard yet.') + (ADMIN && c.email ? '<button class="btn btn-sm" id="invClient">Invite to Client Suite</button>' : '')) + (ADMIN ? '<p style="margin-top:14px"><button class="btn btn-sm btn-danger" id="delC">Delete contact</button></p>' : '') + '</div>';
     html += '</div></div>';
     setTimeout(function () {
       var reload = function () { route(); };
-      document.getElementById('noteF').onsubmit = async function (e) { e.preventDefault(); var f = Object.fromEntries(new FormData(e.target)); try { await api('contacts/' + c.id + '/notes', 'POST', { body: f.body, visibility: f.client ? 'client' : 'internal' }); reload(); } catch (x) { toast(x.message, true); } };
-      document.getElementById('stageSel').onchange = async function (e) { try { await api('contacts/' + c.id, 'PATCH', { stage: e.target.value }); reload(); } catch (x) { toast(x.message, true); } };
+      bindComposer({ contact_id: c.id, email: c.email, name: c.name, portal: d.portal.length > 0 }, reload);
+      bindTasks(reload);
+      document.getElementById('addD').onclick = function () { addDeal(c); };
       document.getElementById('ownerSel').onchange = async function (e) { try { await api('contacts/' + c.id, 'PATCH', { owner_id: e.target.value }); toast('Owner updated.'); } catch (x) { toast(x.message, true); } };
       document.querySelectorAll('.reqSt').forEach(function (s) { s.onchange = async function () { try { await api('requests/' + s.dataset.id, 'PATCH', { status: s.value }); toast('Request updated.'); } catch (x) { toast(x.message, true); } }; });
-      document.getElementById('addT').onclick = function () { addTask(d.team, c.id); };
+      var setTags = async function (tags) { try { await api('contacts/' + c.id, 'PATCH', { tags: tags }); reload(); } catch (x) { toast(x.message, true); } };
+      document.querySelectorAll('.tag.rm').forEach(function (b) { b.onclick = function () { setTags(c.tags.filter(function (t) { return t !== b.dataset.t; })); }; });
+      document.getElementById('addTag').onclick = function () { modal('<h2>Add a tag</h2><label class="fld"><span>Tag</span><input name="t" required maxlength="30" placeholder="e.g. vip, referral, 2026"></label>', async function (f) { await setTags(c.tags.concat([f.t.replace(/^#/, '')])); }); };
       document.getElementById('editC').onclick = function () {
-        modal('<h2>Edit contact</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required value="' + esc(c.name) + '"></label><label class="fld"><span>Company</span><input name="company" value="' + esc(c.company || '') + '"></label></div><div class="row2"><label class="fld"><span>Email</span><input name="email" type="email" value="' + esc(c.email || '') + '"></label><label class="fld"><span>Phone</span><input name="phone" value="' + esc(c.phone || '') + '"></label></div><div class="row2"><label class="fld"><span>Country</span><input name="country" value="' + esc(c.country || '') + '"></label><label class="fld"><span>Source</span><input name="source" value="' + esc(c.source || '') + '"></label></div><div class="row2"><label class="fld"><span>Type</span><select name="kind">' + opts([['lead', 'Lead'], ['client', 'Client'], ['partner', 'Partner']], c.kind) + '</select></label><label class="fld"><span>Deal value (USD, private)</span><input name="value_usd" type="number" min="0" value="' + esc(c.value_usd == null ? '' : c.value_usd) + '"></label></div>', async function (f) { await api('contacts/' + c.id, 'PATCH', f); reload(); });
+        modal('<h2>Edit contact</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required value="' + esc(c.name) + '"></label><label class="fld"><span>Company</span><input name="company" value="' + esc(c.company || '') + '"></label></div><div class="row2"><label class="fld"><span>Email</span><input name="email" type="email" value="' + esc(c.email || '') + '"></label><label class="fld"><span>Phone</span><input name="phone" value="' + esc(c.phone || '') + '"></label></div><div class="row2"><label class="fld"><span>Country</span><input name="country" value="' + esc(c.country || '') + '"></label><label class="fld"><span>Source</span><input name="source" value="' + esc(c.source || '') + '"></label></div><label class="fld"><span>Type</span><select name="kind">' + opts([['lead', 'Lead'], ['client', 'Client'], ['partner', 'Partner']], c.kind) + '</select></label>', async function (f) { await api('contacts/' + c.id, 'PATCH', f); reload(); });
       };
       var a = document.getElementById('assign'); if (a) a.onclick = async function () { var v = document.getElementById('vaSel').value; if (!v) return toast('Pick a VA first.', true); try { await api('contacts/' + c.id + '/assign', 'POST', { va_id: v }); reload(); } catch (x) { toast(x.message, true); } };
       document.querySelectorAll('.unassign').forEach(function (b) { b.onclick = async function () { try { await api('contacts/' + c.id + '/assign', 'POST', { va_id: b.dataset.va, on: false }); reload(); } catch (x) { toast(x.message, true); } }; });
-      var inv = document.getElementById('invClient'); if (inv) inv.onclick = async function () { try { var r = await api('users', 'POST', { name: c.name, email: c.email, role: 'client', contact_id: c.id }); showLink('Client invite ready', r.link, 'Send this link to ' + c.name + '. It works once and expires in 7 days.'); } catch (x) { toast(x.message, true); } };
-      var del = document.getElementById('delC'); if (del) del.onclick = function () { modal('<h2>Delete ' + esc(c.name) + '?</h2><p class="lead">This removes the contact, its notes, requests and VA assignments. Tasks stay, without the contact.</p>', async function () { await api('contacts/' + c.id, 'DELETE'); location.hash = '#contacts'; }); document.getElementById('dlgOk').textContent = 'Delete'; };
-      bindTasks(reload);
+      var inv = document.getElementById('invClient'); if (inv) inv.onclick = async function () { try { var r = await api('users', 'POST', { name: c.name, email: c.email, role: 'client', contact_id: c.id }); showLink(r.emailed ? 'Client invite sent' : 'Client invite ready', r.link, (r.emailed ? 'We emailed it to ' + c.email + '. ' : 'Send this link to ' + c.name + '. ') + 'It works once and expires in 7 days.'); } catch (x) { toast(x.message, true); } };
+      var del = document.getElementById('delC'); if (del) del.onclick = function () { modal('<h2>Delete ' + esc(c.name) + '?</h2><p class="lead">This removes the contact, its notes, requests and VA assignments. Deals and tasks stay, without the contact.</p>', async function () { await api('contacts/' + c.id, 'DELETE'); location.hash = '#contacts'; }); document.getElementById('dlgOk').textContent = 'Delete'; };
     });
     return html;
   };
   function taskRow(t) {
-    return '<li><input type="checkbox" class="tdone" data-id="' + esc(t.id) + '"' + (t.status === 'done' ? ' checked' : '') + ' aria-label="Done" style="width:18px;height:18px;accent-color:var(--acc)"><div class="t"><b' + (t.status === 'done' ? ' style="text-decoration:line-through;color:var(--dim)"' : '') + '>' + esc(t.title) + '</b><span>' + esc([t.contact_name, t.assignee_name, t.due ? 'Due ' + day(t.due) : '', t.client_visible ? 'Client can see' : ''].filter(Boolean).join(' · ')) + '</span></div><select class="tst" data-id="' + esc(t.id) + '" aria-label="Task status" style="width:auto">' + opts([['open', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status) + '</select></li>';
+    var od = t.status !== 'done' && t.due && t.due < today();
+    return '<li class="trow' + (t.priority ? ' hi' : '') + '"><input type="checkbox" class="tdone" data-id="' + esc(t.id) + '"' + (t.status === 'done' ? ' checked' : '') + ' aria-label="Done" style="width:18px;height:18px;accent-color:var(--gold)"><div class="t"><b' + (t.status === 'done' ? ' style="text-decoration:line-through;color:var(--dim)"' : '') + '>' + (t.priority ? '<span class="prio" title="High priority">!</span> ' : '') + esc(t.title) + '</b><span>' + esc([t.deal_title || t.contact_name, t.assignee_name, t.client_visible ? 'Client can see' : ''].filter(Boolean).join(' · ')) + (t.due ? ' <span class="' + (od ? 'od' : '') + '">' + (od ? 'Overdue · ' : 'Due ') + esc(day(t.due)) + '</span>' : '') + '</span></div><select class="tst" data-id="' + esc(t.id) + '" aria-label="Task status" style="width:auto">' + opts([['open', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status) + '</select></li>';
   }
   function bindTasks(reload) {
     var set = async function (id, status) { try { await api('tasks/' + id, 'PATCH', { status: status }); reload(); } catch (x) { toast(x.message, true); } };
@@ -235,31 +370,77 @@
     if (TEAM) html += '<label class="fld"><span>Assign to</span><select name="assignee_id">' + opts((team || []).map(function (t) { return [t.id, t.name]; }), ME.id) + '</select></label>';
     html += '</div>';
     if (contacts) html += '<label class="fld"><span>Client</span><select name="contact_id">' + opts(contacts.map(function (c) { return [c.id, c.company || c.name]; }), '', 'None') + '</select></label>';
+    html += '<label class="chk"><input type="checkbox" name="priority"> <span>High priority</span></label>';
     if (TEAM) html += '<label class="chk"><input type="checkbox" name="client_visible"> <span>Show this task to the client</span></label>';
-    modal(html, async function (f) { if (contactId) f.contact_id = contactId; f.client_visible = !!f.client_visible; await api('tasks', 'POST', f); route(); });
+    modal(html, async function (f) { if (contactId) f.contact_id = contactId; f.client_visible = !!f.client_visible; f.priority = !!f.priority; await api('tasks', 'POST', f); route(); });
   }
 
   V.tasks = async function () {
     var mine = TEAM ? (sessionStorage.getItem('tmine') !== '0') : true;
     var d = await api('tasks' + (TEAM && mine ? '?mine=1' : ''));
+    var t0 = today(), wk = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     var open = d.items.filter(function (t) { return t.status !== 'done'; }), done = d.items.filter(function (t) { return t.status === 'done'; });
-    var team = null, cons = null;
-    if (TEAM) { try { var c = await api('contacts'); cons = c.items; } catch (e) {} }
+    var groups = [['Overdue', open.filter(function (t) { return t.due && t.due < t0; }), 'od'], ['Today', open.filter(function (t) { return t.due === t0; }), 'today'], ['Next 7 days', open.filter(function (t) { return t.due > t0 && t.due <= wk; }), ''], ['Later', open.filter(function (t) { return t.due > wk; }), ''], ['No due date', open.filter(function (t) { return !t.due; }), '']];
+    var cons = null;
+    if (TEAM) { try { cons = (await api('contacts')).items; } catch (e) {} }
     if (ROLE === 'va') { try { cons = (await api('va/clients')).items; } catch (e) {} }
-    var html = top('Tasks', open.length + ' open', '<button class="btn btn-acc" id="addT">Add task</button>');
+    var html = top(ROLE === 'va' ? 'Tasks' : 'My day', open.length + ' open · ' + groups[0][1].length + ' overdue · ' + groups[1][1].length + ' due today', '<button class="btn btn-acc" id="addT">Add task</button>');
     if (TEAM) html += '<div class="seg" style="max-width:320px"><button data-m="1" aria-selected="' + mine + '">Mine</button><button data-m="0" aria-selected="' + !mine + '">Everyone</button></div>';
-    html += '<div class="card" style="margin-bottom:16px"><h2>Open</h2>' + (open.length ? '<ul class="list">' + open.map(taskRow).join('') + '</ul>' : empty('All clear.')) + '</div>';
-    if (done.length) html += '<div class="card"><h2>Done</h2><ul class="list">' + done.slice(0, 30).map(taskRow).join('') + '</ul></div>';
+    html += groups.filter(function (g) { return g[1].length; }).map(function (g) { return '<div class="card tgroup ' + g[2] + '" style="margin-bottom:16px"><h2>' + esc(g[0]) + ' <span class="count">' + g[1].length + '</span></h2><ul class="list">' + g[1].map(taskRow).join('') + '</ul></div>'; }).join('') || '<div class="card">' + empty('All clear. Nothing open.') + '</div>';
+    if (done.length) html += '<details class="card"><summary><b>Done</b> <span class="count">' + done.length + '</span></summary><ul class="list" style="margin-top:10px">' + done.slice(0, 40).map(taskRow).join('') + '</ul></details>';
     setTimeout(function () {
       bindTasks(route);
       document.querySelectorAll('.seg button[data-m]').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('tmine', b.dataset.m); route(); }; });
-      document.getElementById('addT').onclick = async function () {
-        if (TEAM && !team) { try { team = (await api('team')).items; } catch (e) { team = [{ id: ME.id, name: ME.name }]; } }
-        addTask(team, null, cons || []);
-      };
+      document.getElementById('addT').onclick = async function () { addTask(TEAM ? await teamList() : null, null, cons || []); };
     });
     return html;
   };
+
+  // ----- Reports -----
+  function bars(items, label, value, fmt) {
+    var mx = Math.max.apply(null, items.map(value).concat([1]));
+    return items.length ? '<ul class="list stagebars rbars">' + items.map(function (x) { return '<li><span title="' + esc(label(x)) + '">' + esc(label(x)) + '</span><div class="bar"><i style="width:' + (value(x) / mx * 100) + '%"></i></div><b>' + esc(fmt ? fmt(value(x)) : value(x)) + '</b></li>'; }).join('') + '</ul>' : empty('No data in this period yet.');
+  }
+  V.reports = async function () {
+    var days = +(sessionStorage.getItem('rdays') || 90), r = await api('reports?days=' + days);
+    var openTot = r.open.reduce(function (a, x) { return a + x.v; }, 0), openW = r.open.reduce(function (a, x) { return a + x.w; }, 0);
+    var html = top('Reports', 'How Delegance is selling', '<select id="rd" aria-label="Period" style="width:auto">' + opts([[30, 'Last 30 days'], [90, 'Last 90 days'], [180, 'Last 6 months'], [365, 'Last 12 months']], days) + '</select>');
+    html += '<div class="grid g4" style="margin-bottom:16px">' + [['Won', money(r.won.v) || 'US$0', r.won.n + ' deals', true], ['Win rate', r.win_rate == null ? '—' : r.win_rate + '%', r.won.n + ' won · ' + r.lost + ' lost'], ['Average deal', r.avg_deal ? money(r.avg_deal) : '—', r.won.cycle != null ? r.won.cycle + ' days to close on average' : 'Days to close appear after the first win'], ['Open pipeline', money(openTot) || 'US$0', money(Math.round(openW)) + ' weighted forecast', true]].map(function (k) { return '<div class="card kpi' + (k[3] ? ' hot' : '') + '"><span>' + esc(k[0]) + '</span><b>' + esc(k[1]) + '</b><small>' + esc(k[2]) + '</small></div>'; }).join('') + '</div>';
+    // revenue by month (12 months)
+    var months = []; for (var i = 11; i >= 0; i--) { var dt = new Date(); dt.setUTCDate(1); dt.setUTCMonth(dt.getUTCMonth() - i); var k = dt.toISOString().slice(0, 7), f = r.months.find(function (m) { return m.mo === k; }); months.push({ k: k, v: f ? f.v : 0, n: f ? f.n : 0 }); }
+    var mx = Math.max.apply(null, months.map(function (m) { return m.v; }).concat([1]));
+    html += '<div class="card" style="margin-bottom:16px"><h2>Won per month</h2><div class="vbars" role="img" aria-label="Revenue won per month, last 12 months">' + months.map(function (m) { return '<div class="vb" title="' + esc(m.k + ': ' + (money(m.v) || 'US$0') + ' from ' + m.n + ' deals') + '"><i style="height:' + Math.max(2, m.v / mx * 100) + '%"></i><span>' + esc(new Date(m.k + '-15').toLocaleDateString(undefined, { month: 'short' })) + '</span></div>'; }).join('') + '</div></div>';
+    var funnel = DSTAGES.slice(0, 5).map(function (s) { var f = r.open.find(function (x) { return x.stage === s[0]; }) || { n: 0, v: 0 }; return { name: s[1], n: f.n, v: f.v }; });
+    html += '<div class="grid g2" style="margin-bottom:16px"><div class="card"><h2>Open deals by stage</h2>' + bars(funnel, function (x) { return x.name; }, function (x) { return x.n; }) + '</div><div class="card"><h2>New leads by source <small style="font:400 12px Inter;color:var(--dim)">' + r.new_leads + ' total</small></h2>' + bars(r.sources, function (x) { return x.source; }, function (x) { return x.n; }) + '</div></div>';
+    html += '<div class="grid g2"><div class="card"><h2>Leaderboard</h2>' + (r.owners.length ? '<table class="tbl"><thead><tr><th>Owner</th><th>Won</th><th>Value</th><th>Open</th></tr></thead><tbody>' + r.owners.map(function (o, i) { return '<tr><td>' + (i === 0 && o.v ? '<span class="crown" aria-hidden="true">♛</span> ' : '') + esc(o.name) + '</td><td>' + o.won + '</td><td>' + (money(o.v) || '—') + '</td><td>' + o.open + '</td></tr>'; }).join('') + '</tbody></table>' : empty('No deals yet.')) + '</div><div class="card"><h2>Why deals were lost</h2>' + bars(r.lost_reasons, function (x) { return x.reason; }, function (x) { return x.n; }) + '</div></div>';
+    var act = {}; r.activity.forEach(function (a) { act[a.name] = act[a.name] || { name: a.name, n: 0 }; act[a.name].n += a.n; });
+    html += '<div class="card" style="margin-top:16px"><h2>Team activity <small style="font:400 12px Inter;color:var(--dim)">notes, calls, meetings and emails</small></h2>' + bars(Object.values(act).sort(function (a, b) { return b.n - a.n; }), function (x) { return x.name; }, function (x) { return x.n; }) + '</div>';
+    setTimeout(function () { document.getElementById('rd').onchange = function (e) { sessionStorage.setItem('rdays', e.target.value); route(); }; });
+    return html;
+  };
+
+  // ----- Global search (Ctrl/Cmd+K) and the bell -----
+  function openSearch() {
+    dlg.innerHTML = '<div class="search"><input type="search" id="gs" placeholder="Search contacts, deals and tasks…" aria-label="Search" autocomplete="off"><div id="gsr" class="gsr"><p class="hint">Type at least 2 letters. Tip: press Ctrl+K anywhere.</p></div></div>';
+    dlg.classList.add('sdlg'); dlg.showModal();
+    dlg.addEventListener('close', function () { dlg.classList.remove('sdlg'); }, { once: true });
+    var inp = document.getElementById('gs'), out = document.getElementById('gsr'), t;
+    inp.focus();
+    inp.oninput = function () { clearTimeout(t); t = setTimeout(async function () { var q = inp.value.trim(); if (q.length < 2) { out.innerHTML = '<p class="hint">Type at least 2 letters.</p>'; return; } try { var r = await api('search?q=' + encodeURIComponent(q)); var sec = function (title, items, fn) { return items.length ? '<h4>' + title + '</h4>' + items.map(fn).join('') : ''; }; out.innerHTML = (sec('Contacts', r.contacts, function (c) { return '<a href="#contact/' + esc(c.id) + '"><span class="av xs">' + initials(c.name) + '</span><span><b>' + esc(c.name) + '</b><small>' + esc([c.company, c.email].filter(Boolean).join(' · ')) + '</small></span></a>'; }) + sec('Deals', r.deals, function (d) { return '<a href="#deal/' + esc(d.id) + '"><span class="av xs gold">$</span><span><b>' + esc(d.title) + '</b><small>' + esc([DSTAGE[d.stage], d.value_usd ? money(d.value_usd) : '', d.contact_name].filter(Boolean).join(' · ')) + '</small></span></a>'; }) + sec('Tasks', r.tasks, function (x) { return '<a href="#tasks"><span class="av xs">✓</span><span><b>' + esc(x.title) + '</b><small>' + esc(x.due ? 'Due ' + day(x.due) : 'No due date') + '</small></span></a>'; })) || '<p class="hint">Nothing found for "' + esc(q) + '".</p>'; out.querySelectorAll('a').forEach(function (a) { a.onclick = function () { dlg.close(); }; }); } catch (x) { out.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; } }, 220); };
+    inp.onkeydown = function (e) { if (e.key === 'Escape') { e.preventDefault(); dlg.close(); return; } if (e.key === 'Enter') { var a = out.querySelector('a'); if (a) { location.hash = a.getAttribute('href'); dlg.close(); } } };
+  }
+  async function loadBell() {
+    var b = document.getElementById('bell'); if (!b) return;
+    try { var r = await api('notifications'); b.dataset.n = r.unread; b.querySelector('.dot').hidden = !r.unread; b.querySelector('.dot').textContent = r.unread > 9 ? '9+' : r.unread; b._items = r.items; } catch (e) {}
+  }
+  function openBell() {
+    var b = document.getElementById('bell'), items = b._items || [];
+    dlg.innerHTML = '<div class="bellp"><h2>Notifications</h2>' + (items.length ? '<ul class="list">' + items.map(function (n) { return '<li class="' + (n.read_at ? '' : 'unread') + '"><a class="row" href="' + esc(n.link || '#home') + '"><div class="t"><b>' + esc(n.title) + '</b><span>' + esc([n.body, ago(n.created_at)].filter(Boolean).join(' · ')) + '</span></div></a></li>'; }).join('') + '</ul>' : empty('You are all caught up.')) + '<div class="acts"><button class="btn" id="bclose">Close</button></div></div>';
+    dlg.showModal();
+    dlg.querySelectorAll('a').forEach(function (a) { a.onclick = function () { dlg.close(); }; });
+    document.getElementById('bclose').onclick = function () { dlg.close(); };
+    if (b.dataset.n !== '0') api('notifications/read', 'POST', {}).then(loadBell).catch(function () {});
+  }
 
   V.requests = async function () {
     var d = await api('requests');
@@ -419,12 +600,14 @@
   async function route() {
     document.body.classList.remove('nav-open');
     var parts = (location.hash.slice(1) || 'home').split('/'), name = parts[0], fn = V[name];
-    var allowed = navFor(ROLE).some(function (n) { return n[0] === name; }) || (name === 'contact' && TEAM);
+    var allowed = navFor(ROLE).some(function (n) { return n[0] === name; }) || ((name === 'contact' || name === 'deal') && TEAM);
     if (!fn || !allowed) { location.replace('#home'); return; }
     drawNav();
     try { main.innerHTML = await fn(decodeURIComponent(parts[1] || '')); }
     catch (x) { main.innerHTML = top('Something went wrong') + '<div class="card"><p class="err">' + esc(x.message) + '</p><button class="btn" onclick="location.reload()">Try again</button></div>'; }
     var mb = document.getElementById('menuBtn'); if (mb) mb.onclick = function () { document.body.classList.toggle('nav-open'); };
+    var sb = document.getElementById('srchBtn'); if (sb) sb.onclick = openSearch;
+    var bl = document.getElementById('bell'); if (bl) { bl.onclick = openBell; loadBell(); }
     document.title = (main.querySelector('h1') ? main.querySelector('h1').textContent + ' · ' : '') + SPACES[ROLE][0] + ' · Delegance';
   }
   async function boot() {
@@ -437,6 +620,8 @@
     document.getElementById('soSide').onclick = signOut;
     document.querySelector('#soSide svg').setAttribute('width', '16');
   }
+  document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && TEAM && !(ME && ME.mfa_required && !ME.mfa)) { e.preventDefault(); if (!dlg.open) openSearch(); } });
+  setInterval(function () { if (document.visibilityState === 'visible' && ME) loadBell(); }, 60000);
   window.addEventListener('hashchange', function () { if (ME && ME.mfa_required && !ME.mfa) return; route(); });
   document.addEventListener('click', function (e) { if (document.body.classList.contains('nav-open') && !e.target.closest('.side') && !e.target.closest('#menuBtn')) document.body.classList.remove('nav-open'); });
   boot().then(function () { if (ME.mfa_required && !ME.mfa) return gate(); return route(); }).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });

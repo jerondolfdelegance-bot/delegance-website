@@ -513,3 +513,8 @@ footer.site{border-top:1px solid var(--line);padding:64px 0 40px;color:var(--dim
 /* v3.3: request goes to the CRM */
 .sr-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}.sr-link{background:none;border:0;padding:0;color:#ececee;text-decoration:underline;cursor:pointer;font:inherit}.sr-done{color:#a2a2aa;margin-top:8px}.sr-done a{color:#fff}
 .sr-ts{margin-top:14px}.sr-ts:empty{display:none}
+
+/* v3.5: Delegance gold joins black and silver */
+:root{--gold:#e2c27a}
+.eyebrow{color:#d9c08a}.eyebrow::before{background:linear-gradient(90deg,transparent,#e2c27a)}
+.sr-ts{margin:14px 0 4px}
