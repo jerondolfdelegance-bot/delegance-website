@@ -7,3 +7,9 @@ compatibility_date = "2026-10-02"
 binding = "DB"
 database_name = "delegance-desk"
 database_id = "097da0af-d866-4776-b262-035190467e52"
+
+[vars]
+# Public Turnstile site key (the secret lives in Cloudflare as TURNSTILE_SECRET)
+TURNSTILE_SITE_KEY = "0x4AAAAAAFW0NxS7dcQAqtRn"
+MAIL_FROM = "Delegance <noreply@delegance.app>"
+TEAM_INBOX = "admin@delegance.app"

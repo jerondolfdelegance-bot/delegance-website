@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/dash.css?v=1">
+<link rel="stylesheet" href="/assets/dash.css?v=2">
 </head>
 <body class="auth">
 <div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
@@ -38,7 +38,25 @@
       <label class="fld"><span>Password</span><span class="pw"><input name="password" type="password" autocomplete="current-password" required><button type="button" class="eye" aria-label="Show password">Show</button></span></label>
       <p class="err" role="alert"></p>
       <button class="btn btn-silver wide" type="submit">Sign in</button>
-      <p class="fine">Forgot your password? Message us at <a href="mailto:admin@delegance.app?subject=Password%20reset">admin@delegance.app</a> and we'll send you a reset link.</p>
+      <p class="fine"><button type="button" class="linkbtn" id="toForgot">Forgot your password?</button></p>
+    </form>
+    <form id="fCode" class="af" novalidate hidden>
+      <h1>Enter your code</h1>
+      <p class="lead">Open your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…) and type the 6-digit code for Delegance.</p>
+      <label class="fld"><span>6-digit code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="9" pattern="[0-9 ]*" required class="code-in"></label>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-silver wide" type="submit">Verify and sign in</button>
+      <p class="fine">Lost your phone? Type one of your recovery codes instead (like <code>ab2c-d3ef</code>). <button type="button" class="linkbtn" data-back>Back to sign in</button></p>
+    </form>
+    <form id="fForgot" class="af" novalidate hidden>
+      <h1>Reset your password</h1>
+      <p class="lead">Type the email you sign in with. We'll email you a link to choose a new password.</p>
+      <label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+      <div class="ts" data-ts></div>
+      <p class="err" role="alert"></p>
+      <p class="ok" role="status" hidden></p>
+      <button class="btn btn-silver wide" type="submit">Email me a reset link</button>
+      <p class="fine"><button type="button" class="linkbtn" data-back>Back to sign in</button></p>
     </form>
     <form id="fUp" class="af" novalidate hidden>
       <h1>Create your account</h1>
@@ -48,6 +66,7 @@
       <label class="fld"><span>Password</span><span class="pw"><input name="password" type="password" autocomplete="new-password" minlength="10" required><button type="button" class="eye" aria-label="Show password">Show</button></span><small>At least 10 characters.</small></label>
       <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <label class="chk"><input type="checkbox" name="consent"> <span>I agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</span></label>
+      <div class="ts" data-ts></div>
       <p class="err" role="alert"></p>
       <button class="btn btn-silver wide" type="submit">Create account</button>
     </form>
@@ -65,14 +84,25 @@
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
-  function show(id){['fIn','fUp','fSet'].forEach(function(f){document.getElementById(f).hidden=f!==id});$('#modeTabs').hidden=id==='fSet';document.querySelectorAll('#modeTabs button').forEach(function(b){b.setAttribute('aria-selected',String((b.dataset.mode==='in')===(id==='fIn')))});var i=document.querySelector('#'+id+' input');if(i)i.focus()}
+  function show(id){['fIn','fUp','fSet','fCode','fForgot'].forEach(function(f){document.getElementById(f).hidden=f!==id});$('#modeTabs').hidden=!(id==='fIn'||id==='fUp');document.querySelectorAll('#modeTabs button').forEach(function(b){b.setAttribute('aria-selected',String((b.dataset.mode==='in')===(id==='fIn')))});var i=document.querySelector('#'+id+' input');if(i)i.focus()}
   async function post(u,d){var r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(d)});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Something went wrong. Please try again.');return j}
   function go(){var n=new URLSearchParams(location.search).get('next');location.replace(n&&/^\/(?!\/)[a-z0-9\-\/#]*$/i.test(n)?n:'/dashboard')}
-  function wire(form,fn){form.addEventListener('submit',async function(e){e.preventDefault();var b=form.querySelector('button[type=submit]'),er=form.querySelector('.err');er.textContent='';b.disabled=true;try{await fn(Object.fromEntries(new FormData(form)))}catch(x){er.textContent=x.message;b.disabled=false}})}
+  function wire(form,fn){form.addEventListener('submit',async function(e){e.preventDefault();var b=form.querySelector('button[type=submit]'),er=form.querySelector('.err');er.textContent='';b.disabled=true;try{await fn(Object.fromEntries(new FormData(form)));b.disabled=false}catch(x){er.textContent=x.message;b.disabled=false;if(form.id==='fUp'||form.id==='fForgot')tsReset(form.id);if(form.id==='fCode'&&/expired|again/.test(x.message))setTimeout(function(){show('fIn')},1800)}})}
   document.querySelectorAll('#modeTabs button').forEach(function(b){b.onclick=function(){show(b.dataset.mode==='in'?'fIn':'fUp')}});
   document.querySelectorAll('.eye').forEach(function(b){b.onclick=function(){var i=b.previousElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide';b.setAttribute('aria-label',i.type==='password'?'Show password':'Hide password')}});
-  wire($('#fIn'),async function(d){await post('/api/auth/login',d);go()});
-  wire($('#fUp'),async function(d){d.consent=!!d.consent;await post('/api/auth/signup',d);go()});
+  var ticket=null,TS=null,tsIds={};
+  wire($('#fIn'),async function(d){var r=await post('/api/auth/login',d);if(r.mfa){ticket=r.ticket;show('fCode');return}go()});
+  wire($('#fCode'),async function(d){await post('/api/auth/login-code',{ticket:ticket,code:d.code});go()});
+  wire($('#fUp'),async function(d){d.consent=!!d.consent;d.turnstile=tsToken('fUp');await post('/api/auth/signup',d);go()});
+  wire($('#fForgot'),async function(d){d.turnstile=tsToken('fForgot');var r=await post('/api/auth/forgot',d);var ok=$('#fForgot .ok');ok.textContent=r.email?'If '+d.email+' has a Delegance account, a reset link is on its way. Check your inbox (and spam) in a minute.':'Email sending is not switched on yet. Message admin@delegance.app and we will send you a link.';ok.hidden=false;tsReset('fForgot')});
+  $('#toForgot').onclick=function(){$('#fForgot [name=email]').value=$('#fIn [name=email]').value;show('fForgot');tsRender('fForgot')};
+  document.querySelectorAll('[data-back]').forEach(function(b){b.onclick=function(){show('fIn')}});
+  document.querySelector('#modeTabs [data-mode=up]').addEventListener('click',function(){tsRender('fUp')});
+  // Cloudflare Turnstile: free, privacy-friendly "I am human" check, only on sign-up and reset.
+  fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;TS=c.turnstile;var s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;s.onload=function(){['fUp','fForgot'].forEach(function(f){if(!document.getElementById(f).hidden)tsRender(f)})};document.head.appendChild(s)}).catch(function(){});
+  function tsRender(f){if(!TS||!window.turnstile||tsIds[f]!=null)return;tsIds[f]=turnstile.render(document.querySelector('#'+f+' [data-ts]'),{sitekey:TS,theme:'dark',size:'flexible'})}
+  function tsToken(f){return TS&&window.turnstile&&tsIds[f]!=null?turnstile.getResponse(tsIds[f]):''}
+  function tsReset(f){if(TS&&window.turnstile&&tsIds[f]!=null)turnstile.reset(tsIds[f])}
   var m=location.hash.match(/^#(invite|reset)=([A-Za-z0-9_-]{20,})$/),tok=m&&m[2];
   if(m){history.replaceState(null,'',location.pathname);show('fSet');
     post('/api/auth/link',{token:tok}).then(function(i){$('#setTitle').textContent=i.kind==='invite'?'Welcome to Delegance':'Choose a new password';$('#setLead').textContent=(i.kind==='invite'?'You were invited as '+i.role_name+'. ':'')+'Account: '+i.email;$('#fSet [name=name]').value=i.name||'';if(i.kind!=='invite')$('#fSet [name=name]').closest('.fld').hidden=true}).catch(function(x){$('#fSet .err').textContent=x.message;$('#fSet button[type=submit]').disabled=true});
