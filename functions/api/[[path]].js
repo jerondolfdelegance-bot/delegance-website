@@ -2,6 +2,7 @@
 import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwordProblem, json, bad, clean, cleanEmail, parse, body, limited, audit,
   startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink, checkTotp, newTotpSecret, recoveryCodes, seal, unseal, needsMfa,
   sendEmail, mailReady, teamInbox, humanOk } from './_lib.js';
+import { crmRoutes, notificationRoutes, notify, adminIds, newDeal, logActivity } from './_crm.js';
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
 const TEAM = ['staff', 'admin', 'super_admin'];
@@ -145,6 +146,10 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     await DB.prepare('INSERT INTO crm_requests (id, contact_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
       .bind(uid('rq_'), contactId, needs.length ? needs.slice(0, 3).join(', ') : 'New request', details, 'new', t, t).run();
     await audit(env, email, 'crm.web_request', contactId);
+    const openDeal = await DB.prepare("SELECT id FROM crm_deals WHERE contact_id = ? AND stage NOT IN ('won','lost')").bind(contactId).first();
+    if (!openDeal) await newDeal(env, { title: (clean(b.company, 80) || name) + ' · ' + (needs.slice(0, 2).join(', ') || 'New request'), contact_id: contactId, source: 'Website request' });
+    await logActivity(env, { contact_id: contactId, body: 'Website request:\n' + (details || 'New request') });
+    later(notify(env, await adminIds(env), { title: `New request from ${name}`, body: needs.join(', ') || clean(b.message, 140), link: '#contact/' + contactId }));
     later(Promise.all([
       sendEmail(env, { to: email, subject: 'We got your request', intro: `Hi ${name.split(' ')[0]},\n\nThanks for reaching out to Delegance. Your request is with our team and we will reply to this email, usually within one business day.\n\nWhat you sent:\n${details || 'New request'}`, button: 'Create a free account', link: 'https://delegance.app/login', outro: 'With an account you can follow your requests and message the team in one place.' }),
       sendEmail(env, { to: teamInbox(env), subject: `New request: ${name}${b.company ? ' (' + clean(b.company, 80) + ')' : ''}`, intro: `${name} <${email}> sent a request from the website.\n\n${details}`, button: 'Open in the CRM', link: 'https://delegance.app/dashboard#contact/' + contactId, replyTo: email }),
@@ -278,6 +283,8 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
     await audit(env, who, 'crm.export', results.length + ' contacts');
     return new Response([cols.join(','), ...results.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="delegance-contacts-${now().slice(0, 10)}.csv"`, 'Cache-Control': 'no-store' } });
   }
+  const nr = await notificationRoutes(path, m, req, env, me); if (nr) return nr;
+  const cr = await crmRoutes(path, m, req, env, me, url, later); if (cr) return cr;
   // ----- Contacts / pipeline (team) -----
   if (p[0] === 'contacts' && isTeam) return contacts(p, m, req, env, me, url, ctx);
 
@@ -302,6 +309,7 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
       await DB.prepare('INSERT INTO crm_requests (id, contact_id, user_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)').bind(uid('rq_'), cid, me.id, title, details || null, 'new', t, t).run();
       await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(t, cid).run();
       await audit(env, who, 'request.create', title);
+      later(notify(env, await adminIds(env), { title: `${me.name} sent a request`, body: title, link: '#contact/' + cid }));
       later(sendEmail(env, { to: teamInbox(env), subject: `New request from ${me.name}: ${title}`, intro: `${me.name} (${ROLE_NAMES[me.role]}) sent a request from their dashboard.\n\n${title}${details ? '\n\n' + details : ''}`, button: 'Open in the CRM', link: 'https://delegance.app/dashboard#contact/' + cid, replyTo: me.email }));
       return json({ ok: true }, 201);
     }
@@ -323,6 +331,9 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
       if (await limited(env, 'msg:' + me.id, 60, 3600)) return bad('Slow down a little, please.', 429);
       await DB.prepare("INSERT INTO crm_notes (id, contact_id, author_id, author_name, visibility, body, created_at) VALUES (?,?,?,?, 'client', ?, ?)").bind(uid('nt_'), me.contact_id, me.id, me.name, text, now()).run();
       await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(now(), me.contact_id).run();
+      await DB.prepare('UPDATE crm_contacts SET last_activity = ? WHERE id = ?').bind(now(), me.contact_id).run();
+      const own = await DB.prepare('SELECT owner_id FROM crm_contacts WHERE id = ?').bind(me.contact_id).first();
+      later(notify(env, own && own.owner_id ? [own.owner_id] : await adminIds(env), { title: `Message from ${me.name}`, body: text.slice(0, 200), link: '#contact/' + me.contact_id }));
       const owner = await DB.prepare("SELECT u.email FROM crm_contacts c JOIN users u ON u.id = c.owner_id WHERE c.id = ? AND u.status = 'active' AND u.notify = 1").bind(me.contact_id).first();
       later(sendEmail(env, { to: owner ? owner.email : teamInbox(env), subject: `Message from ${me.name}`, intro: `${me.name} wrote:\n\n${text}`, button: 'Reply in the CRM', link: 'https://delegance.app/dashboard#contact/' + me.contact_id, replyTo: me.email }));
       return json({ ok: true }, 201);
@@ -448,8 +459,16 @@ async function contacts(p, m, req, env, me, url, ctx) {
     const where = [], args = [];
     if (q) { where.push('(name LIKE ? OR company LIKE ? OR email LIKE ?)'); args.push(`%${q}%`, `%${q}%`, `%${q}%`); }
     if (STAGES.includes(st)) { where.push('stage = ?'); args.push(st); }
-    const { results } = await DB.prepare(`SELECT c.*, u.name owner_name FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY c.updated_at DESC LIMIT 500`).bind(...args).all();
-    return json({ items: results.map(c => ({ ...c, tags: parse(c.tags, []) })) });
+    const kind = url.searchParams.get('kind'), tag = clean(url.searchParams.get('tag'), 30), own = url.searchParams.get('owner');
+    if (['lead', 'client', 'partner'].includes(kind)) { where.push('c.kind = ?'); args.push(kind); }
+    if (tag) { where.push('c.tags LIKE ?'); args.push(`%"${tag.replace(/[%_"]/g, '')}"%`); }
+    if (own === 'me') { where.push('c.owner_id = ?'); args.push(me.id); }
+    const { results } = await DB.prepare(`SELECT c.*, u.name owner_name, (SELECT COUNT(*) FROM crm_deals d WHERE d.contact_id = c.id AND d.stage NOT IN ('won','lost')) open_deals,
+      (SELECT COALESCE(SUM(value_usd),0) FROM crm_deals d WHERE d.contact_id = c.id AND d.stage NOT IN ('won','lost')) open_value
+      FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY COALESCE(c.last_activity, c.updated_at) DESC LIMIT 1000`).bind(...args).all();
+    const { results: tagRows } = await DB.prepare("SELECT tags FROM crm_contacts WHERE tags != '[]'").all();
+    const allTags = [...new Set(tagRows.flatMap(r => parse(r.tags, [])))].sort();
+    return json({ items: results.map(c => ({ ...c, tags: parse(c.tags, []) })), tags: allTags });
   }
   if (!p[1] && m === 'POST') {
     const b = await body(req); const name = clean(b.name, 120);
@@ -473,7 +492,8 @@ async function contacts(p, m, req, env, me, url, ctx) {
     ]);
     const { results: allVas } = await DB.prepare("SELECT id, name FROM users WHERE role = 'va' AND status != 'disabled' ORDER BY name").all();
     const { results: team } = await DB.prepare("SELECT id, name, role FROM users WHERE role IN ('staff','admin','super_admin','va') AND status = 'active' ORDER BY name").all();
-    return json({ contact: { ...c, tags: parse(c.tags, []) }, notes: notes.results, tasks: tks.results, requests: reqs.results, vas: vas.results, portal: portal.results, all_vas: allVas, team });
+    const { results: deals } = await DB.prepare('SELECT d.*, u.name owner_name FROM crm_deals d LEFT JOIN users u ON u.id = d.owner_id WHERE d.contact_id = ? ORDER BY d.stage IN (\'won\',\'lost\'), d.updated_at DESC').bind(c.id).all();
+    return json({ contact: { ...c, tags: parse(c.tags, []) }, deals, notes: notes.results, tasks: tks.results, requests: reqs.results, vas: vas.results, portal: portal.results, all_vas: allVas, team });
   }
   if (!p[2] && m === 'PATCH') {
     const b = await body(req), f = { ...c };
@@ -491,13 +511,13 @@ async function contacts(p, m, req, env, me, url, ctx) {
   }
   if (!p[2] && m === 'DELETE' && can(me, 'admin')) {
     await DB.batch(['crm_notes', 'crm_requests', 'va_assignments'].map(t => DB.prepare(`DELETE FROM ${t} WHERE contact_id = ?`).bind(c.id)).concat([
-      DB.prepare('UPDATE crm_tasks SET contact_id = NULL WHERE contact_id = ?').bind(c.id), DB.prepare('UPDATE users SET contact_id = NULL WHERE contact_id = ?').bind(c.id), DB.prepare('DELETE FROM crm_contacts WHERE id = ?').bind(c.id)]));
+      DB.prepare('UPDATE crm_tasks SET contact_id = NULL WHERE contact_id = ?').bind(c.id), DB.prepare('UPDATE crm_deals SET contact_id = NULL WHERE contact_id = ?').bind(c.id), DB.prepare('UPDATE users SET contact_id = NULL WHERE contact_id = ?').bind(c.id), DB.prepare('DELETE FROM crm_contacts WHERE id = ?').bind(c.id)]));
     await audit(env, me.email, 'crm.contact_delete', c.name);
     return json({ ok: true });
   }
   if (p[2] === 'notes' && m === 'POST') {
     const b = await body(req); const text = clean(b.body, 3000); if (!text) return bad('Write a note first.');
-    await DB.prepare('INSERT INTO crm_notes (id, contact_id, author_id, author_name, visibility, body, created_at) VALUES (?,?,?,?,?,?,?)').bind(uid('nt_'), c.id, me.id, me.name, b.visibility === 'client' ? 'client' : 'internal', text, now()).run();
+    await logActivity(env, { contact_id: c.id, me, kind: ['call', 'meeting'].includes(b.kind) ? b.kind : 'note', body: text, visibility: b.visibility === 'client' ? 'client' : 'internal' });
     await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(now(), c.id).run();
     if (b.visibility === 'client') {
       const { results: ppl } = await DB.prepare("SELECT email, name FROM users WHERE contact_id = ? AND status = 'active' AND notify = 1").bind(c.id).all();
@@ -527,7 +547,7 @@ async function tasks(p, m, req, env, me, url, ctx) {
       return json({ items: results });
     }
     const mine = !isTeam || url.searchParams.get('mine') === '1';
-    const { results } = await DB.prepare(`SELECT t.*, c.name contact_name, u.name assignee_name FROM crm_tasks t LEFT JOIN crm_contacts c ON c.id = t.contact_id LEFT JOIN users u ON u.id = t.assignee_id ${mine ? 'WHERE t.assignee_id = ?' : ''} ORDER BY t.status = 'done', t.due IS NULL, t.due, t.created_at DESC LIMIT 400`).bind(...(mine ? [me.id] : [])).all();
+    const { results } = await DB.prepare(`SELECT t.*, c.name contact_name, u.name assignee_name, d.title deal_title FROM crm_tasks t LEFT JOIN crm_contacts c ON c.id = t.contact_id LEFT JOIN users u ON u.id = t.assignee_id LEFT JOIN crm_deals d ON d.id = t.deal_id ${mine ? 'WHERE t.assignee_id = ?' : ''} ORDER BY t.status = 'done', t.priority DESC, t.due IS NULL, t.due, t.created_at DESC LIMIT 400`).bind(...(mine ? [me.id] : [])).all();
     return json({ items: results });
   }
   if (!p[1] && m === 'POST' && (isTeam || me.role === 'va')) {
@@ -536,8 +556,11 @@ async function tasks(p, m, req, env, me, url, ctx) {
     if (me.role === 'va' && b.contact_id && !(await DB.prepare('SELECT 1 FROM va_assignments WHERE va_id = ? AND contact_id = ?').bind(me.id, b.contact_id).first())) return bad('That client is not assigned to you.');
     const t = now(), assignee = isTeam ? (b.assignee_id || me.id) : me.id;
     if (assignee !== me.id) { const a = await DB.prepare("SELECT email, name FROM users WHERE id = ? AND status = 'active' AND notify = 1").bind(assignee).first(); if (a) later(sendEmail(env, { to: a.email, subject: `New task: ${title}`, intro: `Hi ${a.name.split(' ')[0]},\n\n${me.name} gave you a task: "${title}"${/^\d{4}-\d{2}-\d{2}$/.test(b.due) ? ', due ' + b.due : ''}.`, button: 'Open my tasks', link: 'https://delegance.app/dashboard#tasks' })); }
-    await DB.prepare('INSERT INTO crm_tasks (id, title, contact_id, assignee_id, due, status, client_visible, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(
-      uid('tk_'), title, b.contact_id || null, assignee, /^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null, 'open', b.client_visible ? 1 : 0, me.id, t, t).run();
+    let contactId = b.contact_id || null, dealId = null;
+    if (isTeam && b.deal_id) { const d = await DB.prepare('SELECT id, contact_id FROM crm_deals WHERE id = ?').bind(b.deal_id).first(); if (d) { dealId = d.id; contactId = contactId || d.contact_id; } }
+    await DB.prepare('INSERT INTO crm_tasks (id, title, contact_id, deal_id, assignee_id, due, status, priority, client_visible, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)').bind(
+      uid('tk_'), title, contactId, dealId, assignee, /^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null, 'open', b.priority ? 1 : 0, b.client_visible ? 1 : 0, me.id, t, t).run();
+    if (assignee !== me.id) later(notify(env, [assignee], { title: `${me.name} gave you a task`, body: title, link: '#tasks' }));
     return json({ ok: true }, 201);
   }
   const t = p[1] && await DB.prepare('SELECT * FROM crm_tasks WHERE id = ?').bind(p[1]).first();
@@ -546,6 +569,8 @@ async function tasks(p, m, req, env, me, url, ctx) {
   if (m === 'PATCH') {
     const b = await body(req);
     const status = ['open', 'doing', 'done'].includes(b.status) ? b.status : t.status;
+    if (b.priority !== undefined) await DB.prepare('UPDATE crm_tasks SET priority = ? WHERE id = ?').bind(b.priority ? 1 : 0, t.id).run();
+    if (status === 'done' && t.status !== 'done' && t.contact_id && isTeam) await logActivity(env, { contact_id: t.contact_id, deal_id: t.deal_id, me, body: `Task done: ${t.title}` });
     await DB.prepare('UPDATE crm_tasks SET status = ?, title = ?, due = ?, assignee_id = ?, client_visible = ?, updated_at = ? WHERE id = ?').bind(status, clean(b.title, 200) || t.title,
       b.due !== undefined ? (/^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null) : t.due, isTeam && b.assignee_id !== undefined ? (b.assignee_id || null) : t.assignee_id,
       isTeam && b.client_visible !== undefined ? (b.client_visible ? 1 : 0) : t.client_visible, now(), t.id).run();
@@ -562,7 +587,11 @@ async function dashboard(env, me) {
   const all = async (sql, ...a) => (await DB.prepare(sql).bind(...a).all()).results;
   const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
   if (can(me, 'staff')) {
-    out.pipeline = await all('SELECT stage, COUNT(*) n, COALESCE(SUM(value_usd),0) v FROM crm_contacts GROUP BY stage');
+    out.pipeline = await all("SELECT stage, COUNT(*) n, COALESCE(SUM(value_usd),0) v FROM crm_deals GROUP BY stage");
+    out.forecast = (await one("SELECT COALESCE(SUM(value_usd * COALESCE(probability, CASE stage WHEN 'new' THEN 10 WHEN 'contacted' THEN 20 WHEN 'call' THEN 40 WHEN 'proposal' THEN 60 WHEN 'negotiation' THEN 80 ELSE 0 END) / 100.0),0) w, COALESCE(SUM(value_usd),0) v FROM crm_deals WHERE stage NOT IN ('won','lost')"));
+    out.won_month = (await one("SELECT COUNT(*) n, COALESCE(SUM(value_usd),0) v FROM crm_deals WHERE stage = 'won' AND closed_at >= ?", now().slice(0, 8) + '01'));
+    out.stale = await all("SELECT d.id, d.title, d.stage, d.value_usd, d.updated_at FROM crm_deals d WHERE d.stage NOT IN ('won','lost') AND d.updated_at < ? ORDER BY d.updated_at LIMIT 5", new Date(Date.now() - 14 * 86400_000).toISOString());
+    out.today = (await one("SELECT SUM(due < ?) overdue, SUM(due = ?) today FROM crm_tasks WHERE assignee_id = ? AND status != 'done'", now().slice(0, 10), now().slice(0, 10), me.id));
     out.counts = {
       contacts: (await one('SELECT COUNT(*) n FROM crm_contacts')).n,
       new_this_week: (await one('SELECT COUNT(*) n FROM crm_contacts WHERE created_at > ?', weekAgo)).n,
@@ -573,7 +602,7 @@ async function dashboard(env, me) {
     };
     out.my_tasks = await all("SELECT t.id, t.title, t.due, t.status, c.name contact_name, t.contact_id FROM crm_tasks t LEFT JOIN crm_contacts c ON c.id = t.contact_id WHERE t.assignee_id = ? AND t.status != 'done' ORDER BY t.due IS NULL, t.due LIMIT 8", me.id);
     out.requests = await all("SELECT r.id, r.title, r.status, r.created_at, c.name contact_name, r.contact_id FROM crm_requests r LEFT JOIN crm_contacts c ON c.id = r.contact_id WHERE r.status IN ('new','in_progress') ORDER BY r.created_at DESC LIMIT 6");
-    out.recent = await all('SELECT id, name, company, stage, updated_at FROM crm_contacts ORDER BY updated_at DESC LIMIT 6');
+    out.recent = await all('SELECT id, name, company, kind, updated_at FROM crm_contacts ORDER BY COALESCE(last_activity, updated_at) DESC LIMIT 6');
   }
   if (can(me, 'admin')) {
     out.people = await all('SELECT role, status, COUNT(*) n FROM users GROUP BY role, status');

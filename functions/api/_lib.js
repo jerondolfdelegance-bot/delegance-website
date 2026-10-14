@@ -127,11 +127,11 @@ export function emailHtml({ title, intro, button, link, outro }) {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f6;font-family:Inter,Segoe UI,Arial,sans-serif;color:#1a1a1f">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f6;padding:32px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e6e6ea">
-<tr><td style="background:#0a0a0b;padding:22px 28px"><img src="https://delegance.app/brand/email-logo.png" alt="DELEGANCE" width="160" height="30" style="height:30px;width:160px;color:#ffffff;font:600 14px Arial;letter-spacing:4px"></td></tr>
+<tr><td style="background:#0a0a0b;padding:22px 28px;border-bottom:2px solid #e2c27a"><img src="https://delegance.app/brand/email-logo.png" alt="DELEGANCE" width="160" height="30" style="height:30px;width:160px;color:#ffffff;font:600 14px Arial;letter-spacing:4px"></td></tr>
 <tr><td style="padding:28px">
 <h1 style="margin:0 0 12px;font:600 22px/1.3 Montserrat,Arial,sans-serif;color:#0a0a0b">${escH(title)}</h1>
 <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#3a3a42;white-space:pre-line">${escH(intro)}</p>
-${link ? `<p style="margin:0 0 20px"><a href="${escH(link)}" style="display:inline-block;background:#0a0a0b;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:999px">${escH(button || 'Open')}</a></p>
+${link ? `<p style="margin:0 0 20px"><a href="${escH(link)}" style="display:inline-block;background:#0a0a0b;color:#e2c27a;border:1px solid #e2c27a;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:999px">${escH(button || 'Open')}</a></p>
 <p style="margin:0 0 16px;font-size:12px;color:#7a7a84">Or paste this link into your browser:<br><span style="word-break:break-all">${escH(link)}</span></p>` : ''}
 ${outro ? `<p style="margin:0;font-size:13px;line-height:1.6;color:#7a7a84">${escH(outro)}</p>` : ''}
 </td></tr>
