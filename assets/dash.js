@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var main = document.getElementById('main'), dlg = document.getElementById('dlg');
-  var ME = null, ROLE = null, TEAM = false, ADMIN = false, SUPER = false;
+  var ME = null, ROLE = null, TEAM = false, ADMIN = false, SUPER = false, EMAIL = false;
   var STAGES = [['new', 'New'], ['contacted', 'Contacted'], ['call', 'Discovery call'], ['proposal', 'Proposal'], ['won', 'Won'], ['lost', 'Lost']];
   var STAGE = Object.fromEntries(STAGES);
   var STATUS = { new: 'New', in_progress: 'In progress', done: 'Done', closed: 'Closed', open: 'To do', doing: 'Doing', active: 'Active', invited: 'Invited', disabled: 'Off', pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
@@ -14,6 +14,7 @@
     var r = await fetch('/api/' + path, { method: method || 'GET', credentials: 'same-origin', headers: data !== undefined ? { 'Content-Type': 'application/json' } : {}, body: data !== undefined ? JSON.stringify(data) : undefined });
     if (r.status === 401) { location.replace('/login?next=' + encodeURIComponent('/dashboard' + location.hash)); throw new Error('Please sign in.'); }
     var j = await r.json().catch(function () { return {}; });
+    if (r.status === 403 && j.code === 'mfa_setup') { location.reload(); throw new Error(j.error); }
     if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.');
     return j;
   }
@@ -180,7 +181,7 @@
   V.contacts = async function () {
     var q = sessionStorage.getItem('dq') || '';
     var d = await api('contacts' + (q ? '?q=' + encodeURIComponent(q) : ''));
-    var html = top('Contacts', d.items.length + ' people and companies', '<button class="btn btn-acc" id="addC">Add contact</button>') + '<div class="tools"><input type="search" id="q" placeholder="Search name, company or email" value="' + esc(q) + '" aria-label="Search contacts"></div>';
+    var html = top('Contacts', d.items.length + ' people and companies', (ADMIN ? '<a class="btn" href="/api/contacts.csv" download>Export CSV</a>' : '') + '<button class="btn btn-acc" id="addC">Add contact</button>') + '<div class="tools"><input type="search" id="q" placeholder="Search name, company or email" value="' + esc(q) + '" aria-label="Search contacts"></div>';
     html += d.items.length ? '<div class="tblwrap"><table class="tbl"><thead><tr><th>Name</th><th class="hide-sm">Source</th><th>Stage</th><th class="hide-sm">Owner</th><th class="hide-sm">Updated</th></tr></thead><tbody>' + d.items.map(function (c) { return '<tr class="click" data-href="#contact/' + esc(c.id) + '"><td><a href="#contact/' + esc(c.id) + '" style="text-decoration:none"><b>' + esc(c.name) + '</b></a><span class="sub">' + esc([c.company, c.email].filter(Boolean).join(' · ')) + '</span></td><td class="hide-sm">' + esc(c.source || '') + '</td><td>' + pill(c.stage, STAGE[c.stage]) + '</td><td class="hide-sm">' + esc(c.owner_name || '') + '</td><td class="hide-sm">' + esc(ago(c.updated_at)) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="card">' + empty(q ? 'Nothing matches that search.' : 'No contacts yet. Requests from the website "Start a request" form appear here automatically.') + '</div>';
     setTimeout(function () {
       document.getElementById('addC').onclick = addContact;
@@ -308,19 +309,20 @@
     var roles = d.can_give.map(function (r) { return [r, ROLE_NAME[r]]; });
     var html = top('People', d.items.length + ' accounts', '<button class="btn btn-acc" id="inv">Invite someone</button>');
     html += '<div class="tblwrap"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th class="hide-sm">Last sign-in</th><th></th></tr></thead><tbody>' + d.items.map(function (u) {
-      return '<tr><td><b>' + esc(u.name) + '</b>' + (u.id === ME.id ? ' <span class="pill">You</span>' : '') + '<span class="sub">' + esc(u.email) + (u.title ? ' · ' + esc(u.title) : '') + '</span></td><td>' + esc(u.role_name) + '</td><td>' + pill(u.status) + '</td><td class="hide-sm">' + esc(u.last_login ? ago(u.last_login) : 'Never') + '</td><td>' + (u.id !== ME.id && (SUPER || ['staff', 'va', 'client', 'member'].includes(u.role)) ? '<button class="btn btn-sm editU" data-id="' + esc(u.id) + '">Manage</button>' : '') + '</td></tr>';
+      return '<tr><td><b>' + esc(u.name) + '</b>' + (u.id === ME.id ? ' <span class="pill">You</span>' : '') + '<span class="sub">' + esc(u.email) + (u.title ? ' · ' + esc(u.title) : '') + '</span></td><td>' + esc(u.role_name) + '</td><td>' + pill(u.status) + (u.mfa ? ' <span class="pill active" title="2-step sign-in on">2-step</span>' : '') + '</td><td class="hide-sm">' + esc(u.last_login ? ago(u.last_login) : 'Never') + '</td><td>' + (u.id !== ME.id && (SUPER || ['staff', 'va', 'client', 'member'].includes(u.role)) ? '<button class="btn btn-sm editU" data-id="' + esc(u.id) + '">Manage</button>' : '') + '</td></tr>';
     }).join('') + '</tbody></table></div><p class="fine">Invite links and password reset links work once. Send them to the person yourself, by email or chat.</p>';
     setTimeout(function () {
       document.getElementById('inv').onclick = function () {
-        modal('<h2>Invite someone</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required maxlength="80"></label><label class="fld"><span>Email</span><input name="email" type="email" required></label></div><div class="row2"><label class="fld"><span>Role</span><select name="role" id="invRole">' + opts(roles, 'staff') + '</select></label><label class="fld"><span>Job title (optional)</span><input name="title" maxlength="80"></label></div><label class="fld" id="invVa" hidden><span>Link VA profile</span><select name="candidate_id">' + opts(d.candidates.map(function (c) { return [c.id, c.name]; }), '', 'Not yet') + '</select></label><label class="fld" id="invCl" hidden><span>Client record</span><select name="contact_id">' + opts(d.contacts.map(function (c) { return [c.id, c.company ? c.company + ' (' + c.name + ')' : c.name]; }), '', 'Create a new one') + '</select></label>', async function (f) { var r = await api('users', 'POST', f); showLink('Invite ready', r.link, 'Send this link to ' + f.name + '. It works once and expires in 7 days.'); setTimeout(route, 50); return true; });
+        modal('<h2>Invite someone</h2><div class="row2"><label class="fld"><span>Name</span><input name="name" required maxlength="80"></label><label class="fld"><span>Email</span><input name="email" type="email" required></label></div><div class="row2"><label class="fld"><span>Role</span><select name="role" id="invRole">' + opts(roles, 'staff') + '</select></label><label class="fld"><span>Job title (optional)</span><input name="title" maxlength="80"></label></div><label class="fld" id="invVa" hidden><span>Link VA profile</span><select name="candidate_id">' + opts(d.candidates.map(function (c) { return [c.id, c.name]; }), '', 'Not yet') + '</select></label><label class="fld" id="invCl" hidden><span>Client record</span><select name="contact_id">' + opts(d.contacts.map(function (c) { return [c.id, c.company ? c.company + ' (' + c.name + ')' : c.name]; }), '', 'Create a new one') + '</select></label>', async function (f) { var r = await api('users', 'POST', f); showLink(r.emailed ? 'Invite sent' : 'Invite ready', r.link, r.emailed ? 'We emailed this link to ' + f.email + '. You can also copy it and send it another way. It works once and expires in 7 days.' : 'Send this link to ' + f.name + '. It works once and expires in 7 days.'); setTimeout(route, 50); return true; });
         var rs = document.getElementById('invRole'), sync = function () { document.getElementById('invVa').hidden = rs.value !== 'va'; document.getElementById('invCl').hidden = rs.value !== 'client'; }; rs.onchange = sync; sync();
       };
       document.querySelectorAll('.editU').forEach(function (b) {
         b.onclick = function () {
           var u = d.items.find(function (x) { return x.id === b.dataset.id; });
-          modal('<h2>' + esc(u.name) + '</h2><p class="lead">' + esc(u.email) + '</p><div class="row2"><label class="fld"><span>Name</span><input name="name" value="' + esc(u.name) + '"></label><label class="fld"><span>Job title</span><input name="title" value="' + esc(u.title || '') + '"></label></div><div class="row2"><label class="fld"><span>Role</span><select name="role">' + opts(roles.some(function (r) { return r[0] === u.role; }) ? roles : roles.concat([[u.role, ROLE_NAME[u.role]]]), u.role) + '</select></label><label class="fld"><span>Status</span><select name="status">' + opts([['active', 'Active'], ['disabled', 'Off (cannot sign in)']].concat(u.status === 'invited' ? [['invited', 'Invited']] : []), u.status) + '</select></label></div><label class="fld"><span>VA profile</span><select name="candidate_id">' + opts(d.candidates.map(function (c) { return [c.id, c.name]; }), u.candidate_id, 'None') + '</select></label><label class="fld"><span>Client record</span><select name="contact_id">' + opts(d.contacts.map(function (c) { return [c.id, c.company ? c.company + ' (' + c.name + ')' : c.name]; }), u.contact_id, 'None') + '</select></label><div class="inline" style="flex-wrap:wrap;margin:6px 0 10px"><button type="button" class="btn btn-sm" id="uLink">' + (u.status === 'invited' ? 'New invite link' : 'Password reset link') + '</button><button type="button" class="btn btn-sm" id="uOut">Sign out everywhere</button>' + (SUPER ? '<button type="button" class="btn btn-sm btn-danger" id="uDel">Delete account</button>' : '') + '</div>', async function (f) { await api('users/' + u.id, 'PATCH', f); toast('Saved.'); route(); });
-          document.getElementById('uLink').onclick = async function () { try { var r = await api('users/' + u.id + '/link', 'POST', {}); showLink(u.status === 'invited' ? 'New invite link' : 'Password reset link', r.link, 'Send this to ' + u.name + '. It works once and expires in ' + (u.status === 'invited' ? '7 days.' : '24 hours.')); } catch (x) { toast(x.message, true); } };
+          modal('<h2>' + esc(u.name) + '</h2><p class="lead">' + esc(u.email) + '</p><div class="row2"><label class="fld"><span>Name</span><input name="name" value="' + esc(u.name) + '"></label><label class="fld"><span>Job title</span><input name="title" value="' + esc(u.title || '') + '"></label></div><div class="row2"><label class="fld"><span>Role</span><select name="role">' + opts(roles.some(function (r) { return r[0] === u.role; }) ? roles : roles.concat([[u.role, ROLE_NAME[u.role]]]), u.role) + '</select></label><label class="fld"><span>Status</span><select name="status">' + opts([['active', 'Active'], ['disabled', 'Off (cannot sign in)']].concat(u.status === 'invited' ? [['invited', 'Invited']] : []), u.status) + '</select></label></div><label class="fld"><span>VA profile</span><select name="candidate_id">' + opts(d.candidates.map(function (c) { return [c.id, c.name]; }), u.candidate_id, 'None') + '</select></label><label class="fld"><span>Client record</span><select name="contact_id">' + opts(d.contacts.map(function (c) { return [c.id, c.company ? c.company + ' (' + c.name + ')' : c.name]; }), u.contact_id, 'None') + '</select></label><div class="inline" style="flex-wrap:wrap;margin:6px 0 10px"><button type="button" class="btn btn-sm" id="uLink">' + (u.status === 'invited' ? 'New invite link' : 'Password reset link') + '</button><button type="button" class="btn btn-sm" id="uOut">Sign out everywhere</button>' + (u.mfa ? '<button type="button" class="btn btn-sm" id="uMfa">Reset 2-step sign-in</button>' : '') + '' + (SUPER ? '<button type="button" class="btn btn-sm btn-danger" id="uDel">Delete account</button>' : '') + '</div>', async function (f) { await api('users/' + u.id, 'PATCH', f); toast('Saved.'); route(); });
+          document.getElementById('uLink').onclick = async function () { try { var r = await api('users/' + u.id + '/link', 'POST', {}); showLink(u.status === 'invited' ? 'New invite link' : 'Password reset link', r.link, (r.emailed ? 'We emailed this to ' + u.email + '. ' : 'Send this to ' + u.name + '. ') + 'It works once and expires in ' + (u.status === 'invited' ? '7 days.' : '24 hours.')); } catch (x) { toast(x.message, true); } };
           document.getElementById('uOut').onclick = async function () { try { await api('users/' + u.id + '/sessions', 'DELETE'); toast(u.name + ' is signed out everywhere.'); } catch (x) { toast(x.message, true); } };
+          var um = document.getElementById('uMfa'); if (um) um.onclick = async function () { if (um.dataset.sure !== '1') { um.dataset.sure = '1'; um.textContent = 'Click again: they set it up again at next sign-in'; return; } try { await api('users/' + u.id + '/mfa', 'DELETE'); toast('2-step sign-in reset for ' + u.name + '.'); dlg.close(); route(); } catch (x) { toast(x.message, true); } };
           var del = document.getElementById('uDel'); if (del) del.onclick = async function () { if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'Click again to delete'; return; } try { await api('users/' + u.id, 'DELETE'); dlg.close(); toast('Account deleted.'); route(); } catch (x) { toast(x.message, true); } };
         };
       });
@@ -358,19 +360,60 @@
   V.guides = async function () { location.href = '/guides'; return ''; };
 
   V.account = async function () {
+    var ses = await api('auth/sessions');
     var html = top('Account', ROLE_NAME[ROLE] + ' · ' + ME.email);
     html += '<div class="grid g2"><div class="card"><h2>Profile</h2><form id="profF"><label class="fld"><span>Name</span><input name="name" required maxlength="80" value="' + esc(ME.name) + '"></label><label class="fld"><span>Job title (optional)</span><input name="title" maxlength="80" value="' + esc(ME.title || '') + '"></label><button class="btn btn-acc">Save</button></form></div>';
     html += '<div class="card"><h2>Password</h2><form id="pwF"><label class="fld"><span>Current password</span><input type="password" name="current" autocomplete="current-password" required></label><label class="fld"><span>New password</span><input type="password" name="password" autocomplete="new-password" minlength="10" required><small>At least 10 characters. Changing it signs out your other devices.</small></label><button class="btn btn-acc">Change password</button></form></div></div>';
-    html += '<div class="card" style="margin-top:16px"><h2>Sign out</h2><div class="inline" style="flex-wrap:wrap"><button class="btn" id="so">Sign out</button><button class="btn btn-danger" id="soAll">Sign out on every device</button></div></div>';
+    html += '<div class="grid g2" style="margin-top:16px"><div class="card"><h2>2-step sign-in ' + pill(ME.mfa ? 'active' : 'pending', ME.mfa ? 'On' : 'Off') + '</h2><div id="mfaBox">' + (ME.mfa
+      ? '<p style="color:var(--muted);margin-bottom:14px">You enter a 6-digit code from your authenticator app after your password.' + (ME.mfa_required ? ' Required for team accounts.' : '') + '</p><form id="mfaAct" class="inline" style="flex-wrap:wrap"><input name="code" class="code-in" inputmode="numeric" maxlength="7" placeholder="123456" aria-label="Current 6-digit code" style="max-width:170px"><button class="btn" value="rec">New recovery codes</button>' + (ME.mfa_required ? '' : '<button class="btn btn-danger" value="off">Turn off</button>') + '</form><p class="fine">Type a current code from the app first.</p>'
+      : '<p style="color:var(--muted);margin-bottom:14px">Add a 6-digit code from your phone to every sign-in, so a stolen password is not enough.</p><button class="btn btn-acc" id="mfaOn">Turn on</button>') + '</div></div>';
+    html += '<div class="card"><h2>Email notifications</h2><label class="toggle"><span style="color:var(--muted)">Email me about new messages, tasks given to me and updates to my requests.</span><span class="switch"><input type="checkbox" id="notify"' + (ME.notify ? ' checked' : '') + ' aria-label="Email notifications"><i></i></span></label>' + (EMAIL ? '' : '<p class="fine">Email sending is being switched on.</p>') + '</div></div>';
+    html += '<div class="card" style="margin-top:16px"><h2>Where you are signed in</h2><ul class="list">' + ses.items.map(function (x) { return '<li><div class="t"><b>' + esc(x.device) + (x.current ? ' <span class="pill active">This device</span>' : '') + '</b><span>' + esc([x.place, 'active ' + ago(x.last_seen), 'signed in ' + day(x.created_at)].filter(Boolean).join(' · ')) + '</span></div>' + (x.current ? '' : '<button class="btn btn-sm endS" data-id="' + esc(x.id) + '">Sign out</button>') + '</li>'; }).join('') + '</ul><div class="inline" style="flex-wrap:wrap;margin-top:14px"><button class="btn" id="so">Sign out</button><button class="btn btn-danger" id="soAll">Sign out on every device</button></div></div>';
     setTimeout(function () {
       document.getElementById('profF').onsubmit = async function (e) { e.preventDefault(); try { await api('auth/profile', 'POST', Object.fromEntries(new FormData(e.target))); toast('Saved.'); boot(); } catch (x) { toast(x.message, true); } };
       document.getElementById('pwF').onsubmit = async function (e) { e.preventDefault(); try { await api('auth/password', 'POST', Object.fromEntries(new FormData(e.target))); e.target.reset(); toast('Password changed.'); } catch (x) { toast(x.message, true); } };
       document.getElementById('so').onclick = signOut;
       document.getElementById('soAll').onclick = async function () { try { await api('auth/logout-all', 'POST', {}); } catch (x) {} location.replace('/login'); };
+      document.querySelectorAll('.endS').forEach(function (b) { b.onclick = async function () { try { await api('auth/sessions/' + b.dataset.id, 'DELETE'); route(); } catch (x) { toast(x.message, true); } }; });
+      document.getElementById('notify').onchange = async function (e) { try { await api('auth/notify', 'POST', { on: e.target.checked }); ME.notify = e.target.checked; toast(e.target.checked ? 'Email notifications on.' : 'Email notifications off.'); } catch (x) { toast(x.message, true); } };
+      var on = document.getElementById('mfaOn'); if (on) on.onclick = function () { mfaSetup(document.getElementById('mfaBox'), async function () { await boot(); route(); }).catch(function (x) { toast(x.message, true); }); };
+      var act = document.getElementById('mfaAct'); if (act) act.onsubmit = async function (e) {
+        e.preventDefault(); var code = e.target.code.value, which = e.submitter && e.submitter.value;
+        try {
+          if (which === 'off') { await api('auth/totp/disable', 'POST', { code: code }); toast('2-step sign-in is off.'); await boot(); route(); }
+          else { var r = await api('auth/totp/recovery', 'POST', { code: code }); showCodes(document.getElementById('mfaBox'), r.recovery, function () { route(); }); }
+        } catch (x) { toast(x.message, true); }
+      };
     });
     return html;
   };
   async function signOut() { try { await api('auth/logout', 'POST', {}); } catch (x) {} location.replace('/login'); }
+
+  // ---------- 2-step sign-in ----------
+  function loadQr() { return window.qrcode ? Promise.resolve() : new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/assets/qr.js?v=1'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); }
+  async function mfaSetup(box, done) {
+    var r = await api('auth/totp/start', 'POST', {});
+    var qr = '';
+    try { await loadQr(); var q = window.qrcode(0, 'M'); q.addData(r.uri); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) {}
+    box.innerHTML = '<ol class="steps"><li>Install a free authenticator app on your phone: <b>Google Authenticator</b>, <b>Microsoft Authenticator</b> or <b>1Password</b>.</li><li>In the app, tap <b>+</b> and scan this QR code.' + (qr ? '<div style="margin-top:12px"><span class="qr">' + qr + '</span></div>' : '') + '<span style="display:block;margin-top:10px;font-size:13px">Can\'t scan? Choose "Enter a setup key" and type:</span><code class="secret">' + esc(r.secret.replace(/(.{4})/g, '$1 ').trim()) + '</code></li><li>Type the 6-digit code the app shows for Delegance:<form id="mfaF" style="margin-top:10px;max-width:280px"><input name="code" class="code-in" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required aria-label="6-digit code"><p class="err" role="alert"></p><button class="btn btn-acc wide">Turn on 2-step sign-in</button></form></li></ol>';
+    box.querySelector('#mfaF').onsubmit = async function (e) {
+      e.preventDefault(); var b = e.target.querySelector('button'), er = e.target.querySelector('.err'); b.disabled = true; er.textContent = '';
+      try { var c = await api('auth/totp/confirm', 'POST', { code: e.target.code.value }); showCodes(box, c.recovery, done); } catch (x) { er.textContent = x.message; b.disabled = false; }
+    };
+  }
+  function showCodes(box, codes, done) {
+    box.innerHTML = '<h2 style="font-size:18px;margin-bottom:8px">Save your recovery codes</h2><p style="color:var(--muted)">If you lose your phone, each of these codes lets you sign in once. Keep them somewhere safe, like a password manager. You will not see them again.</p><div class="codes">' + codes.map(function (c) { return '<span>' + esc(c) + '</span>'; }).join('') + '</div><div class="inline" style="flex-wrap:wrap"><button class="btn" id="cpC">Copy</button><button class="btn" id="dlC">Download .txt</button><button class="btn btn-acc" id="okC">I saved them</button></div>';
+    var txt = 'Delegance recovery codes for ' + ME.email + '\n\n' + codes.join('\n') + '\n\nEach code works once.';
+    box.querySelector('#cpC').onclick = function () { navigator.clipboard.writeText(txt).then(function () { toast('Codes copied.'); }); };
+    box.querySelector('#dlC').onclick = function () { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' })); a.download = 'delegance-recovery-codes.txt'; a.click(); };
+    box.querySelector('#okC').onclick = done;
+  }
+  function gate() {
+    document.getElementById('nav').innerHTML = '';
+    main.innerHTML = '<div class="gate"><div class="hero"><span class="eyebrow">' + esc(SPACES[ROLE][0]) + '</span><h1>One more step, ' + esc(ME.name.split(' ')[0]) + '.</h1><p>Team accounts can see client details, so Delegance asks for a 6-digit code from your phone when you sign in. It takes about a minute to set up.</p></div><div class="card" id="mfaBox"><p class="loading">Preparing…</p></div><p class="fine" style="text-align:center"><button class="linkbtn" id="gateOut">Sign out</button></p></div>';
+    document.getElementById('gateOut').onclick = signOut;
+    mfaSetup(document.getElementById('mfaBox'), function () { location.reload(); }).catch(function (x) { document.getElementById('mfaBox').innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
+  }
 
   // ---------- router ----------
   async function route() {
@@ -385,7 +428,7 @@
     document.title = (main.querySelector('h1') ? main.querySelector('h1').textContent + ' · ' : '') + SPACES[ROLE][0] + ' · Delegance';
   }
   async function boot() {
-    var r = await api('auth/me'); ME = r.user; ROLE = ME.role;
+    var r = await api('auth/me'); ME = r.user; ROLE = ME.role; EMAIL = !!r.email;
     SUPER = ROLE === 'super_admin'; ADMIN = SUPER || ROLE === 'admin'; TEAM = ADMIN || ROLE === 'staff';
     document.body.dataset.role = ROLE;
     document.body.classList.toggle('topbar', !TEAM);
@@ -394,7 +437,7 @@
     document.getElementById('soSide').onclick = signOut;
     document.querySelector('#soSide svg').setAttribute('width', '16');
   }
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', function () { if (ME && ME.mfa_required && !ME.mfa) return; route(); });
   document.addEventListener('click', function (e) { if (document.body.classList.contains('nav-open') && !e.target.closest('.side') && !e.target.closest('#menuBtn')) document.body.classList.remove('nav-open'); });
-  boot().then(route).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
+  boot().then(function () { if (ME.mfa_required && !ME.mfa) return gate(); return route(); }).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
 })();

@@ -194,3 +194,17 @@ dialog .acts{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;flex-
   .tbl .hide-sm{display:none}
 }
 @media (max-width:520px){.g4{grid-template-columns:1fr 1fr}.kpi b{font-size:26px}.card{padding:16px}}
+
+/* v1.1: sign-in codes, reset, security */
+.linkbtn{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit}
+.linkbtn:hover{color:#fff}
+.ok{color:var(--ok);font-size:14px;margin:0 0 12px}
+.code-in{font:600 22px/1 ui-monospace,Menlo,monospace!important;letter-spacing:.3em;text-align:center}
+.ts{margin:4px 0 12px;min-height:0}
+.qr{background:#fff;border-radius:14px;padding:12px;display:inline-block;line-height:0}.qr img,.qr svg{width:180px;height:180px;display:block}
+.steps{counter-reset:s;list-style:none;display:grid;gap:14px;margin:6px 0 18px}.steps li{counter-increment:s;position:relative;padding-left:38px;color:var(--muted)}.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accbg);color:var(--acc);font:600 13px Montserrat,sans-serif}
+.secret{font:500 14px ui-monospace,Menlo,monospace;letter-spacing:.08em;word-break:break-all;background:rgba(255,255,255,.05);border:1px dashed var(--line2);border-radius:10px;padding:8px 10px;display:block;margin-top:6px}
+.codes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font:600 15px ui-monospace,Menlo,monospace;margin:12px 0}.codes span{background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:10px;padding:8px;text-align:center}
+.gate{max-width:640px;margin:40px auto}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.switch{position:relative;width:46px;height:26px;flex:none}.switch input{opacity:0;width:0;height:0}.switch i{position:absolute;inset:0;border-radius:99px;background:#2a2a30;transition:.2s;cursor:pointer}.switch i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#bbb;transition:.2s}.switch input:checked+i{background:var(--acc)}.switch input:checked+i::after{transform:translateX(20px);background:#0a0a0b}.switch input:focus-visible+i{outline:2px solid var(--acc);outline-offset:2px}
