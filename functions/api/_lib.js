@@ -80,7 +80,7 @@ export async function currentUser(env, req) {
   return s;
 }
 export const can = (user, role) => !!user && (ROLES[user.role] || 0) >= ROLES[role];
-export const publicUser = u => ({ id: u.id, email: u.email, name: u.name, role: u.role, role_name: ROLE_NAMES[u.role], title: u.title || null, status: u.status, candidate_id: u.candidate_id || null, contact_id: u.contact_id || null, last_login: u.last_login || null, created_at: u.created_at, mfa: !!u.totp_enabled, mfa_required: (ROLES[u.role] || 0) >= ROLES.staff, avatar: u.avatar || null, bio: u.bio || null, phone: u.phone || null, location: u.location || null, accent: u.accent || null, intent: u.intent || null });
+export const publicUser = u => ({ id: u.id, email: u.email, name: u.name, role: u.role, role_name: ROLE_NAMES[u.role], title: u.title || null, status: u.status, candidate_id: u.candidate_id || null, contact_id: u.contact_id || null, last_login: u.last_login || null, created_at: u.created_at, mfa: !!u.totp_enabled, mfa_required: (ROLES[u.role] || 0) >= ROLES.staff, avatar: u.avatar || null, bio: u.bio || null, phone: u.phone || null, location: u.location || null, accent: u.accent || null, intent: u.intent || null, theme: u.theme || null });
 export const ACCENTS = ['gold', 'silver', 'sapphire', 'emerald', 'rose', 'violet'];
 
 export async function makeLink(env, userId, kind, hours, by) {

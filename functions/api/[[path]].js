@@ -287,6 +287,11 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
     return json({ ok: true });
   }
   if (path === 'auth/logout-all' && m === 'POST') { await DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(me.id).run(); return json({ ok: true }, 200, { 'Set-Cookie': clearCookie }); }
+  if (path === 'auth/prefs' && m === 'POST') {
+    const b = await body(req); if (!['auto', 'light', 'dark'].includes(b.theme)) return bad('Pick auto, light or dark.');
+    await DB.prepare('UPDATE users SET theme = ? WHERE id = ?').bind(b.theme, me.id).run();
+    return json({ ok: true });
+  }
   if (path === 'auth/intent' && m === 'POST') {
     const b = await body(req); if (!['hire', 'work', 'both'].includes(b.intent)) return bad('Pick hire, work or both.');
     await DB.prepare('UPDATE users SET intent = ?, updated_at = ? WHERE id = ?').bind(b.intent, now(), me.id).run();
