@@ -65,6 +65,9 @@
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
     bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12" width="3" height="5" rx="1"/><rect x="12" y="8" width="3" height="9" rx="1"/><rect x="17" y="5" width="3" height="12" rx="1"/></svg>',
+    bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+    plug: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/></svg>',
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>',
     menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
     va: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-7 8-7s7 2.5 8 7"/><path d="M16 4.5l1.5-1.5"/></svg>'
   };
@@ -78,7 +81,9 @@
   };
   function navFor(r) {
     var n = [['home', 'Home', 'home']];
-    if (TEAM) n.push(['pipeline', 'Pipeline', 'pipe'], ['contacts', 'Contacts', 'book'], ['tasks', 'My day', 'task'], ['requests', 'Requests', 'inbox'], ['reports', 'Reports', 'chart']);
+    if (TEAM) n.push(['pipeline', 'Pipeline', 'pipe'], ['contacts', 'Contacts', 'book'], ['tasks', 'My day', 'task'], ['calendar', 'Calendar', 'cal'], ['requests', 'Requests', 'inbox'], ['reports', 'Reports', 'chart']);
+    if (ADMIN) n.push(['automations', 'Automations', 'bolt']);
+    if (TEAM) n.push(['integrations', 'Integrations', 'plug']);
     if (ADMIN) n.push(['people', 'People', 'people'], ['vas', 'VA applications', 'va'], ['hours', 'Hours', 'clock'], ['news', 'Announcements', 'mega']);
     if (SUPER) n.push(['audit', 'Security log', 'shield']);
     if (r === 'va') n.push(['clients', 'My clients', 'people'], ['tasks', 'Tasks', 'task'], ['hours', 'Timesheet', 'clock'], ['news', 'Updates', 'mega']);
@@ -569,6 +574,158 @@
     return html;
   };
   async function signOut() { try { await api('auth/logout', 'POST', {}); } catch (x) {} location.replace('/login'); }
+
+  // ================= Automations, Integrations, Calendar =================
+  var ACT_NAME = { create_task: 'Create a task', send_email: 'Send an email to the contact', notify: 'Notify someone (bell)', add_tag: 'Add a tag', remove_tag: 'Remove a tag', set_owner: 'Assign an owner', move_stage: 'Move the deal to a stage', create_deal: 'Create a deal', webhook: 'Send to a webhook (Zapier, Make, n8n, GoHighLevel)', wait: 'Wait' };
+  var OPS = [['equals', 'is'], ['not_equals', 'is not'], ['contains', 'contains'], ['gte', 'is at least'], ['lte', 'is at most'], ['exists', 'is filled in'], ['missing', 'is empty']];
+  var FIELD_NAME = { 'contact.source': 'Contact source', 'contact.kind': 'Contact type', 'contact.country': 'Country', 'contact.tags': 'Contact tags', 'contact.email': 'Contact email', 'deal.stage': 'Deal stage', 'deal.value_usd': 'Deal value (USD)', 'deal.source': 'Deal source', 'request.title': 'Request', 'booking.company': 'Booked company' };
+  function stepSummary(s) {
+    switch (s.type) {
+      case 'create_task': return 'Task "' + (s.title || 'Follow up') + '"' + (s.due_days != null ? ', due in ' + s.due_days + ' day' + (s.due_days == 1 ? '' : 's') : '') + (s.assignee === 'round_robin' ? ', round robin' : s.assignee === 'owner' ? ', to the owner' : '');
+      case 'send_email': return 'Email "' + (s.subject || '') + '"';
+      case 'notify': return 'Notify ' + (s.to === 'admins' ? 'admins' : s.to === 'owner' ? 'the owner' : 'a teammate');
+      case 'add_tag': return 'Add tag #' + (s.tag || '');
+      case 'remove_tag': return 'Remove tag #' + (s.tag || '');
+      case 'set_owner': return s.owner === 'round_robin' || !s.owner ? 'Assign owner (round robin)' : 'Assign owner';
+      case 'move_stage': return 'Move deal to ' + (DSTAGE[s.stage] || s.stage);
+      case 'create_deal': return 'Create a deal';
+      case 'webhook': try { return 'Send to ' + new URL(s.url).hostname; } catch (e) { return 'Send to webhook'; }
+      case 'wait': var h = +s.hours || 1; return 'Wait ' + (h % 24 === 0 ? (h / 24) + ' day' + (h === 24 ? '' : 's') : h + ' hour' + (h === 1 ? '' : 's'));
+    }
+    return s.type;
+  }
+  V.automations = async function () {
+    var d = await api('automations'), tab = sessionStorage.getItem('atab') || 'list';
+    var html = top('Automations', 'Workflows that run themselves: when something happens, Delegance does the next steps', '<button class="btn btn-acc" id="newA">New automation</button>');
+    html += '<div class="seg" style="max-width:340px"><button data-t="list" aria-selected="' + (tab === 'list') + '">Workflows</button><button data-t="log" aria-selected="' + (tab === 'log') + '">Run history</button></div>';
+    if (tab === 'log') {
+      var lg = await api('automations/log');
+      html += lg.items.length ? '<div class="tblwrap"><table class="tbl"><thead><tr><th>When</th><th>Automation</th><th class="hide-sm">For</th><th>What happened</th></tr></thead><tbody>' + lg.items.map(function (l) { return '<tr><td>' + esc(ago(l.created_at)) + '</td><td><b>' + esc(l.name || '') + '</b></td><td class="hide-sm">' + esc(l.subject || '') + '</td><td>' + pill(l.status === 'ok' ? 'done' : 'lost', l.status === 'ok' ? 'Done' : 'Error') + ' <span class="sub" style="display:inline">' + esc(l.detail || '') + '</span></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="card">' + empty('Nothing has run yet.') + '</div>';
+    } else {
+      var have = d.items.map(function (a) { return a.name; });
+      var recipes = d.recipes.filter(function (r) { return have.indexOf(r.name) < 0; });
+      if (recipes.length) html += '<div class="card recipes" style="margin-bottom:16px"><h2>One-click recipes</h2><div class="rgrid">' + recipes.map(function (r) { return '<button class="recipe" data-r="' + esc(r.key) + '"><b>' + esc(r.name) + '</b><span>When ' + esc((d.events[r.trigger] || r.trigger).toLowerCase()) + '</span><i>+ Add</i></button>'; }).join('') + '</div></div>';
+      html += d.items.length ? '<div class="grid">' + d.items.map(function (a) { return '<div class="card flow"><div class="fhead"><div><h2 style="margin:0">' + esc(a.name) + '</h2><span class="sub">' + a.runs + ' runs' + (a.last_run ? ' · last ' + esc(ago(a.last_run)) : '') + '</span></div><div class="inline"><label class="switch" title="On / off"><input type="checkbox" class="aon" data-id="' + esc(a.id) + '"' + (a.active ? ' checked' : '') + ' aria-label="Automation on"><i></i></label><button class="btn btn-sm aedit" data-id="' + esc(a.id) + '">Edit</button></div></div><ol class="chain"><li class="trig"><span>When</span>' + esc(d.events[a.trigger] || a.trigger) + (a.trigger_value ? ' <b>' + esc(a.trigger === 'deal.idle' ? a.trigger_value + ' days' : DSTAGE[a.trigger_value] || a.trigger_value) + '</b>' : '') + '</li>' + (a.conditions.length ? '<li class="cond"><span>If</span>' + a.conditions.map(function (c) { return esc(FIELD_NAME[c.field] + ' ' + (OPS.find(function (o) { return o[0] === c.op; }) || [0, c.op])[1] + (c.value ? ' "' + c.value + '"' : '')); }).join(' and ') + '</li>' : '') + a.actions.map(function (s) { return '<li class="' + (s.type === 'wait' ? 'wait' : 'act') + '"><span>' + (s.type === 'wait' ? 'Then' : 'Do') + '</span>' + esc(stepSummary(s)) + '</li>'; }).join('') + '</ol></div>'; }).join('') + '</div>' : '<div class="card">' + empty('No automations yet. Add a recipe above or build your own.') + '</div>';
+    }
+    setTimeout(function () {
+      document.querySelectorAll('.seg button[data-t]').forEach(function (b) { b.onclick = function () { sessionStorage.setItem('atab', b.dataset.t); route(); }; });
+      document.getElementById('newA').onclick = function () { editAutomation(d, null); };
+      document.querySelectorAll('.recipe').forEach(function (b) { b.onclick = async function () { try { await api('automations', 'POST', { recipe: b.dataset.r }); toast('Recipe added and switched on.'); route(); } catch (x) { toast(x.message, true); } }; });
+      document.querySelectorAll('.aon').forEach(function (c) { c.onchange = async function () { try { await api('automations/' + c.dataset.id, 'PATCH', { active: c.checked }); toast(c.checked ? 'Switched on.' : 'Paused.'); } catch (x) { toast(x.message, true); } }; });
+      document.querySelectorAll('.aedit').forEach(function (b) { b.onclick = function () { editAutomation(d, d.items.find(function (a) { return a.id === b.dataset.id; })); }; });
+    });
+    return html;
+  };
+  function editAutomation(d, a) {
+    var st = a ? JSON.parse(JSON.stringify(a)) : { name: '', trigger: 'lead.received', trigger_value: '', conditions: [], actions: [{ type: 'create_task', title: 'Follow up with {{contact.name}}', due_days: 1, assignee: 'owner' }] };
+    var team = d.team.map(function (u) { return [u.id, u.name]; });
+    function stepFields(s, i) {
+      var f = function (k, label, input) { return '<label class="fld"><span>' + label + '</span>' + input + '</label>'; };
+      var v = function (k) { return esc(s[k] == null ? '' : s[k]); };
+      switch (s.type) {
+        case 'create_task': return f('title', 'Task', '<input data-i="' + i + '" data-k="title" value="' + v('title') + '" placeholder="Call {{contact.name}}">') + '<div class="row2">' + f('due_days', 'Due in (days)', '<input type="number" min="0" data-i="' + i + '" data-k="due_days" value="' + v('due_days') + '">') + f('assignee', 'Give it to', '<select data-i="' + i + '" data-k="assignee">' + opts([['owner', 'The owner'], ['round_robin', 'Round robin (team takes turns)']].concat(team), s.assignee || 'owner') + '</select>') + '</div><label class="chk"><input type="checkbox" data-i="' + i + '" data-k="priority"' + (s.priority ? ' checked' : '') + '> <span>High priority</span></label>';
+        case 'send_email': return f('subject', 'Subject', '<input data-i="' + i + '" data-k="subject" value="' + v('subject') + '">') + f('body', 'Message', '<textarea data-i="' + i + '" data-k="body" style="min-height:120px">' + v('body') + '</textarea>');
+        case 'notify': return '<div class="row2">' + f('to', 'Who', '<select data-i="' + i + '" data-k="to">' + opts([['owner', 'The owner'], ['admins', 'All admins']].concat(team), s.to || 'owner') + '</select>') + f('title', 'Message', '<input data-i="' + i + '" data-k="title" value="' + v('title') + '">') + '</div>';
+        case 'add_tag': case 'remove_tag': return f('tag', 'Tag', '<input data-i="' + i + '" data-k="tag" value="' + v('tag') + '" placeholder="vip">');
+        case 'set_owner': return f('owner', 'Owner', '<select data-i="' + i + '" data-k="owner">' + opts([['round_robin', 'Round robin (team takes turns)']].concat(team), s.owner || 'round_robin') + '</select>');
+        case 'move_stage': return f('stage', 'Stage', '<select data-i="' + i + '" data-k="stage">' + opts(DSTAGES, s.stage || 'contacted') + '</select>');
+        case 'create_deal': return '<div class="row2">' + f('title', 'Deal name', '<input data-i="' + i + '" data-k="title" value="' + v('title') + '" placeholder="{{contact.company}} · VA team">') + f('value_usd', 'Value (USD)', '<input type="number" min="0" data-i="' + i + '" data-k="value_usd" value="' + v('value_usd') + '">') + '</div>';
+        case 'webhook': return f('url', 'Webhook address (from Zapier, Make, n8n or GoHighLevel)', '<input data-i="' + i + '" data-k="url" value="' + v('url') + '" placeholder="https://hooks.zapier.com/…">') + f('secret', 'Signing secret (optional)', '<input data-i="' + i + '" data-k="secret" value="' + v('secret') + '">');
+        case 'wait': return f('hours', 'Wait (hours) · 24 = 1 day, 168 = 1 week', '<input type="number" min="1" max="2160" data-i="' + i + '" data-k="hours" value="' + v('hours') + '">');
+      }
+      return '';
+    }
+    function draw() {
+      var html = '<h2>' + (a ? 'Edit automation' : 'New automation') + '</h2><div class="aed">';
+      html += '<label class="fld"><span>Name</span><input id="aName" value="' + esc(st.name) + '" maxlength="80" required></label>';
+      html += '<div class="astep trig"><b>When</b><select id="aTrig">' + opts(Object.keys(d.events).map(function (k) { return [k, d.events[k]]; }), st.trigger) + '</select>' + (st.trigger === 'deal.stage_changed' ? '<select id="aTv">' + opts(DSTAGES, st.trigger_value, 'Any stage') + '</select>' : st.trigger === 'deal.idle' ? '<label class="inline">for <input id="aTv" type="number" min="1" style="width:90px" value="' + esc(st.trigger_value || 7) + '"> days</label>' : '') + '</div>';
+      html += st.conditions.map(function (c, i) { return '<div class="astep cond"><b>If</b><select data-c="' + i + '" data-k="field">' + opts(d.fields.map(function (x) { return [x, FIELD_NAME[x] || x]; }), c.field) + '</select><select data-c="' + i + '" data-k="op">' + opts(OPS, c.op) + '</select>' + (c.op === 'exists' || c.op === 'missing' ? '' : '<input data-c="' + i + '" data-k="value" value="' + esc(c.value || '') + '">') + '<button type="button" class="xbtn" data-delc="' + i + '" aria-label="Remove condition">×</button></div>'; }).join('');
+      html += '<button type="button" class="linkbtn" id="addCond">+ Add a condition</button>';
+      html += st.actions.map(function (s, i) { return '<div class="astep act"><div class="ahead"><b>' + (s.type === 'wait' ? 'Then' : 'Do') + '</b><select data-i="' + i + '" data-k="type">' + opts(Object.keys(ACT_NAME).map(function (k) { return [k, ACT_NAME[k]]; }), s.type) + '</select><span class="amove">' + (i ? '<button type="button" class="xbtn" data-up="' + i + '" aria-label="Move up">↑</button>' : '') + '<button type="button" class="xbtn" data-dels="' + i + '" aria-label="Remove step">×</button></span></div>' + stepFields(s, i) + '</div>'; }).join('');
+      html += '<button type="button" class="btn btn-sm" id="addStep">+ Add a step</button><p class="fine">Use {{first_name}}, {{contact.name}}, {{contact.company}}, {{deal.title}} or {{deal.value_usd}} in any text.</p></div>';
+      if (a) html += '<div class="inline" style="flex-wrap:wrap;margin-top:8px"><button type="button" class="btn btn-sm" id="aTest">Test run now</button><button type="button" class="btn btn-sm btn-danger" id="aDel">Delete</button></div>';
+      return html;
+    }
+    function bind() {
+      var f = dlg.querySelector('form');
+      f.querySelector('#aName').oninput = function (e) { st.name = e.target.value; };
+      f.querySelector('#aTrig').onchange = function (e) { st.trigger = e.target.value; st.trigger_value = ''; redraw(); };
+      var tv = f.querySelector('#aTv'); if (tv) tv.onchange = function (e) { st.trigger_value = e.target.value; };
+      f.querySelectorAll('[data-c]').forEach(function (el) { el.onchange = el.oninput = function () { st.conditions[+el.dataset.c][el.dataset.k] = el.value; if (el.dataset.k === 'op') redraw(); }; });
+      f.querySelectorAll('[data-i]').forEach(function (el) { el.onchange = el.oninput = function () { var s = st.actions[+el.dataset.i]; if (el.dataset.k === 'type') { st.actions[+el.dataset.i] = { type: el.value }; if (el.value === 'wait') st.actions[+el.dataset.i].hours = 24; redraw(); return; } s[el.dataset.k] = el.type === 'checkbox' ? el.checked : el.value; }; });
+      f.querySelector('#addCond').onclick = function () { st.conditions.push({ field: 'contact.source', op: 'equals', value: '' }); redraw(); };
+      f.querySelector('#addStep').onclick = function () { st.actions.push({ type: 'notify', to: 'owner', title: '' }); redraw(); };
+      f.querySelectorAll('[data-delc]').forEach(function (b) { b.onclick = function () { st.conditions.splice(+b.dataset.delc, 1); redraw(); }; });
+      f.querySelectorAll('[data-dels]').forEach(function (b) { b.onclick = function () { st.actions.splice(+b.dataset.dels, 1); redraw(); }; });
+      f.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () { var i = +b.dataset.up, x = st.actions[i]; st.actions[i] = st.actions[i - 1]; st.actions[i - 1] = x; redraw(); }; });
+      var t = f.querySelector('#aTest'); if (t) t.onclick = async function () { try { var r = await api('automations/' + a.id + '/test', 'POST', {}); toast(r.result ? (r.result.status === 'ok' ? 'Ran: ' : 'Error: ') + r.result.detail : 'Ran.'); } catch (x) { toast(x.message, true); } };
+      var del = f.querySelector('#aDel'); if (del) del.onclick = async function () { if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'Click again to delete'; return; } await api('automations/' + a.id, 'DELETE'); dlg.close(); route(); };
+    }
+    function redraw() { var holder = dlg.querySelector('form'); var keep = holder.querySelector('.acts'); holder.querySelector('.abody').innerHTML = draw(); bind(); }
+    modal('<div class="abody"></div>', async function () { if (!st.name.trim()) throw new Error('Give the automation a name.'); if (a) await api('automations/' + a.id, 'PATCH', st); else await api('automations', 'POST', st); toast('Automation saved.'); route(); });
+    dlg.classList.add('wide');
+    dlg.addEventListener('close', function () { dlg.classList.remove('wide'); }, { once: true });
+    dlg.querySelector('.abody').innerHTML = draw(); bind();
+  }
+
+  V.integrations = async function () {
+    var keys = await api('apikeys'), hooks = ADMIN ? await api('webhooks') : null, leads = ADMIN ? await api('leadhooks') : null;
+    var html = top('Integrations', 'Connect Delegance to Claude, Zapier, Make, n8n, GoHighLevel and any form', '');
+    html += '<div class="grid g2" style="margin-bottom:16px"><div class="card intro claude"><span class="eyebrow">Claude connector (MCP)</span><h2 style="margin:6px 0 8px">Talk to your CRM in Claude</h2><p class="sub">Ask Claude things like "who are my hottest deals?", "log a call with Grace and set a follow-up for Friday" or "email every new lead from this week". Claude uses 17 Delegance tools with your permissions.</p><button class="btn btn-acc" id="mcpKey">Connect Claude</button></div>';
+    html += '<div class="card intro"><span class="eyebrow">Automation platforms</span><h2 style="margin:6px 0 8px">Zapier, Make, n8n, GoHighLevel</h2><p class="sub">Send Delegance events out with webhooks, bring leads in with a lead-capture link, and read or write anything with an API key.</p><div class="logos"><span>Zapier</span><span>Make</span><span>n8n</span><span>GoHighLevel</span><span>Any form</span></div></div></div>';
+    html += '<div class="card" style="margin-bottom:16px"><h2>API keys <button class="btn btn-sm" id="newKey">New key</button></h2>' + (keys.items.length ? '<ul class="list">' + keys.items.map(function (k) { return '<li><div class="t"><b>' + esc(k.name) + ' <span class="pill' + (k.scope === 'read' ? '' : ' gold') + '">' + (k.scope === 'read' ? 'Read only' : 'Read and write') + '</span>' + (k.revoked ? ' <span class="pill lost">Revoked</span>' : '') + '</b><span><code>' + esc(k.prefix) + '…</code>' + (k.owner ? ' · ' + esc(k.owner) : '') + ' · ' + (k.last_used ? 'used ' + esc(ago(k.last_used)) : 'never used') + '</span></div>' + (k.revoked ? '' : '<button class="btn btn-sm btn-danger rk" data-id="' + esc(k.id) + '">Revoke</button>') + '</li>'; }).join('') + '</ul>' : empty('No keys yet. A key lets Claude or an automation tool act as you.')) + '</div>';
+    if (ADMIN) {
+      html += '<div class="grid g2" style="margin-bottom:16px"><div class="card"><h2>Lead-capture links <button class="btn btn-sm" id="newLead">New link</button></h2><p class="sub" style="margin:-6px 0 12px">Paste a link into Facebook Lead Ads (via Zapier or Make), GoHighLevel, Typeform, WordPress or any form. Each submission becomes a contact and a deal.</p>' + (leads.items.length ? '<ul class="list">' + leads.items.map(function (h) { return '<li><div class="t"><b>' + esc(h.name) + (h.revoked_at ? ' <span class="pill lost">Off</span>' : '') + '</b><span><code>' + esc(h.prefix) + '…</code> · ' + h.count + ' leads' + (h.last_used ? ' · last ' + esc(ago(h.last_used)) : '') + '</span></div>' + (h.revoked_at ? '' : '<button class="btn btn-sm rl" data-id="' + esc(h.id) + '">Turn off</button>') + '</li>'; }).join('') + '</ul>' : empty('No links yet.')) + '</div>';
+      html += '<div class="card"><h2>Webhooks <button class="btn btn-sm" id="newHook">New webhook</button></h2><p class="sub" style="margin:-6px 0 12px">Delegance sends events (new lead, deal won, booking…) to Zapier "Catch Hook", Make "Custom webhook", n8n "Webhook" or a GoHighLevel inbound webhook.</p>' + (hooks.items.length ? '<ul class="list">' + hooks.items.map(function (h) { var host = ''; try { host = new URL(h.url).hostname; } catch (e) {} return '<li><div class="t"><b>' + esc(h.name || host) + (h.active ? '' : ' <span class="pill lost">Paused</span>') + '</b><span>' + esc(h.events.indexOf('*') >= 0 ? 'All events' : h.events.join(', ')) + (h.last_at ? ' · last ' + (h.last_status && h.last_status < 400 ? 'OK ' : 'failed ') + esc(ago(h.last_at)) : '') + '</span></div><div class="inline"><button class="btn btn-sm th" data-id="' + esc(h.id) + '">Test</button><button class="btn btn-sm btn-danger dh" data-id="' + esc(h.id) + '">Delete</button></div></li>'; }).join('') + '</ul>' : empty('No webhooks yet.')) + '</div></div>';
+    }
+    html += '<details class="card guide"><summary><b>Step-by-step: connect each tool</b></summary><div class="gcols">' +
+      '<div><h3>Claude (claude.ai or Claude Desktop)</h3><ol><li>Click <b>Connect Claude</b> above and copy the connector address.</li><li>In Claude open <b>Settings → Connectors → Add custom connector</b>.</li><li>Name it <b>Delegance</b>, paste the address, click <b>Add</b>.</li><li>In a chat, turn on the Delegance connector and ask about your pipeline.</li></ol></div>' +
+      '<div><h3>Zapier</h3><ol><li>Events out: trigger <b>Webhooks by Zapier → Catch Hook</b>, copy its URL into <b>New webhook</b> here.</li><li>Leads in: action <b>Webhooks by Zapier → POST</b> to a lead-capture link (payload type JSON).</li><li>Anything else: <b>Webhooks → Custom Request</b> to <code>https://delegance.app/api/…</code> with header <code>Authorization: Bearer &lt;key&gt;</code>.</li></ol></div>' +
+      '<div><h3>Make</h3><ol><li>Events out: <b>Webhooks → Custom webhook</b>, copy the address into <b>New webhook</b>.</li><li>Leads in / API: <b>HTTP → Make a request</b> to a lead-capture link or the API with your key.</li></ol></div>' +
+      '<div><h3>n8n</h3><ol><li>Events out: add a <b>Webhook</b> node (POST), use its production URL in <b>New webhook</b>.</li><li>API: <b>HTTP Request</b> node, Authentication → Generic → Header Auth, name <code>Authorization</code>, value <code>Bearer &lt;key&gt;</code>.</li></ol></div>' +
+      '<div><h3>GoHighLevel</h3><ol><li>Leads from GHL: in a GHL workflow add <b>Webhook</b> action → paste a lead-capture link.</li><li>Delegance → GHL: create an <b>Inbound Webhook</b> trigger in GHL and paste its URL into <b>New webhook</b>.</li></ol></div>' +
+      '<div><h3>API cheat sheet</h3><ol class="mono"><li>GET /api/contacts?q=…</li><li>POST /api/contacts</li><li>GET /api/deals · POST /api/deals</li><li>PATCH /api/deals/&lt;id&gt; {"stage":"won"}</li><li>POST /api/activities · POST /api/tasks</li><li>GET /api/reports?days=90</li></ol></div>' +
+      '</div><p class="fine">Webhooks are signed: check the <code>X-Delegance-Signature</code> header (HMAC-SHA256 of the body with your signing secret).</p></details>';
+    setTimeout(function () {
+      var makeKey = function (title, scopeDefault, forClaude) {
+        modal('<h2>' + esc(title) + '</h2><label class="fld"><span>Name</span><input name="name" value="' + (forClaude ? 'Claude' : '') + '" maxlength="60" required placeholder="e.g. Zapier"></label><label class="fld"><span>Access</span><select name="scope">' + opts([['write', 'Read and write'], ['read', 'Read only']], scopeDefault) + '</select><small>The key acts as you (' + esc(ROLE_NAME[ROLE]) + '). Revoke it any time.</small></label>', async function (f) {
+          var r = await api('apikeys', 'POST', f);
+          dlg.innerHTML = '<h2>' + (forClaude ? 'Your Claude connector' : 'Your new API key') + '</h2><p class="lead">Copy it now: we only show it once and store it scrambled.</p>' + (forClaude ? '<label class="fld"><span>Connector address (paste into Claude → Settings → Connectors → Add custom connector)</span><div class="copy"><input readonly value="' + esc(r.mcp_url) + '"><button class="btn btn-acc" data-cp="' + esc(r.mcp_url) + '">Copy</button></div></label><label class="fld"><span>Claude Desktop / Claude Code config (optional)</span><textarea readonly style="min-height:120px;font:12px ui-monospace,Menlo,monospace">' + esc(JSON.stringify({ mcpServers: { delegance: { type: 'http', url: 'https://delegance.app/api/mcp', headers: { Authorization: 'Bearer ' + r.key } } } }, null, 2)) + '</textarea></label>' : '<div class="copy"><input readonly value="' + esc(r.key) + '"><button class="btn btn-acc" data-cp="' + esc(r.key) + '">Copy</button></div><p class="fine">Use it as <code>Authorization: Bearer ' + esc(r.key.slice(0, 10)) + '…</code></p>') + '<div class="acts"><button class="btn" id="cl">Done</button></div>';
+          dlg.querySelectorAll('[data-cp]').forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.cp).then(function () { toast('Copied.'); }); }; });
+          dlg.querySelector('#cl').onclick = function () { dlg.close(); route(); };
+          return true;
+        });
+      };
+      document.getElementById('mcpKey').onclick = function () { makeKey('Connect Claude', 'write', true); };
+      document.getElementById('newKey').onclick = function () { makeKey('New API key', 'write', false); };
+      document.querySelectorAll('.rk').forEach(function (b) { b.onclick = async function () { if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Click again'; return; } await api('apikeys/' + b.dataset.id, 'DELETE'); toast('Key revoked.'); route(); }; });
+      var nl = document.getElementById('newLead'); if (nl) nl.onclick = function () { modal('<h2>New lead-capture link</h2><label class="fld"><span>Name</span><input name="name" required maxlength="60" placeholder="Facebook Lead Ads"></label><label class="fld"><span>Lead source shown in the CRM</span><input name="source" maxlength="60" placeholder="Facebook"></label><label class="chk"><input type="checkbox" name="make_deal" checked> <span>Also create a deal for each new lead</span></label>', async function (f) { f.make_deal = !!f.make_deal; var r = await api('leadhooks', 'POST', f); showLink('Lead-capture link ready', r.url, 'POST JSON or form fields: name (or first_name + last_name), email, phone, company, message, tags, value. We only show this link once.'); setTimeout(route, 50); return true; }); };
+      document.querySelectorAll('.rl').forEach(function (b) { b.onclick = async function () { await api('leadhooks/' + b.dataset.id, 'DELETE'); route(); }; });
+      var nh = document.getElementById('newHook'); if (nh) nh.onclick = function () { modal('<h2>New webhook</h2><label class="fld"><span>Name</span><input name="name" maxlength="80" placeholder="Zapier: new leads to Google Sheets"></label><label class="fld"><span>Webhook address</span><input name="url" required placeholder="https://hooks.zapier.com/hooks/catch/…"></label><div class="fld"><span>Send these events</span><div class="evs">' + Object.keys(hooks.events).map(function (k) { return '<label class="chk" style="margin:0"><input type="checkbox" name="ev" value="' + esc(k) + '"> <span>' + esc(hooks.events[k]) + '</span></label>'; }).join('') + '</div><small>Leave all unticked to send every event.</small></div>', async function (f, form) { var evs = [].slice.call(form.querySelectorAll('[name=ev]:checked')).map(function (x) { return x.value; }); var r = await api('webhooks', 'POST', { name: f.name, url: f.url, events: evs }); showLink('Webhook added', r.secret, 'Signing secret (optional to use): we put an HMAC-SHA256 signature of each body in the X-Delegance-Signature header.'); setTimeout(route, 50); return true; }); };
+      document.querySelectorAll('.th').forEach(function (b) { b.onclick = async function () { try { var r = await api('webhooks/' + b.dataset.id + '/test', 'POST', {}); toast(r.ok ? 'Delivered (' + r.status + ').' : 'Failed: ' + r.status, !r.ok); route(); } catch (x) { toast(x.message, true); } }; });
+      document.querySelectorAll('.dh').forEach(function (b) { b.onclick = async function () { if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Click again'; return; } await api('webhooks/' + b.dataset.id, 'DELETE'); route(); }; });
+    });
+    return html;
+  };
+
+  V.calendar = async function () {
+    var d = await api('bookings'), cfg = d.settings, upcoming = d.items.filter(function (b) { return b.status === 'booked' && b.end_at > new Date().toISOString(); });
+    var html = top('Calendar', upcoming.length + ' upcoming calls', '<a class="btn" href="/book" target="_blank" rel="noopener">Open booking page</a>' + (ADMIN ? '<button class="btn btn-acc" id="bset">Booking settings</button>' : ''));
+    html += '<div class="card" style="margin-bottom:16px"><div class="inline" style="justify-content:space-between;flex-wrap:wrap"><div><b>' + esc(cfg.title) + '</b> · ' + cfg.minutes + ' minutes · ' + (cfg.enabled ? '<span class="goldtxt">Open for booking</span>' : 'Closed') + '<div class="sub">Share <a href="/book" target="_blank" rel="noopener">delegance.app/book</a> anywhere. Bookings create the contact, a deal, a task and a calendar invite.</div></div><button class="btn btn-sm" id="cpBook">Copy link</button></div></div>';
+    var groups = {}; upcoming.forEach(function (b) { var k = new Date(b.start_at).toDateString(); (groups[k] = groups[k] || []).push(b); });
+    html += Object.keys(groups).length ? Object.keys(groups).map(function (k) { return '<div class="card" style="margin-bottom:12px"><h2>' + esc(new Date(k).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })) + '</h2><ul class="list">' + groups[k].map(function (b) { return '<li><span class="when">' + esc(new Date(b.start_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '</span><a class="row" href="#contact/' + esc(b.contact_id) + '"><div class="t"><b>' + esc(b.name) + (b.company ? ' · ' + esc(b.company) : '') + '</b><span>' + esc([b.email, b.host_name ? 'with ' + b.host_name : '', b.notes].filter(Boolean).join(' · ')) + '</span></div></a></li>'; }).join('') + '</ul></div>'; }).join('') : '<div class="card">' + empty('No upcoming calls yet.') + '</div>';
+    setTimeout(function () {
+      document.getElementById('cpBook').onclick = function () { navigator.clipboard.writeText('https://delegance.app/book').then(function () { toast('Link copied.'); }); };
+      var bs = document.getElementById('bset'); if (bs) bs.onclick = function () {
+        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        modal('<h2>Booking settings</h2><label class="chk"><input type="checkbox" name="enabled"' + (cfg.enabled ? ' checked' : '') + '> <span>Booking page is open</span></label><div class="row2"><label class="fld"><span>Call name</span><input name="title" value="' + esc(cfg.title) + '"></label><label class="fld"><span>Length</span><select name="minutes">' + opts([[15, '15 minutes'], [20, '20 minutes'], [30, '30 minutes'], [45, '45 minutes'], [60, '60 minutes']], cfg.minutes) + '</select></label></div><label class="fld"><span>Short description</span><input name="intro" maxlength="400" value="' + esc(cfg.intro || '') + '"></label><div class="row2"><label class="fld"><span>Your time zone</span><input name="tz" value="' + esc(cfg.tz) + '" placeholder="Asia/Manila"></label><label class="fld"><span>Meeting link (Google Meet, Zoom…)</span><input name="link" value="' + esc(cfg.link || '') + '" placeholder="https://meet.google.com/…"></label></div><div class="fld"><span>Available hours (in your time zone)</span><div class="hrs">' + days.map(function (n, i) { var h = cfg.hours[i] || cfg.hours[String(i)]; return '<label class="hrow"><input type="checkbox" name="d' + i + '"' + (h ? ' checked' : '') + '> <b>' + n + '</b><input type="number" name="s' + i + '" min="0" max="23.5" step="0.5" value="' + (h ? h[0] : 9) + '" aria-label="' + n + ' start"> to <input type="number" name="e' + i + '" min="0.5" max="24" step="0.5" value="' + (h ? h[1] : 17) + '" aria-label="' + n + ' end"></label>'; }).join('') + '</div></div><div class="row2"><label class="fld"><span>Minimum notice (hours)</span><input type="number" name="notice_hours" min="0" value="' + cfg.notice_hours + '"></label><label class="fld"><span>Book up to (days ahead)</span><input type="number" name="days_ahead" min="1" max="60" value="' + cfg.days_ahead + '"></label></div><label class="fld"><span>Break between calls (minutes)</span><input type="number" name="buffer" min="0" max="60" value="' + cfg.buffer + '"></label>', async function (f) {
+          var hours = {}; for (var i = 0; i < 7; i++) if (f['d' + i]) hours[i] = [+f['s' + i], +f['e' + i]];
+          await api('booking/settings', 'POST', { enabled: !!f.enabled, title: f.title, minutes: +f.minutes, intro: f.intro, tz: f.tz, link: f.link, hours: hours, notice_hours: +f.notice_hours, days_ahead: +f.days_ahead, buffer: +f.buffer }); toast('Booking settings saved.'); route();
+        });
+      };
+    });
+    return html;
+  };
 
   // ---------- 2-step sign-in ----------
   function loadQr() { return window.qrcode ? Promise.resolve() : new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/assets/qr.js?v=1'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }); }

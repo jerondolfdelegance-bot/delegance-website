@@ -306,3 +306,39 @@ dialog.sdlg{width:min(620px,calc(100% - 24px));padding:0;margin-top:12vh;margin-
 @media (prefers-reduced-motion:reduce){.confetti{display:none}}
 @media (max-width:860px){.dh-val b{font-size:28px}.rbars li{grid-template-columns:100px 1fr 40px}.vbars{height:150px;gap:4px}.vb span{font-size:9px}.tright .btn{min-height:38px;padding:0 12px}}
 .split>*{min-width:0}.composer{overflow:hidden}
+
+/* ===== v5: automations, integrations, calendar ===== */
+dialog.wide{width:min(760px,calc(100% - 24px))}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.recipe{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px;border-radius:14px;border:1px dashed var(--goldline);background:var(--goldbg);color:var(--text);cursor:pointer;transition:transform .15s,border-color .15s}
+.recipe:hover{transform:translateY(-2px);border-style:solid}.recipe b{font:600 14px Montserrat,sans-serif}.recipe span{font-size:12px;color:var(--muted)}.recipe i{font-style:normal;font-weight:600;font-size:12px;color:var(--gold);margin-top:4px}
+.flow .fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.chain{list-style:none;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chain li{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line2);font-size:13px;position:relative}
+.chain li:not(:last-child)::after{content:"→";position:absolute;right:-14px;color:var(--dim)}
+.chain li{margin-right:8px}
+.chain span{font:700 10px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.chain .trig{border-color:var(--goldline);background:var(--goldbg)}.chain .trig span{color:var(--gold)}
+.chain .wait{border-style:dashed}
+.aed .astep{border:1px solid var(--line2);border-radius:14px;padding:12px;margin:10px 0;background:rgba(255,255,255,.02)}
+.aed .astep>b,.aed .ahead b{display:inline-block;font:700 11px Inter;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-right:8px;min-width:40px}
+.aed .astep.trig{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-color:var(--goldline);background:var(--goldbg)}
+.aed .astep.trig select{width:auto;flex:1}
+.aed .astep.cond{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.aed .astep.cond select,.aed .astep.cond input{width:auto;flex:1 1 120px}
+.aed .ahead{display:flex;gap:8px;align-items:center;margin-bottom:10px}.aed .ahead select{flex:1}
+.amove{display:flex;gap:4px}
+.xbtn{width:32px;height:32px;border-radius:10px;border:1px solid var(--line2);background:none;color:var(--muted);cursor:pointer;flex:none}
+.xbtn:hover{color:#fff;border-color:#4a4a52}
+.aed .linkbtn{margin:2px 0 6px}
+.intro .eyebrow{font:600 11px Montserrat,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.intro.claude{border-color:var(--goldline);background:radial-gradient(120% 160% at 100% 0%,var(--goldbg),transparent 55%),var(--panel)}
+.intro .sub{color:var(--muted);margin-bottom:14px}
+.logos{display:flex;flex-wrap:wrap;gap:8px}.logos span{padding:6px 12px;border-radius:999px;border:1px solid var(--line2);font-size:13px;color:#d5d6db}
+.guide summary{cursor:pointer}.gcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-top:16px}
+.gcols h3{font-size:15px;margin-bottom:8px;color:var(--gold)}.gcols ol{padding-left:18px;color:var(--muted);font-size:13.5px;display:grid;gap:6px}
+.gcols code,.list code,.fine code{font:12px ui-monospace,Menlo,monospace;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:6px;color:#e8e8ea}
+.mono li{font:12.5px ui-monospace,Menlo,monospace}
+.evs{display:grid;gap:6px;max-height:220px;overflow:auto;padding:8px;border:1px solid var(--line2);border-radius:12px}
+.when{font:600 14px Montserrat,sans-serif;color:var(--gold);min-width:74px}
+.hrs{display:grid;gap:6px}.hrow{display:flex;gap:8px;align-items:center;font-size:14px}.hrow b{width:38px}.hrow input[type=number]{width:90px;min-height:38px}
+@media (max-width:860px){.chain li:not(:last-child)::after{display:none}.flow .fhead{flex-wrap:wrap}}
