@@ -1,6 +1,6 @@
 // Delegance app shell: works offline for the dashboard frame; data always comes fresh from the network.
-const CACHE = 'dlg-shell-v6';
-const SHELL = ['/dashboard', '/assets/dash.css?v=6', '/assets/dash.js?v=6', '/assets/motion.css?v=1', '/assets/motion.js?v=1', '/brand/delegance-logo-horizontal-flat.svg', '/favicon.svg'];
+const CACHE = 'dlg-shell-v7';
+const SHELL = ['/dashboard', '/assets/dash.css?v=7', '/assets/dash.js?v=7', '/assets/motion.css?v=1', '/assets/motion.js?v=1', '/brand/delegance-logo-horizontal-flat.svg', '/favicon.svg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
