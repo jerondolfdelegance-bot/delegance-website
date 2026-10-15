@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Book a call · Delegance</title>
 <meta name="description" content="Pick a time for a free call with the Delegance team about virtual assistants, websites, apps and automations.">
@@ -13,42 +14,55 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/dash.css?v=5">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/dash.css?v=8">
 <link rel="stylesheet" href="/assets/motion.css?v=1">
 <script src="/assets/motion.js?v=1"></script>
 <style>
 body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;--glow2:#2b2416}
-.bk{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
-.bk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.bk{max-width:1180px;margin:0 auto;padding:24px 20px 40px;min-height:100vh;display:flex;flex-direction:column}
+.bk-top{display:flex;justify-content:space-between;align-items:center}
 .bk-top img{height:26px;width:auto}
-.bk-grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
-.bk-info{padding:28px}
+.bk-stage{flex:1;display:flex;align-items:center;padding:28px 0}
+.bk-grid{width:100%;display:grid;grid-template-columns:380px 1fr;border:1px solid var(--line2);border-radius:28px;overflow:hidden;background:rgba(var(--base),.82);box-shadow:0 40px 120px rgba(0,0,0,.25)}
+.bk-info{position:relative;padding:36px 32px;min-height:560px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,rgba(10,10,11,.15),rgba(10,10,11,.92) 62%),url(/img/meeting.webp) center/cover}
 .bk-info .eyebrow{font:600 11px Montserrat,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
-.bk-info h1{font-size:30px;margin:10px 0 10px}
-.bk-info p{color:var(--muted)}
-.bk-meta{list-style:none;display:grid;gap:10px;margin:20px 0 0}.bk-meta li{display:flex;gap:10px;align-items:center;color:#d5d6db;font-size:14px}.bk-meta svg{width:18px;height:18px;color:var(--gold)}
-.bk-pick{padding:24px}
-.days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:thin}
-.day{flex:none;width:76px;padding:10px 0;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;text-align:center;font:500 12px Inter}
-.day b{display:block;font:600 20px Montserrat,sans-serif;margin:2px 0}
-.day[aria-pressed=true]{border-color:var(--gold);background:var(--goldbg);color:var(--gold)}
-.day:disabled{opacity:.35;cursor:default}
-.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:18px;min-height:60px}
-.slot{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);font:600 14px Inter;cursor:pointer;transition:border-color .15s,background .15s}
-.slot:hover{border-color:var(--goldline)}.slot[aria-pressed=true]{background:var(--gold);color:#0a0a0b;border-color:transparent}
-.tzline{color:var(--dim);font-size:12px;margin-top:12px}
-.bk-form{margin-top:20px;border-top:1px solid var(--line);padding-top:20px}
-.done{text-align:center;padding:40px 20px}.done .check{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;background:var(--goldbg);color:var(--gold);font-size:30px}
-@media (max-width:860px){.bk-grid{grid-template-columns:1fr}.bk-info{padding:22px}.bk-pick{padding:18px}}
+.bk-info h1{font-size:34px;margin:10px 0 10px}
+.bk-info p{color:var(--text)}
+.bk-meta{list-style:none;display:grid;gap:12px;margin:22px 0 0;padding:0}.bk-meta li{display:flex;gap:12px;align-items:center;color:var(--text);font-size:14px}.bk-meta svg{width:20px;height:20px;color:var(--gold);flex:none}
+.bk-steps{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);display:grid;gap:8px;font-size:13px;color:var(--muted)}
+.bk-steps b{color:var(--gold);font-weight:600;margin-right:6px}
+.bk-pick{padding:32px;display:grid;grid-template-columns:1fr 220px;gap:28px;align-content:start}
+.bk-pick h2{font-size:20px;margin:0 0 4px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.cal-head b{font:600 16px Montserrat,sans-serif}
+.cal-nav{display:flex;gap:6px}.cal-nav button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;font-size:16px}.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.cal .wd{font:600 11px Inter;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:6px 0}
+.cal button{aspect-ratio:1;border-radius:50%;border:0;background:none;color:#5d5e66;font:500 15px Inter;cursor:default}
+.cal button.open{color:var(--text);background:rgba(226,194,122,.10);cursor:pointer;font-weight:600}
+.cal button.open:hover{background:rgba(226,194,122,.22)}
+.cal button[aria-pressed=true]{background:var(--gold);color:#0a0a0b}
+.cal button.today{box-shadow:inset 0 0 0 1px rgba(226,194,122,.5)}
+.times h3{font:600 15px Montserrat,sans-serif;margin:0 0 12px;min-height:22px}
+.slots{display:grid;gap:8px;max-height:380px;overflow:auto;padding-right:4px}
+.slot{min-height:46px;border-radius:12px;border:1px solid rgba(226,194,122,.4);background:none;color:var(--gold);font:600 15px Inter;cursor:pointer;transition:background .15s,color .15s}
+.slot:hover{background:rgba(226,194,122,.12)}.slot[aria-pressed=true]{background:var(--gold);color:#0a0a0b}
+.tzline{color:var(--dim);font-size:12px;margin-top:14px}
+.bk-form{grid-column:1/-1;border-top:1px solid var(--line);padding-top:22px}
+.done{grid-column:1/-1;text-align:center;padding:60px 20px}.done .check{width:72px;height:72px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;background:var(--goldbg);color:var(--gold);font-size:32px}
+@media (min-width:1600px){html{zoom:1.15}}@media (min-width:2200px){html{zoom:1.35}}
+@media (max-width:900px){.bk-grid{grid-template-columns:1fr}.bk-info{min-height:300px;padding:24px}.bk-pick{grid-template-columns:1fr;padding:22px}.slots{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));max-height:none}.bk-stage{align-items:flex-start;padding-top:16px}}
 </style>
+<link rel="stylesheet" href="/assets/theme.css?v=1">
+<script src="/assets/theme.js?v=1" defer></script>
 </head>
 <body>
 <div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
 <main class="bk">
   <div class="bk-top"><a href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="138" height="26"></a><a class="btn btn-sm" href="/">Back to site</a></div>
-  <div class="bk-grid">
-    <section class="card bk-info">
+  <div class="bk-stage"><div class="bk-grid">
+    <section class="bk-info tone-dark">
       <span class="eyebrow">Book a call</span>
       <h1 id="title">Discovery call</h1>
       <p id="intro">A short call with the Delegance team about what you want to hand over.</p>
@@ -57,14 +71,18 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg><span>Video call, link sent by email</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg><span>Free, no commitment</span></li>
       </ul>
+      <div class="bk-steps"><span><b>1</b>Tell us what eats your time</span><span><b>2</b>We suggest the right VA or build</span><span><b>3</b>You get a clear plan and price by email</span></div>
     </section>
-    <section class="card bk-pick" id="pick" aria-live="polite">
-      <h2 style="font-size:18px;margin-bottom:14px">Pick a day and time</h2>
-      <div class="days" id="days" role="group" aria-label="Days"></div>
-      <div class="slots" id="slots" role="group" aria-label="Times"><div class="skel" style="grid-column:1/-1"><i style="--h:44px"></i></div></div>
-      <p class="tzline" id="tzl"></p>
+    <section class="bk-pick" id="pick" aria-live="polite">
+      <div>
+        <h2>Pick a day</h2>
+        <div class="cal-head"><b id="mon"></b><div class="cal-nav"><button type="button" id="prev" aria-label="Previous month">‹</button><button type="button" id="next" aria-label="Next month">›</button></div></div>
+        <div class="cal" id="cal" role="grid" aria-label="Calendar"></div>
+        <p class="tzline" id="tzl"></p>
+      </div>
+      <div class="times"><h3 id="dayname">&nbsp;</h3><div class="slots" id="slots" role="group" aria-label="Times"><div class="skel"><i style="--h:46px"></i><i style="--h:46px"></i></div></div></div>
       <form class="bk-form" id="f" hidden novalidate>
-        <p id="chosen" style="font:600 15px Montserrat,sans-serif;margin-bottom:14px;color:var(--gold)"></p>
+        <p id="chosen" style="font:600 16px Montserrat,sans-serif;margin-bottom:14px;color:var(--gold)"></p>
         <div class="row2"><label class="fld"><span>Your name</span><input name="name" autocomplete="name" maxlength="80" required></label><label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required></label></div>
         <label class="fld"><span>Business or website (optional)</span><input name="company" maxlength="120"></label>
         <label class="fld"><span>What would you like to talk about? (optional)</span><textarea name="notes" maxlength="1000" placeholder="e.g. I need help with my inbox and bookings, about 15 hours a week."></textarea></label>
@@ -74,7 +92,7 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
         <button class="btn btn-acc wide" type="submit">Confirm booking</button>
       </form>
     </section>
-  </div>
+  </div></div>
 </main>
 <script>
 (function(){
@@ -90,10 +108,20 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
     if(!d.enabled||!d.slots.length){$('#slots').innerHTML='<p class="empty" style="grid-column:1/-1">'+(d.enabled?'No free times right now. Email admin@delegance.app and we will find one.':'Booking is closed right now. Email admin@delegance.app.')+'</p>';return}
     var by={};d.slots.forEach(function(s){(by[dkey(s)]=by[dkey(s)]||[]).push(s)});
     var keys=Object.keys(by).sort();
-    $('#days').innerHTML=keys.map(function(k){var dt=new Date(k+'T12:00:00');return '<button class="day" type="button" data-k="'+k+'" aria-pressed="false"><span>'+dt.toLocaleDateString(undefined,{weekday:'short'})+'</span><b>'+dt.getDate()+'</b><span>'+dt.toLocaleDateString(undefined,{month:'short'})+'</span></button>'}).join('');
-    function showDay(k){day=k;document.querySelectorAll('.day').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.k===k))});$('#slots').innerHTML=by[k].map(function(s){return '<button class="slot" type="button" data-s="'+s+'" aria-pressed="false">'+new Date(s).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</button>'}).join('');document.querySelectorAll('.slot').forEach(function(b){b.onclick=function(){choose(b.dataset.s)}})}
-    document.querySelectorAll('.day').forEach(function(b){b.onclick=function(){showDay(b.dataset.k)}});
-    showDay(keys[0]);
+    var first=new Date(keys[0]+'T12:00:00'),last=new Date(keys[keys.length-1]+'T12:00:00'),view=new Date(first.getFullYear(),first.getMonth(),1),todayK=new Date().toLocaleDateString('en-CA',{timeZone:tz});
+    function drawCal(){
+      $('#mon').textContent=view.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+      var wd=[];for(var i=0;i<7;i++)wd.push('<span class="wd">'+new Date(2026,1,1+i).toLocaleDateString(undefined,{weekday:'short'}).slice(0,2)+'</span>');
+      var lead=view.getDay(),n=new Date(view.getFullYear(),view.getMonth()+1,0).getDate(),cells=[];
+      for(var j=0;j<lead;j++)cells.push('<span></span>');
+      for(var d=1;d<=n;d++){var k=view.getFullYear()+'-'+String(view.getMonth()+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),o=!!by[k];cells.push('<button type="button"'+(o?' class="open'+(k===todayK?' today':'')+'" data-k="'+k+'" aria-pressed="'+(k===day)+'" aria-label="'+new Date(k+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'})+', '+by[k].length+' times"':(k===todayK?' class="today" disabled':' disabled'))+'>'+d+'</button>')}
+      $('#cal').innerHTML=wd.join('')+cells.join('');
+      $('#prev').disabled=view<=new Date(first.getFullYear(),first.getMonth(),1);$('#next').disabled=view>=new Date(last.getFullYear(),last.getMonth(),1);
+      document.querySelectorAll('.cal button[data-k]').forEach(function(b){b.onclick=function(){showDay(b.dataset.k)}});
+    }
+    function showDay(k){day=k;document.querySelectorAll('.cal button[data-k]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.k===k))});$('#dayname').textContent=new Date(k+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});$('#slots').innerHTML=by[k].map(function(s){return '<button class="slot" type="button" data-s="'+s+'" aria-pressed="false">'+new Date(s).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</button>'}).join('');document.querySelectorAll('.slot').forEach(function(b){b.onclick=function(){choose(b.dataset.s)}})}
+    $('#prev').onclick=function(){view=new Date(view.getFullYear(),view.getMonth()-1,1);drawCal()};$('#next').onclick=function(){view=new Date(view.getFullYear(),view.getMonth()+1,1);drawCal()};
+    drawCal();showDay(keys[0]);
   }).catch(function(x){$('#slots').innerHTML='<p class="err">'+esc(x.message)+'</p>'});
   function choose(s){pick=s;document.querySelectorAll('.slot').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===s))});$('#f').hidden=false;$('#chosen').textContent=new Date(s).toLocaleString(undefined,{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
     if(tsId==null)fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;var sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=function(){tsId=turnstile.render('#ts',{sitekey:c.turnstile,theme:'dark',size:'flexible'})};document.head.appendChild(sc);tsId=-1}).catch(function(){});

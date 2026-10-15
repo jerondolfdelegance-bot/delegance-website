@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dashboard · Delegance</title>
 <meta name="robots" content="noindex">
@@ -13,9 +14,11 @@
 <meta name="apple-mobile-web-app-title" content="Delegance">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/dash.css?v=7">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/dash.css?v=8">
 <link rel="stylesheet" href="/assets/motion.css?v=1">
+<link rel="stylesheet" href="/assets/theme.css?v=1">
+<script src="/assets/theme.js?v=1" defer></script>
 </head>
 <body>
 <div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
@@ -30,6 +33,6 @@
 </div>
 <dialog id="dlg"></dialog>
 <script src="/assets/motion.js?v=1" defer></script>
-<script src="/assets/dash.js?v=7" defer></script>
+<script src="/assets/dash.js?v=8" defer></script>
 </body>
 </html>
