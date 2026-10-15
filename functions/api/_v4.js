@@ -19,17 +19,25 @@ export async function desk(env, path, payload, me) {
   return j;
 }
 
+// Your other sign-in emails (e.g. the Gmail you used in Desk) count as you. Stored in settings, never in code.
+async function myEmails(env, me) {
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'email_aliases'").first().catch(() => null);
+  const map = (row && parse(row.value, null)) || {};
+  return [me.email, ...((map[me.email] || []).map(String))];
+}
+
 async function visibleAccounts(env, me) {
-  const { results } = await env.DB.prepare(`SELECT a.id, a.network, a.name, a.handle, a.avatar, a.client, a.status, a.status_note, a.private, c.connected_by
-    FROM accounts a LEFT JOIN connections c ON c.id = a.connection_id WHERE a.enabled = 1 AND (a.private = 0 OR c.connected_by = ?) ORDER BY a.network, a.name`).bind(me.email).all();
-  return results.map(a => ({ ...a, mine: a.connected_by === me.email }));
+  const mine = await myEmails(env, me), qs = mine.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(`SELECT a.id, a.network, a.name, a.handle, a.avatar, a.client, a.status, a.status_note, a.private, a.enabled, c.connected_by
+    FROM accounts a LEFT JOIN connections c ON c.id = a.connection_id WHERE (a.private = 0 OR c.connected_by IN (${qs})) ORDER BY a.enabled DESC, a.network, a.name`).bind(...mine).all();
+  return results.map(a => ({ ...a, mine: mine.includes(a.connected_by) }));
 }
 
 // ---------------- Social (team) ----------------
 export async function socialRoutes(path, m, req, env, me, url) {
   const DB = env.DB, p = path.split('/');
   if (p[0] !== 'social' || !can(me, 'staff')) return null;
-  const accts = await visibleAccounts(env, me), ids = new Set(accts.map(a => a.id));
+  const accts = await visibleAccounts(env, me), ids = new Set(accts.map(a => a.id)), live = new Set(accts.filter(a => a.enabled).map(a => a.id));
   const onlyVisible = list => list.length > 0 && list.every(id => ids.has(id));
 
   if (!p[1] && m === 'GET') {
@@ -56,7 +64,7 @@ export async function socialRoutes(path, m, req, env, me, url) {
   }
   if (p[1] === 'posts' && m === 'POST') {
     const b = await body(req), list = (Array.isArray(b.account_ids) ? b.account_ids : []).map(String).slice(0, 30);
-    if (!list.every(id => ids.has(id)) || (!list.length && (b.publish_now || b.scheduled_at))) return bad('Choose at least one of your connected accounts.');
+    if (!list.every(id => live.has(id)) || (!list.length && (b.publish_now || b.scheduled_at))) return bad('Choose at least one of your connected accounts.');
     if (await limited(env, 'spost:' + me.id, 60, 3600)) return bad('That is a lot of posts this hour. Please wait a little.', 429);
     try {
       const r = await desk(env, 'posts', { body: b.body, account_ids: list, link_url: b.link_url, first_comment: b.first_comment, media_id: b.media_id, status: b.publish_now ? 'scheduled' : (b.scheduled_at ? 'scheduled' : 'draft'), scheduled_at: b.scheduled_at, publish_now: !!b.publish_now }, me);
@@ -85,10 +93,23 @@ export async function socialRoutes(path, m, req, env, me, url) {
       if (!a.mine && !can(me, 'super_admin')) return bad('Only the person who connected this account can make it private.', 403);
       await DB.prepare('UPDATE accounts SET private = ? WHERE id = ?').bind(b.private ? 1 : 0, a.id).run();
     }
+    if (b.enabled !== undefined) {
+      if (!a.mine && !can(me, 'super_admin')) return bad('Only the person who connected this page can switch it on or off.', 403);
+      await DB.prepare('UPDATE accounts SET enabled = ?, updated_at = ? WHERE id = ?').bind(b.enabled ? 1 : 0, new Date().toISOString(), a.id).run();
+      await audit(env, me.email, 'social.toggle', `${a.network} ${a.name} ${b.enabled ? 'on' : 'off'}`);
+    }
     if (b.client !== undefined) {
-      if (!can(me, 'admin')) return bad('Only admins can label clients.', 403);
+      if (!a.mine && !can(me, 'admin')) return bad('Only the person who connected this page (or an admin) can move it to another profile.', 403);
       await DB.prepare('UPDATE accounts SET client = ? WHERE id = ?').bind(clean(b.client, 60) || null, a.id).run();
     }
+    return json({ ok: true });
+  }
+  if (p[1] === 'accounts' && p[2] && m === 'DELETE') {
+    const a = accts.find(x => x.id === p[2]);
+    if (!a) return bad('Account not found.', 404);
+    if (!a.mine && !can(me, 'super_admin')) return bad('Only the person who connected this page can disconnect it.', 403);
+    try { await desk(env, 'disconnect', { id: a.id }, me); } catch (e) { return bad(e.message); }
+    await audit(env, me.email, 'social.disconnect', `${a.network} ${a.name}`);
     return json({ ok: true });
   }
   if (p[1] === 'autoreplies') {
