@@ -2,6 +2,8 @@
 (function () {
   fetch('/api/auth/me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
     if (!d || !d.user) return;
+    window.DLG_SIGNED_IN = true;
+    if (d.user.theme && window.DLGTheme && d.user.theme !== DLGTheme.get()) DLGTheme.set(d.user.theme, false);
     var u = d.user, first = String(u.name || '').split(' ')[0];
     var ini = String(u.name || '?').split(/\s+/).map(function (x) { return x[0]; }).slice(0, 2).join('').toUpperCase();
     document.querySelectorAll('a[href="/login"]').forEach(function (a) {

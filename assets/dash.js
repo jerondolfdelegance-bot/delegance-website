@@ -27,7 +27,7 @@
   var hrs = function (m) { return (Math.round((m || 0) / 6) / 10).toLocaleString() + 'h'; };
   var empty = function (t) { return '<p class="empty">' + esc(t) + '</p>'; };
   var today = function () { return new Date().toISOString().slice(0, 10); };
-  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline tright">' + (actions || '') + (TEAM ? '<button class="ibtn" id="srchBtn" aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)">' + I.search + '</button>' : '') + '<button class="ibtn" id="bell" aria-label="Notifications" title="Notifications" data-n="0">' + I.bell + '<span class="dot" hidden></span></button><button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
+  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline tright">' + (actions || '') + '<span data-theme-toggle></span>' + (TEAM ? '<button class="ibtn" id="srchBtn" aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)">' + I.search + '</button>' : '') + '<button class="ibtn" id="bell" aria-label="Notifications" title="Notifications" data-n="0">' + I.bell + '<span class="dot" hidden></span></button><button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
   function opts(list, sel, blank) { return (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') + list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(sel == null ? '' : sel) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join(''); }
   function modal(html, onSubmit) {
     dlg.innerHTML = '<form method="dialog" novalidate>' + html + '<p class="err" role="alert"></p><div class="acts"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn btn-acc" value="ok" id="dlgOk">Save</button></div></form>';
@@ -877,7 +877,7 @@
     var s = size || 36, st = 'width:' + s + 'px;height:' + s + 'px;min-width:' + s + 'px;font-size:' + Math.round(s * 0.38) + 'px' + (u && u.accent && ACCENT[u.accent] ? ';background:' + ACCENT[u.accent][1] : '');
     return u && u.avatar ? '<img class="av img" src="' + esc(u.avatar) + '" alt="" style="' + st + '">' : '<span class="av" style="' + st + '">' + initials(u && u.name) + '</span>';
   }
-  function applyAccent() { var a = ME && ME.accent && ACCENT[ME.accent]; if (a) document.documentElement.style.setProperty('--acc', a[1]); else document.documentElement.style.removeProperty('--acc'); }
+  function applyAccent() { var a = ME && ME.accent && ACCENT[ME.accent], b = document.body.style; if (a && document.documentElement.dataset.theme !== 'light') { b.setProperty('--acc', a[1]); b.setProperty('--accbg', a[1] + '1f'); } else { b.removeProperty('--acc'); b.removeProperty('--accbg'); } }
   function shrinkPhoto(file) {
     return new Promise(function (ok, no) {
       if (!/^image\//.test(file.type)) return no(new Error('Pick a photo (JPG, PNG or WebP).'));
@@ -1033,7 +1033,7 @@
     drawNav();
     var fresh = name + '/' + (parts[1] || '') !== route.last; route.last = name + '/' + (parts[1] || '');
     if (fresh) { main.classList.add('enter'); main.innerHTML = '<div class="skel" aria-label="Loading"><i style="--h:56px"></i><i style="--h:140px"></i><i style="--h:220px"></i></div>'; } else main.classList.remove('enter');
-    try { main.innerHTML = await fn(decodeURIComponent(parts[1] || '')); if (window.DLGMotion) DLGMotion.scan(main); }
+    try { main.innerHTML = await fn(decodeURIComponent(parts[1] || '')); if (window.DLGMotion) DLGMotion.scan(main); if (window.DLGTheme) DLGTheme.scan(); }
     catch (x) { main.innerHTML = top('Something went wrong') + '<div class="card"><p class="err">' + esc(x.message) + '</p><button class="btn" onclick="location.reload()">Try again</button></div>'; }
     var mb = document.getElementById('menuBtn'); if (mb) mb.onclick = function () { document.body.classList.toggle('nav-open'); };
     var sb = document.getElementById('srchBtn'); if (sb) sb.onclick = openSearch;
@@ -1048,6 +1048,10 @@
     var sp = document.getElementById('space'); sp.querySelector('b').textContent = SPACES[ROLE][0]; sp.querySelector('span').textContent = SPACES[ROLE][1];
     document.getElementById('meBox').innerHTML = '<a href="#profile" class="melink" title="My profile">' + avatar(ME, 36) + '<div class="who"><b>' + esc(ME.name) + '</b><span>' + esc(ME.title || ROLE_NAME[ROLE]) + '</span></div></a><button class="btn btn-sm" id="soSide" aria-label="Sign out" title="Sign out" style="margin-left:auto;padding:0 10px">' + I.out + '</button>';
     document.getElementById('soSide').onclick = signOut;
+    window.DLG_SIGNED_IN = true;
+    if (ME.theme && window.DLGTheme && ME.theme !== DLGTheme.get()) DLGTheme.set(ME.theme, false);
+    window.DLG_SIGNED_IN = true;
+    if (ME.theme && window.DLGTheme && ME.theme !== DLGTheme.get()) DLGTheme.set(ME.theme, false);
     applyAccent(); loadChatBadge();
     document.querySelector('#soSide svg').setAttribute('width', '16');
   }
@@ -1058,5 +1062,6 @@
   boot().then(function () { if (ME.mfa_required && !ME.mfa) return gate(); return route(); }).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
   // Installable app: offline shell + install prompt (shown on the Account page).
   if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  document.addEventListener('dlg-theme', function () { if (ME) applyAccent(); });
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.DLG_INSTALL = e; });
 })();

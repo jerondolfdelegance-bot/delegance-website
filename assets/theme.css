@@ -1,0 +1,57 @@
+/* Delegance light / dark themes. Loaded last on every page. Dark is the default; [data-theme=light] swaps the tokens. */
+:root{--ink:255,255,255;--base:10,10,11;--strong:#fff;--metal:linear-gradient(180deg,#fff 0%,#d9dadf 35%,#9a9ba3 60%,#e6e7ea 85%,#b9bac1 100%)}
+html[data-theme=light]{
+  color-scheme:light;
+  --ink:28,22,10;--base:250,247,240;--strong:#14110b;
+  --bg:#f6f2ea;--bg2:#efe9dd;--card:#ffffff;--card2:#fbf8f2;--panel:rgba(255,255,255,.88);--panel2:#ffffff;
+  --line:#e4ddcd;--line2:#d4cbb7;--text:#1b1813;--muted:#5d574b;--dim:#8a8373;
+  --silver:linear-gradient(180deg,#2a2620 0%,#14110b 55%,#3a342a 100%);
+  --edge:linear-gradient(135deg,rgba(28,22,10,.18),rgba(28,22,10,.04) 40%,rgba(28,22,10,.02) 60%,rgba(28,22,10,.12));
+  --gold:#8a6a1f;--gold2:#6d5216;--goldbg:rgba(160,124,40,.12);--goldline:rgba(138,106,31,.38);
+  --ok:#1f8a5b;--warn:#9a6a00;--bad:#c03d3d;--info:#2f64b7;
+  --glow1:#efe0bd;--glow2:#f3e6cc;
+}
+html[data-theme=light]{background:var(--bg)}
+html[data-theme=light] body{--acc:#8a6a1f;--acc2:#6d5216;--accbg:rgba(160,124,40,.12)}
+html[data-theme=light] body[data-role=admin]{--acc:#4b4f5c;--acc2:#2f323b;--accbg:rgba(75,79,92,.10)}
+html[data-theme=light] body[data-role=staff]{--acc:#2a5cad;--acc2:#1d4384;--accbg:rgba(42,92,173,.10)}
+html[data-theme=light] body[data-role=va]{--acc:#1e7a52;--acc2:#145a3b;--accbg:rgba(30,122,82,.10)}
+html[data-theme=light] body[data-role=client]{--acc:#8a5a2b;--acc2:#6a431e;--accbg:rgba(138,90,43,.10)}
+html[data-theme=light] body[data-role=member]{--acc:#5a42c2;--acc2:#432f9c;--accbg:rgba(90,66,194,.10)}
+html[data-theme=light] .grain{opacity:.025}
+html[data-theme=light] .amb i{opacity:.55}
+html[data-theme=light] .btn-acc,html[data-theme=light] .btn.btn-acc{color:#fff}
+html[data-theme=light] img.logo-w,html[data-theme=light] .logo img,html[data-theme=light] .brand img,html[data-theme=light] .bk-top img,html[data-theme=light] .auth-home img,html[data-theme=light] .k-wrap .logo img{filter:invert(1) hue-rotate(180deg)}
+/* Theme switch */
+.thm{position:relative;display:inline-flex}
+.thm-btn{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid var(--line2);background:rgba(var(--ink),.04);color:var(--text);cursor:pointer;transition:border-color .15s,transform .15s}
+.thm-btn:hover{border-color:var(--strong)}.thm-btn svg{width:18px;height:18px}
+.thm-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:170px;padding:6px;border-radius:14px;border:1px solid var(--line2);background:var(--card,#141417);box-shadow:0 18px 50px rgba(0,0,0,.35);z-index:80}
+html[data-theme=light] .thm-menu{box-shadow:0 18px 50px rgba(60,45,10,.18)}
+.thm-menu button{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 12px;border:0;border-radius:10px;background:none;color:var(--text);font:500 14px Inter,sans-serif;cursor:pointer;text-align:left}
+.thm-menu button:hover,.thm-menu button:focus-visible{background:rgba(var(--ink),.06)}
+.thm-menu button[aria-checked=true]{color:var(--gold,#e2c27a);font-weight:600}
+.thm-menu svg{width:16px;height:16px}
+.thm-float{position:fixed;left:16px;bottom:16px;z-index:70}
+.thm-float .thm-menu{right:auto;left:0;top:auto;bottom:calc(100% + 8px)}
+@media print{.thm-float{display:none}}
+/* Section tones: some sections always light ("paper"), photo bands always dark, whatever the theme. */
+.tone-light{color-scheme:light;--ink:28,22,10;--base:250,247,240;--strong:#14110b;--bg:#f6f2ea;--bg2:#efe9dd;--card:#ffffff;--card2:#fbf8f2;--line:#e4ddcd;--line2:#d4cbb7;--text:#1b1813;--muted:#5d574b;--dim:#857e6e;--silver:linear-gradient(180deg,#2a2620 0%,#14110b 55%,#3a342a 100%);--edge:linear-gradient(135deg,rgba(28,22,10,.16),rgba(28,22,10,.04) 40%,rgba(28,22,10,.02) 60%,rgba(28,22,10,.1));--gold:#8a6a1f;--goldbg:rgba(160,124,40,.12);--goldline:rgba(138,106,31,.38);--ok:#1f8a5b;--info:#2f64b7;--warn:#9a6a00;background:var(--bg);color:var(--text)}
+.tone-dark{color-scheme:dark;--ink:255,255,255;--base:10,10,11;--strong:#fff;--bg:#0b0a08;--bg2:#12100c;--card:rgba(20,18,14,.78);--card2:rgba(28,25,19,.85);--line:rgba(255,255,255,.12);--line2:rgba(255,255,255,.2);--text:#f1efe9;--muted:#c5c0b4;--dim:#948e80;--silver:linear-gradient(180deg,#fff 0%,#f3e7c8 45%,#d8c08a 75%,#fff4dc 100%);--gold:#e2c27a;--goldbg:rgba(226,194,122,.14);--goldline:rgba(226,194,122,.4);color:var(--text)}
+.tone-light .eyebrow{color:#8a6a1f}.tone-light .eyebrow::before,.tone-light .sec-head.c .eyebrow::after{background:linear-gradient(90deg,transparent,#8a6a1f)}
+html[data-theme=light] .eyebrow{color:#8a6a1f}html[data-theme=light] .eyebrow::before{background:linear-gradient(90deg,transparent,#8a6a1f)}
+
+html[data-theme=light],.tone-light{--metal:linear-gradient(180deg,#f3dca2 0%,#e2c27a 45%,#c49a45 100%)}
+.tone-dark{--metal:linear-gradient(180deg,#fff 0%,#f1e3bf 40%,#d9bd7c 75%,#fff1d0 100%)}
+html[data-theme=light] .glass,.tone-light .glass{background:rgba(255,255,255,.86);border-color:var(--line);box-shadow:0 24px 60px -28px rgba(60,45,10,.28)}
+.tone-dark .glass{background:rgba(20,18,14,.72)}
+html[data-theme=light] footer.site img,html[data-theme=light] .tf img,html[data-theme=light] .side .logo img{filter:invert(1) hue-rotate(180deg)}
+html[data-theme=light] .hero img,html[data-theme=light] .tone-dark img{filter:none}
+html[data-theme=light] .bulk{background:#fbf4e3}
+html[data-theme=light] .timeline .ticon{background:#f3eee3}html[data-theme=light] .timeline li.call .ticon,html[data-theme=light] .timeline li.meeting .ticon,html[data-theme=light] .timeline li.email .ticon{background:#f7ecd2}
+html[data-theme=light] body[data-role] .hero{background:radial-gradient(90% 140% at 100% 0%,var(--accbg),transparent 60%),linear-gradient(135deg,#fffdf8,#f4ecdc);border-color:var(--line)}
+html[data-theme=light] .welcome{background:radial-gradient(120% 140% at 0% 0%,rgba(226,194,122,.32),transparent 55%),radial-gradient(90% 120% at 100% 100%,rgba(196,154,69,.18),transparent 60%),linear-gradient(180deg,#fffdf8,#f7f0e2);border-color:rgba(138,106,31,.25)}
+html[data-theme=light] .qbtn{background:rgba(255,255,255,.75)}
+html[data-theme=light] .ring b{background:#fffdf8}
+html[data-theme=light] .tchat{background:rgba(255,255,255,.7)}
+html[data-theme=light] dialog::backdrop{background:rgba(40,30,10,.35)}
