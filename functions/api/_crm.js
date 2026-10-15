@@ -1,5 +1,6 @@
 // Delegance CRM v2: deals, activities, reports, search, notifications, templates, bulk + import.
 import { now, uid, json, bad, clean, cleanEmail, parse, body, can, audit, sendEmail, limited } from './_lib.js';
+import { emit } from './_auto.js';
 
 export const DEAL_STAGES = ['new', 'contacted', 'call', 'proposal', 'negotiation', 'won', 'lost'];
 export const STAGE_PROB = { new: 10, contacted: 20, call: 40, proposal: 60, negotiation: 80, won: 100, lost: 0 };
@@ -55,11 +56,13 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
     if (!p[1] && m === 'POST') {
       const b = await body(req); const title = clean(b.title, 140);
       if (!title) return bad('Give the deal a name.');
-      let contact = b.contact_id || null;
-      if (!contact && clean(b.contact_name, 120)) contact = (await DB.prepare('INSERT INTO crm_contacts (id, name, company, email, source, stage, kind, owner_id, tags, created_at, updated_at, last_activity) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id')
+      let contact = b.contact_id || null, made = false;
+      if (!contact && clean(b.contact_name, 120)) made = true, contact = (await DB.prepare('INSERT INTO crm_contacts (id, name, company, email, source, stage, kind, owner_id, tags, created_at, updated_at, last_activity) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id')
         .bind(uid('ct_'), clean(b.contact_name, 120), clean(b.company, 120) || null, cleanEmail(b.email) || null, 'Manual', 'new', 'lead', me.id, '[]', now(), now(), now()).first()).id;
       const id = await newDeal(env, { title, contact_id: contact, owner_id: b.owner_id || me.id, stage: b.stage, value_usd: money(b.value_usd), source: clean(b.source, 60) || 'Manual', close_date: isDate(b.close_date) ? b.close_date : null });
       await logActivity(env, { contact_id: contact, deal_id: id, me, body: `Deal created: ${title}.` });
+      if (made) later(emit(env, 'contact.created', { contact_id: contact }));
+      later(emit(env, 'deal.created', { deal_id: id }));
       return json({ ok: true, id }, 201);
     }
     const d = p[1] && await DB.prepare('SELECT * FROM crm_deals WHERE id = ?').bind(p[1]).first();
@@ -89,6 +92,8 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
       if (moved) {
         await logActivity(env, { contact_id: d.contact_id, deal_id: d.id, me, body: `Moved "${f.title}" from ${STAGE_NAME[d.stage]} to ${STAGE_NAME[f.stage]}${f.stage === 'lost' && f.lost_reason ? ' (' + f.lost_reason + ')' : ''}.` });
         if (f.stage === 'won' && d.contact_id) await DB.prepare("UPDATE crm_contacts SET kind = 'client', stage = 'won' WHERE id = ?").bind(d.contact_id).run();
+        later(emit(env, 'deal.stage_changed', { deal_id: d.id, from_stage: d.stage }));
+        if (f.stage === 'won' || f.stage === 'lost') later(emit(env, 'deal.' + f.stage, { deal_id: d.id }));
         if (f.stage === 'won') later(notify(env, await adminIds(env), { title: `Deal won: ${f.title}`, body: `${me.name} won ${f.value_usd ? 'US$' + f.value_usd.toLocaleString() : 'a deal'}.`, link: '#deal/' + d.id }));
       }
       if (b.owner_id && b.owner_id !== d.owner_id && b.owner_id !== me.id) later(notify(env, [b.owner_id], { title: `${me.name} gave you a deal`, body: f.title, link: '#deal/' + d.id }));

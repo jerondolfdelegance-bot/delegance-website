@@ -3,6 +3,9 @@ import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwo
   startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink, checkTotp, newTotpSecret, recoveryCodes, seal, unseal, needsMfa,
   sendEmail, mailReady, teamInbox, humanOk } from './_lib.js';
 import { crmRoutes, notificationRoutes, notify, adminIds, newDeal, logActivity } from './_crm.js';
+import { emit, runDue, autoRoutes } from './_auto.js';
+import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int.js';
+const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements)/;
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
 const TEAM = ['staff', 'admin', 'super_admin'];
@@ -13,17 +16,42 @@ export async function onRequest(ctx) {
   const path = url.pathname.replace(/^\/api\/?/, '').replace(/\/$/, '');
   const m = req.method;
   if (!env.DB) return bad('Not configured yet.', 503);
+  const ip = req.headers.get('CF-Connecting-IP') || 'local';
+  const bearer = ((req.headers.get('Authorization') || '').match(/^Bearer\s+(\S+)$/i) || [])[1];
+  const lazyCron = async () => { if (!(await limited(env, 'lazycron', 1, 120))) ctx.waitUntil(runDue(env).catch(e => console.error('cron', e && e.message))); };
+  try {
+    // Machine endpoints: scheduler, lead capture, Claude MCP, API keys. No cookies, so no CSRF check.
+    if (path === 'cron') { if (await limited(env, 'cron:' + ip, 30, 3600)) return bad('Too many.', 429); const n = await runDue(env); return json({ ok: true, ran: n }); }
+    if (path.startsWith('hooks/')) return await leadHook(req, env, path.slice(6), ctx);
+    if (path === 'mcp' || path.startsWith('mcp/')) {
+      const me = await keyUser(env, path.length > 4 ? path.slice(4) : bearer);
+      if (!me) return json({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Add a valid Delegance API key (Bearer token or /api/mcp/<key>).' } }, 401, { 'WWW-Authenticate': 'Bearer' });
+      await lazyCron();
+      return await mcp(req, env, me, ctx, internalCaller(env, me, ctx));
+    }
+    if (bearer) {
+      const me = await keyUser(env, bearer);
+      if (!me) return bad('Invalid API key.', 401);
+      if (KEY_BLOCKED.test(path)) return bad('This part of the API is only available in the dashboard.', 403);
+      if (me.readonly && m !== 'GET') return bad('This API key is read-only.', 403);
+      if (await limited(env, 'key:' + me.kid, 600, 3600)) return bad('Rate limit: 600 requests per hour per key.', 429);
+      await lazyCron();
+      return (await privateRoutes(path, m, req, env, me, url, ctx)) || bad('Not found.', 404);
+    }
+  } catch (e) { console.error('api error', path, e && e.stack || e); return bad('Something went wrong on our side. Please try again.', 500); }
   if (m !== 'GET' && m !== 'HEAD') {
     const o = req.headers.get('Origin');
     if (o && o !== url.origin) return bad('Blocked: request did not come from delegance.app.', 403);
     if (!o && req.headers.get('Sec-Fetch-Site') && req.headers.get('Sec-Fetch-Site') !== 'same-origin') return bad('Blocked.', 403);
   }
-  const ip = req.headers.get('CF-Connecting-IP') || 'local';
   try {
+    const bk = path === 'book' || path === 'book/cancel' ? await bookingPublic(path, m, req, env, ip, ctx) : null;
+    if (bk) return bk;
     const pub = await publicRoutes(path, m, req, env, ip, ctx);
     if (pub) return pub;
     const me = await currentUser(env, req);
     if (!me) return bad('Please sign in.', 401);
+    await lazyCron();
     // Team accounts must turn on 2-step sign-in before anything else.
     if (needsMfa(me) && !me.totp_enabled && !/^auth\/(me|logout|totp\/(start|confirm))$/.test(path)) return json({ error: 'Turn on 2-step sign-in to continue.', code: 'mfa_setup' }, 403);
     return (await privateRoutes(path, m, req, env, me, url, ctx)) || bad('Not found.', 404);
@@ -31,6 +59,19 @@ export async function onRequest(ctx) {
     console.error('api error', path, e && e.stack || e);
     return bad('Something went wrong on our side. Please try again.', 500);
   }
+}
+
+// Lets the MCP server reuse every API route with the key owner's permissions.
+function internalCaller(env, me, ctx) {
+  return async (method, pathQ, data) => {
+    const u = new URL('https://delegance.app/api/' + pathQ);
+    const r = new Request(u, { method, headers: data !== undefined ? { 'Content-Type': 'application/json' } : {}, body: data !== undefined ? JSON.stringify(data) : undefined });
+    const res = await privateRoutes(u.pathname.replace(/^\/api\/?/, '').replace(/\/$/, ''), method, r, env, me, u, ctx);
+    if (!res) throw new Error('Not found');
+    const j = await res.json().catch(() => ({}));
+    if (res.status >= 400) throw new Error(j.error || 'Request failed (' + res.status + ')');
+    return j;
+  };
 }
 
 // ---------------- Public: sign in, sign up, links, website requests ----------------
@@ -141,13 +182,14 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
     const needs = (Array.isArray(b.needs) ? b.needs : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 10);
     const details = [needs.length ? 'Needs: ' + needs.join(', ') : '', b.when ? 'Start: ' + clean(b.when, 60) : '', b.how ? 'Amount: ' + clean(b.how, 60) : '', clean(b.message, 1500)].filter(Boolean).join('\n');
-    const contactId = await upsertLead(env, { name, email, company: clean(b.company, 120), source: 'Website request' });
+    const contactId = await upsertLead(env, { name, email, company: clean(b.company, 120), source: 'Website request' }, later);
     const t = now();
     await DB.prepare('INSERT INTO crm_requests (id, contact_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
       .bind(uid('rq_'), contactId, needs.length ? needs.slice(0, 3).join(', ') : 'New request', details, 'new', t, t).run();
     await audit(env, email, 'crm.web_request', contactId);
     const openDeal = await DB.prepare("SELECT id FROM crm_deals WHERE contact_id = ? AND stage NOT IN ('won','lost')").bind(contactId).first();
-    if (!openDeal) await newDeal(env, { title: (clean(b.company, 80) || name) + ' · ' + (needs.slice(0, 2).join(', ') || 'New request'), contact_id: contactId, source: 'Website request' });
+    const webDeal = openDeal ? openDeal.id : await newDeal(env, { title: (clean(b.company, 80) || name) + ' · ' + (needs.slice(0, 2).join(', ') || 'New request'), contact_id: contactId, source: 'Website request' });
+    later(emit(env, 'lead.received', { contact_id: contactId, deal_id: webDeal, request: { title: needs.join(', ') || 'New request', details } }));
     await logActivity(env, { contact_id: contactId, body: 'Website request:\n' + (details || 'New request') });
     later(notify(env, await adminIds(env), { title: `New request from ${name}`, body: needs.join(', ') || clean(b.message, 140), link: '#contact/' + contactId }));
     later(Promise.all([
@@ -159,11 +201,12 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
   return null;
 }
 
-async function upsertLead(env, { name, email, company, source }) {
+async function upsertLead(env, { name, email, company, source }, later) {
   const ex = email && await env.DB.prepare('SELECT id FROM crm_contacts WHERE email = ? ORDER BY created_at LIMIT 1').bind(email).first();
   if (ex) { await env.DB.prepare('UPDATE crm_contacts SET updated_at = ?, company = COALESCE(company, ?) WHERE id = ?').bind(now(), company || null, ex.id).run(); return ex.id; }
   const id = uid('ct_'), t = now();
-  await env.DB.prepare('INSERT INTO crm_contacts (id, name, company, email, source, stage, kind, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(id, name, company || null, email || null, source, 'new', 'lead', t, t).run();
+  await env.DB.prepare('INSERT INTO crm_contacts (id, name, company, email, source, stage, kind, created_at, updated_at, last_activity) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(id, name, company || null, email || null, source, 'new', 'lead', t, t, t).run();
+  if (later) later(emit(env, 'contact.created', { contact_id: id }));
   return id;
 }
 
@@ -284,6 +327,8 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
     return new Response([cols.join(','), ...results.map(r => cols.map(c => cell(r[c])).join(','))].join('\r\n'), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="delegance-contacts-${now().slice(0, 10)}.csv"`, 'Cache-Control': 'no-store' } });
   }
   const nr = await notificationRoutes(path, m, req, env, me); if (nr) return nr;
+  const ar = await autoRoutes(path, m, req, env, me); if (ar) return ar;
+  const ir = await integrationRoutes(path, m, req, env, me); if (ir) return ir;
   const cr = await crmRoutes(path, m, req, env, me, url, later); if (cr) return cr;
   // ----- Contacts / pipeline (team) -----
   if (p[0] === 'contacts' && isTeam) return contacts(p, m, req, env, me, url, ctx);
@@ -304,12 +349,13 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
       if (!title) return bad('Give your request a short title.');
       if (await limited(env, 'ureq:' + me.id, 20, 86400)) return bad('That is a lot of requests for one day. Message us instead.', 429);
       let cid = me.contact_id;
-      if (!cid) { cid = await upsertLead(env, { name: me.name, email: me.email, source: 'Member request' }); await DB.prepare('UPDATE users SET contact_id = ? WHERE id = ?').bind(cid, me.id).run(); }
+      if (!cid) { cid = await upsertLead(env, { name: me.name, email: me.email, source: 'Member request' }, later); await DB.prepare('UPDATE users SET contact_id = ? WHERE id = ?').bind(cid, me.id).run(); }
       const t = now();
       await DB.prepare('INSERT INTO crm_requests (id, contact_id, user_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)').bind(uid('rq_'), cid, me.id, title, details || null, 'new', t, t).run();
       await DB.prepare('UPDATE crm_contacts SET updated_at = ? WHERE id = ?').bind(t, cid).run();
       await audit(env, who, 'request.create', title);
       later(notify(env, await adminIds(env), { title: `${me.name} sent a request`, body: title, link: '#contact/' + cid }));
+      later(emit(env, 'request.created', { contact_id: cid, request: { title, details: details || null, from: me.name } }));
       later(sendEmail(env, { to: teamInbox(env), subject: `New request from ${me.name}: ${title}`, intro: `${me.name} (${ROLE_NAMES[me.role]}) sent a request from their dashboard.\n\n${title}${details ? '\n\n' + details : ''}`, button: 'Open in the CRM', link: 'https://delegance.app/dashboard#contact/' + cid, replyTo: me.email }));
       return json({ ok: true }, 201);
     }
@@ -334,6 +380,7 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
       await DB.prepare('UPDATE crm_contacts SET last_activity = ? WHERE id = ?').bind(now(), me.contact_id).run();
       const own = await DB.prepare('SELECT owner_id FROM crm_contacts WHERE id = ?').bind(me.contact_id).first();
       later(notify(env, own && own.owner_id ? [own.owner_id] : await adminIds(env), { title: `Message from ${me.name}`, body: text.slice(0, 200), link: '#contact/' + me.contact_id }));
+      later(emit(env, 'message.received', { contact_id: me.contact_id, message: { from: me.name, body: text } }));
       const owner = await DB.prepare("SELECT u.email FROM crm_contacts c JOIN users u ON u.id = c.owner_id WHERE c.id = ? AND u.status = 'active' AND u.notify = 1").bind(me.contact_id).first();
       later(sendEmail(env, { to: owner ? owner.email : teamInbox(env), subject: `Message from ${me.name}`, intro: `${me.name} wrote:\n\n${text}`, button: 'Reply in the CRM', link: 'https://delegance.app/dashboard#contact/' + me.contact_id, replyTo: me.email }));
       return json({ ok: true }, 201);
@@ -457,8 +504,8 @@ async function contacts(p, m, req, env, me, url, ctx) {
   if (!p[1] && m === 'GET') {
     const q = clean(url.searchParams.get('q'), 80), st = url.searchParams.get('stage');
     const where = [], args = [];
-    if (q) { where.push('(name LIKE ? OR company LIKE ? OR email LIKE ?)'); args.push(`%${q}%`, `%${q}%`, `%${q}%`); }
-    if (STAGES.includes(st)) { where.push('stage = ?'); args.push(st); }
+    if (q) { where.push('(c.name LIKE ? OR c.company LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)'); args.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
+    if (STAGES.includes(st)) { where.push('c.stage = ?'); args.push(st); }
     const kind = url.searchParams.get('kind'), tag = clean(url.searchParams.get('tag'), 30), own = url.searchParams.get('owner');
     if (['lead', 'client', 'partner'].includes(kind)) { where.push('c.kind = ?'); args.push(kind); }
     if (tag) { where.push('c.tags LIKE ?'); args.push(`%"${tag.replace(/[%_"]/g, '')}"%`); }
@@ -478,6 +525,7 @@ async function contacts(p, m, req, env, me, url, ctx) {
       id, name, clean(b.company, 120) || null, cleanEmail(b.email) || null, clean(b.phone, 40) || null, clean(b.country, 60) || null, clean(b.source, 60) || 'Manual',
       STAGES.includes(b.stage) ? b.stage : 'new', ['lead', 'client', 'partner'].includes(b.kind) ? b.kind : 'lead', me.id, Number.isFinite(+b.value_usd) && b.value_usd !== '' ? Math.max(0, Math.round(+b.value_usd)) : null, '[]', t, t).run();
     await audit(env, me.email, 'crm.contact_create', name);
+    later(emit(env, 'contact.created', { contact_id: id }));
     return json({ ok: true, id }, 201);
   }
   const c = p[1] && await DB.prepare('SELECT * FROM crm_contacts WHERE id = ?').bind(p[1]).first();
@@ -571,6 +619,7 @@ async function tasks(p, m, req, env, me, url, ctx) {
     const status = ['open', 'doing', 'done'].includes(b.status) ? b.status : t.status;
     if (b.priority !== undefined) await DB.prepare('UPDATE crm_tasks SET priority = ? WHERE id = ?').bind(b.priority ? 1 : 0, t.id).run();
     if (status === 'done' && t.status !== 'done' && t.contact_id && isTeam) await logActivity(env, { contact_id: t.contact_id, deal_id: t.deal_id, me, body: `Task done: ${t.title}` });
+    if (status === 'done' && t.status !== 'done') later(emit(env, 'task.completed', { contact_id: t.contact_id, deal_id: t.deal_id, task: { id: t.id, title: t.title, by: me.name } }));
     await DB.prepare('UPDATE crm_tasks SET status = ?, title = ?, due = ?, assignee_id = ?, client_visible = ?, updated_at = ? WHERE id = ?').bind(status, clean(b.title, 200) || t.title,
       b.due !== undefined ? (/^\d{4}-\d{2}-\d{2}$/.test(b.due) ? b.due : null) : t.due, isTeam && b.assignee_id !== undefined ? (b.assignee_id || null) : t.assignee_id,
       isTeam && b.client_visible !== undefined ? (b.client_visible ? 1 : 0) : t.client_visible, now(), t.id).run();
