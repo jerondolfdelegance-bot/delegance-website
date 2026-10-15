@@ -37,6 +37,9 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
 .bk-info p{color:var(--text)}
 .bk-meta{list-style:none;display:grid;gap:12px;margin:22px 0 0;padding:0}.bk-meta li{display:flex;gap:12px;align-items:center;color:var(--text);font-size:14px}.bk-meta svg{width:20px;height:20px;color:var(--gold);flex:none}
 .bk-steps{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);display:grid;gap:8px;font-size:13px;color:var(--muted)}
+.calrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--muted)}
+.calrow a,.calrow button{min-height:36px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--line2,rgba(255,255,255,.18));border-radius:4px;background:none;color:var(--text);font:500 13px Inter,sans-serif;text-decoration:none;cursor:pointer}
+.calrow a:hover,.calrow button:hover{border-color:var(--gold,#e2c27a)}
 .bk-ways{margin-top:20px;display:grid;gap:8px}
 .bk-ways-h{margin:0 0 2px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .bk-way{position:relative;display:block;padding:12px 34px 12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:4px;text-decoration:none;color:inherit;transition:border-color .2s,background .2s}
@@ -117,6 +120,18 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
   var $=function(s){return document.querySelector(s)}, esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
   var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC', data=null, day=null, pick=null, tsId=null;
   async function req(m,u,b){var r=await fetch(u,{method:m,headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Something went wrong. Please try again.');return j}
+
+  // Add to calendar: Google, Outlook, or an .ics file for Apple Calendar and everything else.
+  var icsData='';
+  function calLinks(start,mins,title,link){
+    var a=new Date(start),b=new Date(a.getTime()+mins*60000),f=function(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')};
+    var t='Delegance: '+title,det='Video call with Delegance.'+(link?' Join: '+link:' The meeting link is in your email.');
+    icsData=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Delegance//Booking//EN','BEGIN:VEVENT','UID:'+f(a)+'@delegance.app','DTSTAMP:'+f(new Date()),'DTSTART:'+f(a),'DTEND:'+f(b),'SUMMARY:'+t,'DESCRIPTION:'+det.replace(/[,;]/g,' '),link?'URL:'+link:'','END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
+    var g='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(t)+'&dates='+f(a)+'/'+f(b)+'&details='+encodeURIComponent(det);
+    var o='https://outlook.live.com/calendar/0/deeplink/compose?subject='+encodeURIComponent(t)+'&startdt='+encodeURIComponent(a.toISOString())+'&enddt='+encodeURIComponent(b.toISOString())+'&body='+encodeURIComponent(det);
+    return '<div class="calrow" role="group" aria-label="Add to your calendar"><span>Add to calendar:</span><a href="'+g+'" target="_blank" rel="noopener">Google</a><a href="'+o+'" target="_blank" rel="noopener">Outlook</a><button type="button" id="icsBtn">Apple / other (.ics)</button></div>';
+  }
+  function wireIcs(){var b=document.getElementById('icsBtn');if(b)b.onclick=function(){var u=URL.createObjectURL(new Blob([icsData],{type:'text/calendar'})),x=document.createElement('a');x.href=u;x.download='delegance-call.ics';document.body.appendChild(x);x.click();x.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000)}}
   var dkey=function(iso){return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz})};
   var cm=location.hash.match(/^#cancel=([A-Za-z0-9_-]{20,})$/);
   if(cm){history.replaceState(null,'',location.pathname);$('#pick').innerHTML='<div class="done"><h2>Cancel your call?</h2><p class="sub" style="color:var(--muted);margin:8px 0 18px">This frees the time for someone else. You can book again any time.</p><button class="btn btn-danger" id="cx">Yes, cancel it</button> <a class="btn" href="/book">Keep it</a><p class="err" style="margin-top:12px"></p></div>';$('#cx').onclick=async function(){try{DLGMotion.busy(this,true);await req('POST','/api/book/cancel',{token:cm[1]});$('#pick').innerHTML='<div class="done"><div class="check">✓</div><h2>Cancelled</h2><p style="color:var(--muted);margin-top:8px">Want a different time? <a href="/book">Book again</a>.</p></div>'}catch(x){DLGMotion.busy(this,false);$('#pick .err').textContent=x.message}};return}
@@ -149,7 +164,7 @@ body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;
   $('#f').addEventListener('submit',async function(e){e.preventDefault();var b=this.querySelector('button[type=submit]'),er=this.querySelector('.err'),fd=Object.fromEntries(new FormData(this));er.textContent='';
     if(!fd.name||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(fd.email)){er.textContent='Add your name and email.';return}
     fd.start=pick;fd.tz=tz;fd.turnstile=tsId>=0&&window.turnstile?turnstile.getResponse(tsId):'';DLGMotion.busy(b,true);
-    try{var r=await req('POST','/api/book',fd);$('#pick').innerHTML='<div class="done"><div class="check">✓</div><h2>You are booked</h2><p style="color:var(--muted);margin:8px 0 4px">'+esc(new Date(r.start).toLocaleString(undefined,{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</p><p style="color:var(--muted)">We sent a calendar invite to '+esc(fd.email)+'.</p>'+(r.link?'<p style="margin-top:16px"><a class="btn btn-acc" href="'+esc(r.link)+'" target="_blank" rel="noopener">Meeting link</a></p>':'')+'<p style="margin-top:18px"><a class="btn" href="/">Back to Delegance</a></p></div>'}
+    try{var r=await req('POST','/api/book',fd);$('#pick').innerHTML='<div class="done"><div class="check">✓</div><h2>You are booked</h2><p style="color:var(--muted);margin:8px 0 4px">'+esc(new Date(r.start).toLocaleString(undefined,{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</p><p style="color:var(--muted)">We sent a calendar invite to '+esc(fd.email)+'.</p>'+(r.link?'<p style="margin-top:16px"><a class="btn btn-acc" href="'+esc(r.link)+'" target="_blank" rel="noopener">Meeting link</a></p>':'')+calLinks(r.start,data.minutes,$('#title').textContent,r.link)+'<p style="margin-top:18px"><a class="btn" href="/">Back to Delegance</a></p></div>';wireIcs()}
     catch(x){DLGMotion.busy(b,false);er.textContent=x.message;if(tsId>=0&&window.turnstile)turnstile.reset(tsId);if(/taken/.test(x.message))setTimeout(function(){location.reload()},1600)}});
 })();
 </script>

@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="/img/hero.webp" imagesrcset="/img/hero-800.webp 800w, /img/hero.webp 1600w" imagesizes="(max-width:1060px) 92vw, 560px" type="image/webp">
-<link rel="stylesheet" href="/assets/site.css?v=7">
+<link rel="stylesheet" href="/assets/site.css?v=8">
 <link rel="stylesheet" href="/assets/motion.css?v=1">
 <script src="/assets/motion.js?v=1" defer></script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "ProfessionalService", "@id": "https://delegance.app/#org", "name": "Delegance", "url": "https://delegance.app/", "logo": "https://delegance.app/brand/icon-512.png", "image": "https://delegance.app/og.jpg", "email": "admin@delegance.app", "description": "A virtual service provider: virtual assistants, websites, apps and the everyday work behind them.", "areaServed": "Worldwide", "knowsAbout": ["Virtual assistants", "Website design and development", "Web and mobile app development", "Website care and maintenance", "Integrations and automation", "Social media management"], "hasOfferCatalog": {"@type": "OfferCatalog", "name": "Services", "itemListElement": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Virtual assistants"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Websites"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Web and mobile apps"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Care and maintenance"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Integrations and automation"}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Online presence"}}]}}, {"@type": "WebSite", "@id": "https://delegance.app/#site", "url": "https://delegance.app/", "name": "Delegance", "publisher": {"@id": "https://delegance.app/#org"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What kind of work do you take on?", "acceptedAnswer": {"@type": "Answer", "text": "Virtual assistant support, websites, web and mobile apps, ongoing site care, integrations and the everyday tasks that come with running a business. If you're not sure whether something fits, just ask."}}, {"@type": "Question", "name": "Is there anything you don't take on?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. We don't take on work that calls for a licensed professional, such as medical, legal or bookkeeping tasks, or anything in high-risk fields. We'd rather point you to the right specialist."}}, {"@type": "Question", "name": "Can you look after a website someone else built?", "acceptedAnswer": {"@type": "Answer", "text": "Usually, yes. We'll take a look first and let you know honestly what we can do and what we'd recommend."}}, {"@type": "Question", "name": "Do you only build new things?", "acceptedAnswer": {"@type": "Answer", "text": "No. Plenty of our work is improving, fixing and maintaining what you already have."}}, {"@type": "Question", "name": "How do we get started?", "acceptedAnswer": {"@type": "Answer", "text": "Email us at admin@delegance.app with a few lines about what you need, or tap the chat button in the corner. We'll reply with questions or a suggested next step."}}, {"@type": "Question", "name": "What is Delegance Desk?", "acceptedAnswer": {"@type": "Answer", "text": "The tool our team uses to run our clients' social media: planning and scheduling posts, and answering comments and messages with help from AI drafts that a person checks first. Clients don't need to install anything."}}, {"@type": "Question", "name": "Do you need my social media passwords?", "acceptedAnswer": {"@type": "Answer", "text": "No. You add us to your page through the network's own page settings, and you can remove our access at any time."}}]}]}</script>
@@ -440,6 +440,18 @@
     </div>
   </section>
 
+  <section id="estimate" class="tone-light est">
+    <div class="wrap est-in">
+      <div class="sec-head rv"><span class="eyebrow">Time back</span><h2 class="serif">What would delegating <span class="silver">give you back?</span></h2><p class="lead">Move the sliders. This uses only your own numbers, so it is a guide, not a quote.</p></div>
+      <div class="est-card" role="group" aria-label="Time back estimator">
+        <label><span>Hours a week you spend on tasks someone else could do <b id="eH">10</b></span><input type="range" id="eHr" min="1" max="40" value="10"></label>
+        <label><span>What one hour of your time is worth to your business (USD) <b id="eV">$50</b></span><input type="range" id="eVr" min="10" max="300" step="5" value="50"></label>
+        <div class="est-out"><div><b id="eMo">43</b><span>hours back each month</span></div><div><b id="eYr">520</b><span>hours back each year</span></div><div><b id="eVal">$2,170</b><span>of your time each month</span></div></div>
+        <a class="btn btn-silver" href="/book">Talk through it on a free call</a>
+      </div>
+    </div>
+  </section>
+
   <section id="faq">
     <div class="wrap faqg">
       <div>
@@ -481,10 +493,11 @@
 <footer class="site">
   <div class="wrap">
     <div class="fgrid">
-      <div><a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="137" height="26"></a><p>Virtual assistants, websites, apps and the everyday work behind them. Good work, delegated elegantly.</p></div>
+      <div><a href="#top" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="137" height="26"></a><p>Virtual assistants, websites, apps and the everyday work behind them. Good work, delegated elegantly.</p>
+        <form class="fnl" id="fnl" novalidate><label for="fnlE">Monthly tips and updates</label><div><input id="fnlE" type="email" autocomplete="email" placeholder="you@company.com" required><input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px"><button type="submit">Subscribe</button></div><p class="fnl-m" role="status"></p></form></div>
       <div><h4>Services</h4><nav aria-label="Services"><a href="#services">Virtual assistants</a><a href="#services">Websites and apps</a><a href="#services">Care and maintenance</a><a href="#desk">Delegance Desk</a></nav></div>
       <div><h4>Candidates</h4><nav aria-label="Candidates"><a href="/candidates">Browse candidates</a><a href="/apply">Join as a VA</a><a href="/me">VA dashboard</a></nav></div>
-      <div><h4>Company</h4><nav aria-label="Company"><a href="mailto:admin@delegance.app">Contact</a><a href="/guides">Guides</a><a href="#faq">FAQ</a><a href="/book">Book a call</a><a href="/login">Sign in</a><a href="/app">Team app</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
+      <div><h4>Company</h4><nav aria-label="Company"><a href="mailto:admin@delegance.app">Contact</a><a href="/guides">Guides</a><a href="#faq">FAQ</a><a href="/book">Book a call</a><a href="/whats-new">What's new</a><a href="/status">Status</a><a href="/login">Sign in</a><a href="/app">Team app</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div>
     </div>
     <div class="fbot"><span>© <span id="y">2026</span> Delegance</span><span>admin@delegance.app</span></div>
   </div>
@@ -535,7 +548,7 @@ document.addEventListener('click',function(e){var c=e.target.closest('[data-chat
     document.querySelectorAll('[data-pick]').forEach(function(a){a.addEventListener('click',function(){var v=a.dataset.pick;form.querySelectorAll('#srNeed input').forEach(function(i){if(i.value===v)i.checked=true});go(1)})});
     document.getElementById('srSend').addEventListener('click',async function(){var b=this,er=document.getElementById('srErr3'),nm=document.getElementById('srName').value.trim(),em=document.getElementById('srEmail').value.trim();er.hidden=true;
       if(!nm||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){er.textContent='Add your name and email so we can reply.';er.hidden=false;return}
-      b.disabled=true;try{var r=await fetch('/api/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,email:em,company:document.getElementById('srBiz').value,needs:val('#srNeed'),when:val('#srWhen')[0]||'',how:val('#srHow')[0]||'',message:document.getElementById('srMsg').value,website:document.getElementById('srHp').value,turnstile:tsId!=null&&window.turnstile?turnstile.getResponse(tsId):''})});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Could not send. Please email admin@delegance.app.');
+      b.disabled=true;try{var r=await fetch('/api/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,email:em,company:document.getElementById('srBiz').value,needs:val('#srNeed'),when:val('#srWhen')[0]||'',how:val('#srHow')[0]||'',message:document.getElementById('srMsg').value,website:document.getElementById('srHp').value,ref:(function(){try{var r=JSON.parse(localStorage.getItem('dlg-ref')||'null');return r&&Date.now()-r.t<2592e6?r.v:''}catch(e){return''}})(),turnstile:tsId!=null&&window.turnstile?turnstile.getResponse(tsId):''})});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Could not send. Please email admin@delegance.app.');
         form.querySelector('[data-s="3"]').innerHTML='<legend>Thank you, '+nm.replace(/[<>&"]/g,'')+'.</legend><p class="sr-done">Your request is with the Delegance team. We will reply to your email, usually within one business day. Want updates in one place? <a href="/login">Create a free account</a>.</p>'}catch(x){er.textContent=x.message;er.hidden=false;b.disabled=false;if(tsId!=null&&window.turnstile)turnstile.reset(tsId)}});
     // free Cloudflare "I am human" check, loaded only when someone reaches the last step
     var tsId=null,tsBusy=false;function tsInit(){if(tsBusy)return;tsBusy=true;fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;var sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=function(){tsId=turnstile.render('#srTs',{sitekey:c.turnstile,theme:'dark',size:'flexible'})};document.head.appendChild(sc)}).catch(function(){})}
@@ -555,5 +568,25 @@ document.addEventListener('click',function(e){var c=e.target.closest('[data-chat
 </script>
 <script src="https://desk.delegance.app/public/widget.js" defer></script>
 <script src="/assets/me.js?v=4" defer></script>
+
+<script>
+(function () {
+  // Time back estimator (user's own numbers only)
+  var h = document.getElementById('eHr'), v = document.getElementById('eVr');
+  function calc() { var hrs = +h.value, val = +v.value, mo = Math.round(hrs * 52 / 12); document.getElementById('eH').textContent = hrs; document.getElementById('eV').textContent = '$' + val; document.getElementById('eMo').textContent = mo; document.getElementById('eYr').textContent = (hrs * 52).toLocaleString(); document.getElementById('eVal').textContent = '$' + (mo * val).toLocaleString(); }
+  if (h) { h.oninput = calc; v.oninput = calc; calc(); }
+  // Footer newsletter (double opt-in)
+  var f = document.getElementById('fnl');
+  if (f) f.onsubmit = async function (e) { e.preventDefault(); var em = document.getElementById('fnlE').value.trim(), m = f.querySelector('.fnl-m'), b = f.querySelector('button');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { m.textContent = 'Type a valid email address.'; return; }
+    b.disabled = true; try { var r = await fetch('/api/newsletter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em, website: f.website.value, source: 'footer' }) }); var j = await r.json(); if (!r.ok) throw new Error(j.error); m.textContent = 'Check your inbox and click the link to confirm.'; } catch (x) { m.textContent = x.message || 'Something went wrong.'; b.disabled = false; } };
+  // Messages after confirming / unsubscribing
+  var q = new URLSearchParams(location.search), msg = q.get('subscribed') === '1' ? 'You are subscribed. Thank you!' : q.get('subscribed') === 'expired' ? 'That confirmation link has expired or was used. Subscribe again any time.' : q.get('unsubscribed') ? 'You are unsubscribed. Sorry to see you go.' : '';
+  if (msg) { var t = document.createElement('div'); t.className = 'site-toast'; t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 6000); history.replaceState(null, '', location.pathname); }
+  // Referral links: delegance.app/?ref=NAME is remembered for 30 days and sent with requests
+  var ref = (q.get('ref') || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 40);
+  try { if (ref) localStorage.setItem('dlg-ref', JSON.stringify({ v: ref, t: Date.now() })); } catch (e) {}
+})();
+</script>
 </body>
 </html>

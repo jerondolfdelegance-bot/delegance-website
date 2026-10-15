@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What's new · Delegance</title>
+<meta name="description" content="Every new feature and improvement on Delegance, as it ships, plus what we are building next.">
+<link rel="canonical" href="https://delegance.app/whats-new">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Delegance">
+<meta property="og:title" content="What's new · Delegance">
+<meta property="og:description" content="Every new feature and improvement on Delegance, as it ships, plus what we are building next.">
+<meta property="og:url" content="https://delegance.app/whats-new">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<meta property="og:image:secure_url" content="https://delegance.app/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta name="twitter:image" content="https://delegance.app/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://desk.delegance.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/talent.css?v=5">
+<link rel="stylesheet" href="/assets/theme.css?v=1">
+<script src="/assets/theme.js?v=1" defer></script>
+<link rel="alternate" type="application/rss+xml" title="What's new at Delegance" href="/updates.xml">
+</head>
+<body>
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+<header class="th"><div class="wrap">
+  <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
+  <nav aria-label="Main"><a href="/" class="hide-m">Home</a><a href="/candidates">Candidates</a><a href="/whats-new" class="on">What's new</a><a class="btn sm" href="/book">Book a call</a></nav>
+</div></header>
+<main id="main">
+  <section class="t-hero sm"><div class="wrap"><span class="eyebrow">Changelog</span><h1 class="h"><span class="silver">What's new at Delegance</span></h1><p>Every improvement, as it ships. Follow along with <a href="/updates.xml" style="text-decoration:underline">RSS</a> or the newsletter below.</p></div></section>
+  <section class="wrap wn">
+    <div class="wn-tabs" role="tablist"><button role="tab" aria-selected="true" data-t="log">Shipped</button><button role="tab" aria-selected="false" data-t="next">Coming next</button></div>
+    <ol class="wn-log" id="log"><li class="skel" style="height:120px"></li><li class="skel" style="height:120px"></li></ol>
+    <div class="wn-next" id="next" hidden></div>
+    <form class="card nl" id="nl" novalidate><div><h2 class="h" style="font-size:22px">Get the monthly update</h2><p class="small muted">New guides, new features and tips on delegating. About once a month. Unsubscribe in one click.</p></div><div class="nl-row"><label class="sr" for="nlE">Email</label><input class="in" id="nlE" type="email" autocomplete="email" placeholder="you@company.com" required><input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px"><button class="btn silver-b">Subscribe</button></div><p class="small" id="nlMsg" role="status"></p></form>
+  </section></main>
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance</span><nav><a href="/">Home</a><a href="/whats-new">What's new</a><a href="/status">Status</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+<script src="/assets/talent.js?v=2"></script>
+<script src="/assets/me.js?v=4" defer></script>
+<script>
+(function () {
+  var T = window.T, $ = function (i) { return document.getElementById(i); };
+  var day = function (d) { return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }); };
+  T.api && fetch('/api/public/updates').then(function (r) { return r.json(); }).then(function (d) {
+    $('log').innerHTML = d.updates.map(function (u) { return '<li id="' + T.esc(u.id) + '"><span class="wn-v">' + T.esc(u.version || '') + '</span><time datetime="' + T.esc(u.released_at) + '">' + day(u.released_at) + '</time><h2>' + T.esc(u.title) + '</h2><p>' + T.esc(u.body) + '</p></li>'; }).join('');
+    var groups = {}; d.roadmap.forEach(function (r) { (groups[r.status] = groups[r.status] || []).push(r); });
+    $('next').innerHTML = [['in_progress', 'Building now'], ['planned', 'Planned']].map(function (g) { return (groups[g[0]] || []).length ? '<h2 class="vsub">' + g[1] + '</h2><div class="wn-grid">' + groups[g[0]].map(function (r) { return '<article class="card"><span class="chip">' + T.esc(r.area || '') + '</span><h3>' + T.esc(r.title) + '</h3><p class="small muted">' + T.esc(r.body || '') + '</p></article>'; }).join('') + '</div>' : ''; }).join('');
+    if (location.hash.length > 1) { var el = document.getElementById(location.hash.slice(1)); if (el) { el.classList.add('hl'); el.scrollIntoView({ block: 'center' }); } }
+  }).catch(function () { $('log').innerHTML = '<li>Could not load updates right now.</li>'; });
+  document.querySelector('.wn-tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-t]'); if (!b) return; document.querySelectorAll('.wn-tabs button').forEach(function (x) { x.setAttribute('aria-selected', String(x === b)); }); $('log').hidden = b.dataset.t !== 'log'; $('next').hidden = b.dataset.t !== 'next'; });
+  $('nl').onsubmit = async function (e) { e.preventDefault(); var em = $('nlE').value.trim(), m = $('nlMsg'), b = this.querySelector('button');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { m.textContent = 'Type a valid email address.'; return; }
+    b.disabled = true; try { var r = await fetch('/api/newsletter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em, website: this.website.value, source: 'whats-new' }) }); var j = await r.json(); if (!r.ok) throw new Error(j.error); m.textContent = 'Almost done: check your inbox and click the confirmation link.'; } catch (x) { m.textContent = x.message || 'Something went wrong.'; b.disabled = false; } };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Status · Delegance</title>
+<meta name="description" content="Live status of the Delegance website, Desk and email.">
+<link rel="canonical" href="https://delegance.app/status">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Delegance">
+<meta property="og:title" content="Status · Delegance">
+<meta property="og:description" content="Live status of the Delegance website, Desk and email.">
+<meta property="og:url" content="https://delegance.app/status">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<meta property="og:image:secure_url" content="https://delegance.app/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta name="twitter:image" content="https://delegance.app/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://desk.delegance.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/talent.css?v=5">
+<link rel="stylesheet" href="/assets/theme.css?v=1">
+<script src="/assets/theme.js?v=1" defer></script>
+</head>
+<body>
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+<header class="th"><div class="wrap">
+  <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
+  <nav aria-label="Main"><a href="/" class="hide-m">Home</a><a href="/candidates">Candidates</a><a href="/whats-new">What's new</a><a class="btn sm" href="/book">Book a call</a></nav>
+</div></header>
+<main id="main">
+  <section class="t-hero sm"><div class="wrap"><span class="eyebrow">System status</span><h1 class="h"><span class="silver" id="stHead">Checking…</span></h1><p id="stSub">Live check of the Delegance website, Desk and email.</p></div></section>
+  <section class="wrap"><div class="st-list" id="st">
+    <div class="st-row" data-k="web"><b>Website and dashboard</b><span>delegance.app</span><em>…</em></div>
+    <div class="st-row" data-k="desk"><b>Delegance Desk</b><span>Social posting, inbox and VA chat</span><em>…</em></div>
+    <div class="st-row" data-k="email"><b>Email</b><span>Sign-in codes, invites and notifications</span><em>…</em></div>
+  </div><p class="small dim" id="stTime" style="margin-top:14px"></p>
+  <p class="small muted" style="margin-top:24px">Something not working for you? Email <a href="mailto:admin@delegance.app" style="text-decoration:underline">admin@delegance.app</a>. This page re-checks every minute.</p></section></main>
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance</span><nav><a href="/">Home</a><a href="/whats-new">What's new</a><a href="/status">Status</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
+<script src="/assets/talent.js?v=2"></script>
+<script src="/assets/me.js?v=4" defer></script>
+<script>
+(function () {
+  function set(k, ok, note) { var r = document.querySelector('[data-k="' + k + '"]'); r.classList.toggle('ok', ok); r.classList.toggle('down', !ok); r.querySelector('em').textContent = note || (ok ? 'Working' : 'Having problems'); }
+  async function check() {
+    var t0 = performance.now(), d = null;
+    try { var r = await fetch('/api/health', { cache: 'no-store' }); d = await r.json(); } catch (e) {}
+    var ms = Math.round(performance.now() - t0);
+    set('web', !!(d && d.ok), d && d.ok ? 'Working · ' + ms + ' ms' : 'Not reachable');
+    set('desk', !!(d && d.desk)); set('email', !!(d && d.email), d && d.email ? 'Working' : 'Not set up or having problems');
+    var all = d && d.ok && d.desk && d.email;
+    document.getElementById('stHead').textContent = all ? 'All systems working' : d ? 'Some parts need attention' : 'We cannot reach Delegance';
+    document.body.classList.toggle('st-bad', !all);
+    document.getElementById('stTime').textContent = 'Last checked ' + new Date().toLocaleTimeString();
+  }
+  check(); setInterval(function () { if (!document.hidden) check(); }, 60000);
+})();
+</script>
+</body>
+</html>
