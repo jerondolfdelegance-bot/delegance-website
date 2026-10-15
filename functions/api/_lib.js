@@ -80,7 +80,8 @@ export async function currentUser(env, req) {
   return s;
 }
 export const can = (user, role) => !!user && (ROLES[user.role] || 0) >= ROLES[role];
-export const publicUser = u => ({ id: u.id, email: u.email, name: u.name, role: u.role, role_name: ROLE_NAMES[u.role], title: u.title || null, status: u.status, candidate_id: u.candidate_id || null, contact_id: u.contact_id || null, last_login: u.last_login || null, created_at: u.created_at, mfa: !!u.totp_enabled, mfa_required: (ROLES[u.role] || 0) >= ROLES.staff });
+export const publicUser = u => ({ id: u.id, email: u.email, name: u.name, role: u.role, role_name: ROLE_NAMES[u.role], title: u.title || null, status: u.status, candidate_id: u.candidate_id || null, contact_id: u.contact_id || null, last_login: u.last_login || null, created_at: u.created_at, mfa: !!u.totp_enabled, mfa_required: (ROLES[u.role] || 0) >= ROLES.staff, avatar: u.avatar || null, bio: u.bio || null, phone: u.phone || null, location: u.location || null, accent: u.accent || null, intent: u.intent || null });
+export const ACCENTS = ['gold', 'silver', 'sapphire', 'emerald', 'rose', 'violet'];
 
 export async function makeLink(env, userId, kind, hours, by) {
   const t = token();
@@ -118,6 +119,12 @@ async function aesKey(env) {
 }
 export async function seal(env, text) { const iv = crypto.getRandomValues(new Uint8Array(12)); const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(env), enc.encode(text)); return b64(iv) + '.' + b64(ct); }
 export async function unseal(env, s) { const [iv, ct] = String(s).split('.').map(x => Uint8Array.from(atob(x), c => c.charCodeAt(0))); return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await aesKey(env), ct)); }
+// Private contacts: only their owner sees them (anyone sees them again if the owner's account is off).
+export const SEEN = a => `(${a}.id IS NULL OR ${a}.private = 0 OR ${a}.owner_id = ? OR ${a}.owner_id IS NULL OR ${a}.owner_id NOT IN (SELECT id FROM users WHERE status = 'active'))`;
+export async function hiddenFrom(env, c, me) {
+  if (!c || !c.private || !c.owner_id || c.owner_id === me.id) return false;
+  return !!(await env.DB.prepare("SELECT 1 FROM users WHERE id = ? AND status = 'active'").bind(c.owner_id).first());
+}
 export const needsMfa = u => (ROLES[u.role] || 0) >= ROLES.staff;
 
 // ---------- Email (Resend) ----------

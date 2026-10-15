@@ -1,11 +1,13 @@
 // Delegance Accounts + CRM API: one router for /api/*.
 import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwordProblem, json, bad, clean, cleanEmail, parse, body, limited, audit,
   startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink, checkTotp, newTotpSecret, recoveryCodes, seal, unseal, needsMfa,
-  sendEmail, mailReady, teamInbox, humanOk } from './_lib.js';
+  sendEmail, mailReady, teamInbox, humanOk, SEEN, hiddenFrom, ACCENTS } from './_lib.js';
 import { crmRoutes, notificationRoutes, notify, adminIds, newDeal, logActivity } from './_crm.js';
 import { emit, runDue, autoRoutes } from './_auto.js';
 import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int.js';
-const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements)/;
+import { socialRoutes, outreachRoutes, contractRoutes, contractPublic } from './_v4.js';
+import { teamRoutes } from './_team.js';
+const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements|social|outreach|contracts|chat|people|updates|roadmap)/;
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
 const TEAM = ['staff', 'admin', 'super_admin'];
@@ -47,6 +49,8 @@ export async function onRequest(ctx) {
   try {
     const bk = path === 'book' || path === 'book/cancel' ? await bookingPublic(path, m, req, env, ip, ctx) : null;
     if (bk) return bk;
+    const ck = await contractPublic(path, m, req, env, ip);
+    if (ck) return ck;
     const pub = await publicRoutes(path, m, req, env, ip, ctx);
     if (pub) return pub;
     const me = await currentUser(env, req);
@@ -150,9 +154,10 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     if (await DB.prepare('SELECT 1 FROM users WHERE email = ?').bind(email).first()) return bad('That email already has an account. Sign in instead, or ask us to reset your password.', 409);
     const h = await hashPassword(String(b.password)), t = now();
     const u = { id: uid('u_'), email, name, role: 'member', status: 'active' };
-    await DB.prepare('INSERT INTO users (id, email, name, role, status, pass_hash, pass_salt, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)').bind(u.id, email, name, 'member', 'active', h.hash, h.salt, t, t).run();
+    const intent = ['hire', 'work', 'both'].includes(b.intent) ? b.intent : null;
+    await DB.prepare('INSERT INTO users (id, email, name, role, status, pass_hash, pass_salt, created_at, updated_at, intent) VALUES (?,?,?,?,?,?,?,?,?,?)').bind(u.id, email, name, 'member', 'active', h.hash, h.salt, t, t, intent).run();
     await audit(env, email, 'auth.signup', ip);
-    later(sendEmail(env, { to: email, subject: 'Welcome to Delegance', intro: `Hi ${name.split(' ')[0]},\n\nYour free Delegance member account is ready. Read our guides, get updates from the team, and send us a request whenever you are ready to delegate.`, button: 'Open my dashboard', link: 'https://delegance.app/dashboard', outro: 'Questions? Just reply to this email.' }));
+    later(sendEmail(env, { to: email, subject: 'Welcome to Delegance', intro: intent === 'work' || intent === 'both' ? `Hi ${name.split(' ')[0]},\n\nWelcome to Delegance! Next step: build your VA portfolio. It goes live on the Delegance job board as soon as you submit, and clients can message you from it.` : `Hi ${name.split(' ')[0]},\n\nYour free Delegance account is ready. Browse our virtual assistants, read the guides, and send us a request whenever you are ready to delegate.`, button: intent === 'work' || intent === 'both' ? 'Build my portfolio' : 'Open my dashboard', link: intent === 'work' || intent === 'both' ? 'https://delegance.app/apply' : 'https://delegance.app/dashboard', outro: 'Questions? Just reply to this email.' }));
     return json({ ok: true }, 201, { 'Set-Cookie': await startSession(env, req, u) });
   }
   if (path === 'auth/logout' && m === 'POST') { await endSession(env, req); return json({ ok: true }, 200, { 'Set-Cookie': clearCookie }); }
@@ -281,10 +286,22 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
     return json({ ok: true });
   }
   if (path === 'auth/logout-all' && m === 'POST') { await DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(me.id).run(); return json({ ok: true }, 200, { 'Set-Cookie': clearCookie }); }
+  if (path === 'auth/intent' && m === 'POST') {
+    const b = await body(req); if (!['hire', 'work', 'both'].includes(b.intent)) return bad('Pick hire, work or both.');
+    await DB.prepare('UPDATE users SET intent = ?, updated_at = ? WHERE id = ?').bind(b.intent, now(), me.id).run();
+    return json({ ok: true });
+  }
   if (path === 'auth/profile' && m === 'POST') {
     const b = await body(req); const name = clean(b.name, 80);
     if (!name) return bad('Enter your name.');
-    await DB.prepare('UPDATE users SET name = ?, title = ?, updated_at = ? WHERE id = ?').bind(name, clean(b.title, 80) || null, now(), me.id).run();
+    let avatar = me.avatar || null;
+    if (b.avatar === '' || b.avatar === null) avatar = null;
+    else if (typeof b.avatar === 'string') {
+      if (!/^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(b.avatar) || b.avatar.length > 200000) return bad('Use a JPG, PNG or WebP photo (we shrink it for you).');
+      avatar = b.avatar;
+    }
+    await DB.prepare('UPDATE users SET name = ?, title = ?, bio = ?, phone = ?, location = ?, accent = ?, avatar = ?, updated_at = ? WHERE id = ?')
+      .bind(name, clean(b.title, 80) || null, clean(b.bio, 400) || null, clean(b.phone, 40) || null, clean(b.location, 80) || null, ACCENTS.includes(b.accent) ? b.accent : null, avatar, now(), me.id).run();
     return json({ ok: true });
   }
 
@@ -307,20 +324,23 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
   // ----- VA applications (admin+) -----
   if (p[0] === 'candidates' && can(me, 'admin')) {
     if (!p[1] && m === 'GET') {
-      const st = ['pending', 'approved', 'rejected'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'pending';
-      const { results } = await DB.prepare('SELECT id, slug, name, headline, location, years, availability, status, created_at, updated_at FROM candidates WHERE status = ? ORDER BY updated_at DESC LIMIT 200').bind(st).all();
-      return json({ items: results });
+      // Open job board: new profiles go live at once; admins verify the good ones or hide the rest.
+      const st = ['new', 'verified', 'hidden', 'pending'].includes(url.searchParams.get('status')) ? url.searchParams.get('status') : 'new';
+      const where = { new: "status = 'approved' AND verified = 0", verified: "status = 'approved' AND verified = 1", hidden: "status = 'rejected'", pending: "status = 'pending'" }[st];
+      const { results } = await DB.prepare(`SELECT id, slug, name, headline, location, years, availability, status, verified, created_at, updated_at FROM candidates WHERE ${where} ORDER BY updated_at DESC LIMIT 200`).all();
+      const counts = await DB.prepare("SELECT SUM(status = 'approved' AND verified = 0) new, SUM(status = 'approved' AND verified = 1) verified, SUM(status = 'rejected') hidden, SUM(status = 'pending') pending FROM candidates").first();
+      return json({ items: results, counts });
     }
     if (p[1] && m === 'POST') {
-      const b = await body(req); if (!['approved', 'rejected', 'pending'].includes(b.status)) return bad('Pick approve or reject.');
-      await DB.prepare("UPDATE candidates SET status = ?, review_note = ?, approved_at = CASE WHEN ? = 'approved' THEN COALESCE(approved_at, ?) ELSE approved_at END WHERE id = ?").bind(b.status, clean(b.note, 500) || null, b.status, now(), p[1]).run();
-      await audit(env, who, 'candidate.' + b.status, p[1]);
+      const b = await body(req); if (!['approved', 'rejected', 'pending'].includes(b.status)) return bad('Pick verify, show or hide.');
+      await DB.prepare("UPDATE candidates SET status = ?, verified = ?, review_note = ?, approved_at = CASE WHEN ? = 'approved' THEN COALESCE(approved_at, ?) ELSE approved_at END WHERE id = ?").bind(b.status, b.status === 'approved' && b.verified ? 1 : 0, clean(b.note, 500) || null, b.status, now(), p[1]).run();
+      await audit(env, who, 'candidate.' + (b.verified ? 'verify' : b.status), p[1]);
       return json({ ok: true });
     }
   }
 
   if (path === 'contacts.csv' && can(me, 'admin')) {
-    const { results } = await DB.prepare('SELECT c.name, c.company, c.email, c.phone, c.country, c.source, c.stage, c.kind, c.value_usd, u.name owner, c.created_at, c.updated_at FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id ORDER BY c.created_at').all();
+    const { results } = await DB.prepare('SELECT c.name, c.company, c.email, c.phone, c.country, c.source, c.stage, c.kind, c.value_usd, u.name owner, c.created_at, c.updated_at FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id WHERE ' + SEEN('c') + ' ORDER BY c.created_at').bind(me.id).all();
     const cols = ['name', 'company', 'email', 'phone', 'country', 'source', 'stage', 'kind', 'value_usd', 'owner', 'created_at', 'updated_at'];
     const cell = v => { v = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
     await audit(env, who, 'crm.export', results.length + ' contacts');
@@ -329,6 +349,8 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
   const nr = await notificationRoutes(path, m, req, env, me); if (nr) return nr;
   const ar = await autoRoutes(path, m, req, env, me); if (ar) return ar;
   const ir = await integrationRoutes(path, m, req, env, me); if (ir) return ir;
+  const tr = await teamRoutes(path, m, req, env, me); if (tr) return tr;
+  const sr = (await socialRoutes(path, m, req, env, me, url)) || (await outreachRoutes(path, m, req, env, me)) || (await contractRoutes(path, m, req, env, me)); if (sr) return sr;
   const cr = await crmRoutes(path, m, req, env, me, url, later); if (cr) return cr;
   // ----- Contacts / pipeline (team) -----
   if (p[0] === 'contacts' && isTeam) return contacts(p, m, req, env, me, url, ctx);
@@ -503,7 +525,7 @@ async function contacts(p, m, req, env, me, url, ctx) {
   const DB = env.DB, later = x => ctx && ctx.waitUntil ? ctx.waitUntil(x) : x;
   if (!p[1] && m === 'GET') {
     const q = clean(url.searchParams.get('q'), 80), st = url.searchParams.get('stage');
-    const where = [], args = [];
+    const where = [SEEN('c')], args = [me.id];
     if (q) { where.push('(c.name LIKE ? OR c.company LIKE ? OR c.email LIKE ? OR c.phone LIKE ?)'); args.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
     if (STAGES.includes(st)) { where.push('c.stage = ?'); args.push(st); }
     const kind = url.searchParams.get('kind'), tag = clean(url.searchParams.get('tag'), 30), own = url.searchParams.get('owner');
@@ -512,7 +534,7 @@ async function contacts(p, m, req, env, me, url, ctx) {
     if (own === 'me') { where.push('c.owner_id = ?'); args.push(me.id); }
     const { results } = await DB.prepare(`SELECT c.*, u.name owner_name, (SELECT COUNT(*) FROM crm_deals d WHERE d.contact_id = c.id AND d.stage NOT IN ('won','lost')) open_deals,
       (SELECT COALESCE(SUM(value_usd),0) FROM crm_deals d WHERE d.contact_id = c.id AND d.stage NOT IN ('won','lost')) open_value
-      FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY COALESCE(c.last_activity, c.updated_at) DESC LIMIT 1000`).bind(...args).all();
+      FROM crm_contacts c LEFT JOIN users u ON u.id = c.owner_id WHERE ${where.join(' AND ')} ORDER BY COALESCE(c.last_activity, c.updated_at) DESC LIMIT 1000`).bind(...args).all();
     const { results: tagRows } = await DB.prepare("SELECT tags FROM crm_contacts WHERE tags != '[]'").all();
     const allTags = [...new Set(tagRows.flatMap(r => parse(r.tags, [])))].sort();
     return json({ items: results.map(c => ({ ...c, tags: parse(c.tags, []) })), tags: allTags });
@@ -521,15 +543,15 @@ async function contacts(p, m, req, env, me, url, ctx) {
     const b = await body(req); const name = clean(b.name, 120);
     if (!name) return bad('Add a name.');
     const id = uid('ct_'), t = now();
-    await DB.prepare('INSERT INTO crm_contacts (id, name, company, email, phone, country, source, stage, kind, owner_id, value_usd, tags, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
+    await DB.prepare('INSERT INTO crm_contacts (id, name, company, email, phone, country, source, stage, kind, owner_id, value_usd, tags, created_at, updated_at, private, linkedin) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(
       id, name, clean(b.company, 120) || null, cleanEmail(b.email) || null, clean(b.phone, 40) || null, clean(b.country, 60) || null, clean(b.source, 60) || 'Manual',
-      STAGES.includes(b.stage) ? b.stage : 'new', ['lead', 'client', 'partner'].includes(b.kind) ? b.kind : 'lead', me.id, Number.isFinite(+b.value_usd) && b.value_usd !== '' ? Math.max(0, Math.round(+b.value_usd)) : null, '[]', t, t).run();
+      STAGES.includes(b.stage) ? b.stage : 'new', ['lead', 'client', 'partner'].includes(b.kind) ? b.kind : 'lead', me.id, Number.isFinite(+b.value_usd) && b.value_usd !== '' ? Math.max(0, Math.round(+b.value_usd)) : null, '[]', t, t, b.private ? 1 : 0, linkedinUrl(b.linkedin)).run();
     await audit(env, me.email, 'crm.contact_create', name);
     later(emit(env, 'contact.created', { contact_id: id }));
     return json({ ok: true, id }, 201);
   }
   const c = p[1] && await DB.prepare('SELECT * FROM crm_contacts WHERE id = ?').bind(p[1]).first();
-  if (!c) return bad('Contact not found.', 404);
+  if (!c || await hiddenFrom(env, c, me)) return bad('Contact not found.', 404);
   if (!p[2] && m === 'GET') {
     const [notes, tks, reqs, vas, portal] = await Promise.all([
       DB.prepare('SELECT * FROM crm_notes WHERE contact_id = ? ORDER BY created_at DESC LIMIT 200').bind(c.id).all(),
@@ -552,8 +574,10 @@ async function contacts(p, m, req, env, me, url, ctx) {
     if (b.owner_id !== undefined) f.owner_id = b.owner_id || null;
     if (b.value_usd !== undefined) f.value_usd = b.value_usd === '' || b.value_usd == null ? null : Math.max(0, Math.round(+b.value_usd) || 0);
     if (Array.isArray(b.tags)) f.tags = JSON.stringify(b.tags.map(x => clean(x, 30)).filter(Boolean).slice(0, 12));
-    await DB.prepare('UPDATE crm_contacts SET name=?, company=?, email=?, phone=?, country=?, source=?, stage=?, kind=?, owner_id=?, value_usd=?, tags=?, updated_at=? WHERE id=?')
-      .bind(f.name, f.company, f.email, f.phone, f.country, f.source, f.stage, f.kind, f.owner_id, f.value_usd, typeof f.tags === 'string' ? f.tags : '[]', now(), c.id).run();
+    if (b.linkedin !== undefined) f.linkedin = linkedinUrl(b.linkedin);
+    if (b.private !== undefined) { if (c.owner_id && c.owner_id !== me.id && !can(me, 'super_admin')) return bad('Only the owner of this contact can make it private or shared.', 403); f.private = b.private ? 1 : 0; if (f.private && !f.owner_id) f.owner_id = me.id; }
+    await DB.prepare('UPDATE crm_contacts SET name=?, company=?, email=?, phone=?, country=?, source=?, stage=?, kind=?, owner_id=?, value_usd=?, tags=?, linkedin=?, private=?, updated_at=? WHERE id=?')
+      .bind(f.name, f.company, f.email, f.phone, f.country, f.source, f.stage, f.kind, f.owner_id, f.value_usd, typeof f.tags === 'string' ? f.tags : '[]', f.linkedin || null, f.private ? 1 : 0, now(), c.id).run();
     if (b.stage && b.stage !== c.stage) await DB.prepare("INSERT INTO crm_notes (id, contact_id, author_id, author_name, visibility, body, created_at) VALUES (?,?,?,?, 'internal', ?, ?)").bind(uid('nt_'), c.id, me.id, me.name, `Moved from ${c.stage} to ${b.stage}.`, now()).run();
     return json({ ok: true });
   }
@@ -639,7 +663,7 @@ async function dashboard(env, me) {
     out.pipeline = await all("SELECT stage, COUNT(*) n, COALESCE(SUM(value_usd),0) v FROM crm_deals GROUP BY stage");
     out.forecast = (await one("SELECT COALESCE(SUM(value_usd * COALESCE(probability, CASE stage WHEN 'new' THEN 10 WHEN 'contacted' THEN 20 WHEN 'call' THEN 40 WHEN 'proposal' THEN 60 WHEN 'negotiation' THEN 80 ELSE 0 END) / 100.0),0) w, COALESCE(SUM(value_usd),0) v FROM crm_deals WHERE stage NOT IN ('won','lost')"));
     out.won_month = (await one("SELECT COUNT(*) n, COALESCE(SUM(value_usd),0) v FROM crm_deals WHERE stage = 'won' AND closed_at >= ?", now().slice(0, 8) + '01'));
-    out.stale = await all("SELECT d.id, d.title, d.stage, d.value_usd, d.updated_at FROM crm_deals d WHERE d.stage NOT IN ('won','lost') AND d.updated_at < ? ORDER BY d.updated_at LIMIT 5", new Date(Date.now() - 14 * 86400_000).toISOString());
+    out.stale = await all("SELECT d.id, d.title, d.stage, d.value_usd, d.updated_at FROM crm_deals d LEFT JOIN crm_contacts c ON c.id = d.contact_id WHERE d.stage NOT IN ('won','lost') AND d.updated_at < ? AND " + SEEN('c') + " ORDER BY d.updated_at LIMIT 5", new Date(Date.now() - 14 * 86400_000).toISOString(), me.id);
     out.today = (await one("SELECT SUM(due < ?) overdue, SUM(due = ?) today FROM crm_tasks WHERE assignee_id = ? AND status != 'done'", now().slice(0, 10), now().slice(0, 10), me.id));
     out.counts = {
       contacts: (await one('SELECT COUNT(*) n FROM crm_contacts')).n,
@@ -651,11 +675,11 @@ async function dashboard(env, me) {
     };
     out.my_tasks = await all("SELECT t.id, t.title, t.due, t.status, c.name contact_name, t.contact_id FROM crm_tasks t LEFT JOIN crm_contacts c ON c.id = t.contact_id WHERE t.assignee_id = ? AND t.status != 'done' ORDER BY t.due IS NULL, t.due LIMIT 8", me.id);
     out.requests = await all("SELECT r.id, r.title, r.status, r.created_at, c.name contact_name, r.contact_id FROM crm_requests r LEFT JOIN crm_contacts c ON c.id = r.contact_id WHERE r.status IN ('new','in_progress') ORDER BY r.created_at DESC LIMIT 6");
-    out.recent = await all('SELECT id, name, company, kind, updated_at FROM crm_contacts ORDER BY COALESCE(last_activity, updated_at) DESC LIMIT 6');
+    out.recent = await all('SELECT c.id, c.name, c.company, c.kind, c.updated_at FROM crm_contacts c WHERE ' + SEEN('c') + ' ORDER BY COALESCE(c.last_activity, c.updated_at) DESC LIMIT 6', me.id);
   }
   if (can(me, 'admin')) {
     out.people = await all('SELECT role, status, COUNT(*) n FROM users GROUP BY role, status');
-    out.pending_vas = (await one("SELECT COUNT(*) n FROM candidates WHERE status = 'pending'")).n;
+    out.pending_vas = (await one("SELECT COUNT(*) n FROM candidates WHERE status = 'pending' OR (status = 'approved' AND verified = 0)")).n;
     out.hours_week = (await one('SELECT COALESCE(SUM(minutes),0) m FROM timesheets WHERE day >= ?', weekAgo.slice(0, 10))).m;
   }
   if (me.role === 'super_admin') {
@@ -689,4 +713,11 @@ function device(ua) {
   const os = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : /Linux/.test(ua) ? 'Linux' : 'Unknown device';
   const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
   return br ? br + ' on ' + os : os;
+}
+
+function linkedinUrl(v) {
+  const u = clean(v, 300);
+  if (!u) return null;
+  const full = /^https?:\/\//i.test(u) ? u : 'https://' + u.replace(/^\/+/, '');
+  return /^https:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/(in|company)\/[^\s]+$/i.test(full.replace(/^http:/i, 'https:')) ? full.replace(/^http:/i, 'https:') : null;
 }

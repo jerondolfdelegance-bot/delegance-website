@@ -224,18 +224,19 @@ export const RECIPES = [
 ];
 
 // ---------- Admin routes: automations + webhooks ----------
+const SHARING = ['private', 'view', 'edit'];
 export async function autoRoutes(path, m, req, env, me) {
   const DB = env.DB, p = path.split('/');
   if (p[0] !== 'automations' && p[0] !== 'webhooks') return null;
   if (!can(me, 'admin')) return bad('Only admins can change automations and webhooks.', 403);
   if (p[0] === 'automations') {
     if (!p[1] && m === 'GET') {
-      const { results } = await DB.prepare('SELECT * FROM automations ORDER BY created_at DESC').all();
+      const { results } = await DB.prepare("SELECT a.*, u.name owner_name FROM automations a LEFT JOIN users u ON u.id = a.created_by WHERE a.created_by = ? OR a.sharing IN ('view','edit') ORDER BY a.created_at DESC").bind(me.id).all();
       const { results: users } = await DB.prepare("SELECT id, name FROM users WHERE role IN ('staff','admin','super_admin') AND status = 'active' ORDER BY name").all();
-      return json({ items: results.map(a => ({ ...a, conditions: parse(a.conditions, []), actions: parse(a.actions, []) })), events: EVENTS, fields: FIELDS, actions: ACTIONS, stages: DEAL_STAGES, recipes: RECIPES.map(r => ({ key: r.key, name: r.name, trigger: r.trigger })), team: users });
+      return json({ items: results.map(a => ({ ...a, mine: a.created_by === me.id, can_edit: a.created_by === me.id || a.sharing === 'edit', conditions: parse(a.conditions, []), actions: parse(a.actions, []) })), events: EVENTS, fields: FIELDS, actions: ACTIONS, stages: DEAL_STAGES, recipes: RECIPES.map(r => ({ key: r.key, name: r.name, trigger: r.trigger })), team: users });
     }
     if (p[1] === 'log' && m === 'GET') {
-      const { results } = await DB.prepare('SELECT l.*, a.name FROM automation_log l LEFT JOIN automations a ON a.id = l.automation_id ORDER BY l.created_at DESC LIMIT 100').all();
+      const { results } = await DB.prepare("SELECT l.*, a.name FROM automation_log l JOIN automations a ON a.id = l.automation_id WHERE a.created_by = ? OR a.sharing IN ('view','edit') ORDER BY l.created_at DESC LIMIT 100").bind(me.id).all();
       return json({ items: results });
     }
     if (!p[1] && m === 'POST') {
@@ -243,15 +244,20 @@ export async function autoRoutes(path, m, req, env, me) {
       const r = b.recipe ? RECIPES.find(x => x.key === b.recipe) : null;
       const f = validate(r || b); if (typeof f === 'string') return bad(f);
       const id = uid('au_'), t = now();
-      await DB.prepare('INSERT INTO automations (id, name, active, trigger, trigger_value, conditions, actions, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
-        .bind(id, f.name, 1, f.trigger, f.trigger_value, JSON.stringify(f.conditions), JSON.stringify(f.actions), me.id, t, t).run();
+      await DB.prepare('INSERT INTO automations (id, name, active, trigger, trigger_value, conditions, actions, created_by, created_at, updated_at, sharing) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+        .bind(id, f.name, 1, f.trigger, f.trigger_value, JSON.stringify(f.conditions), JSON.stringify(f.actions), me.id, t, t, SHARING.includes(b.sharing) ? b.sharing : 'private').run();
       await audit(env, me.email, 'automation.create', f.name);
       return json({ ok: true, id }, 201);
     }
     const a = p[1] && await DB.prepare('SELECT * FROM automations WHERE id = ?').bind(p[1]).first();
-    if (!a) return bad('Automation not found.', 404);
+    const mine = a && a.created_by === me.id;
+    if (!a || (!mine && a.sharing === 'private')) return bad('Automation not found.', 404);
+    if (m !== 'GET' && !mine && a.sharing !== 'edit') return bad('This workflow is shared view-only. Ask its owner to share it with edit rights.', 403);
+    if (m === 'DELETE' && !mine) return bad('Only the owner can delete this workflow.', 403);
     if (m === 'PATCH') {
       const b = await body(req);
+      if ('sharing' in b && b.sharing !== a.sharing) { if (!mine) return bad('Only the owner can change who sees this workflow.', 403); if (!SHARING.includes(b.sharing)) return bad('Pick private, view or edit.'); await DB.prepare('UPDATE automations SET sharing = ?, updated_at = ? WHERE id = ?').bind(b.sharing, now(), a.id).run(); }
+      delete b.sharing; if (!Object.keys(b).length) return json({ ok: true });
       if (Object.keys(b).length === 1 && 'active' in b) { await DB.prepare('UPDATE automations SET active = ?, updated_at = ? WHERE id = ?').bind(b.active ? 1 : 0, now(), a.id).run(); return json({ ok: true }); }
       const f = validate(b); if (typeof f === 'string') return bad(f);
       await DB.prepare('UPDATE automations SET name = ?, trigger = ?, trigger_value = ?, conditions = ?, actions = ?, updated_at = ? WHERE id = ?').bind(f.name, f.trigger, f.trigger_value, JSON.stringify(f.conditions), JSON.stringify(f.actions), now(), a.id).run();
@@ -269,18 +275,21 @@ export async function autoRoutes(path, m, req, env, me) {
     return null;
   }
   // webhooks
-  if (!p[1] && m === 'GET') { const { results } = await DB.prepare('SELECT id, name, url, events, active, created_at, last_status, last_at, fails FROM webhooks ORDER BY created_at DESC').all(); return json({ items: results.map(h => ({ ...h, events: parse(h.events, ['*']) })), events: EVENTS }); }
+  if (!p[1] && m === 'GET') { const { results } = await DB.prepare("SELECT id, name, url, events, active, created_at, last_status, last_at, fails, sharing, created_by = ? mine FROM webhooks WHERE created_by = ? OR sharing IN ('view','edit') ORDER BY created_at DESC").bind(me.id, me.id).all(); return json({ items: results.map(h => ({ ...h, events: parse(h.events, ['*']) })), events: EVENTS }); }
   if (!p[1] && m === 'POST') {
     const b = await body(req), url = safeUrl(clean(b.url, 500));
     if (!url) return bad('Use a full https:// address from Zapier, Make, n8n or GoHighLevel.');
     const evs = (Array.isArray(b.events) && b.events.length ? b.events : ['*']).filter(e => e === '*' || EVENTS[e]);
     const secret = 'whsec_' + [...crypto.getRandomValues(new Uint8Array(18))].map(x => x.toString(16).padStart(2, '0')).join('');
-    await DB.prepare('INSERT INTO webhooks (id, name, url, events, secret, created_by, created_at) VALUES (?,?,?,?,?,?,?)').bind(uid('wh_'), clean(b.name, 80) || new URL(url).hostname, url, JSON.stringify(evs), secret, me.id, now()).run();
+    await DB.prepare('INSERT INTO webhooks (id, name, url, events, secret, created_by, created_at, sharing) VALUES (?,?,?,?,?,?,?,?)').bind(uid('wh_'), clean(b.name, 80) || new URL(url).hostname, url, JSON.stringify(evs), secret, me.id, now(), SHARING.includes(b.sharing) ? b.sharing : 'private').run();
     await audit(env, me.email, 'webhook.create', url);
     return json({ ok: true, secret }, 201);
   }
+  const hk = p[1] && await DB.prepare('SELECT * FROM webhooks WHERE id = ?').bind(p[1]).first();
+  if (p[1] && (!hk || (hk.created_by !== me.id && hk.sharing !== 'edit'))) return bad('Not found.', 404);
+  if (p[1] && m === 'DELETE' && hk.created_by !== me.id) return bad('Only the owner can delete this webhook.', 403);
   if (p[1] && p[2] === 'test' && m === 'POST') {
-    const h = await DB.prepare('SELECT * FROM webhooks WHERE id = ?').bind(p[1]).first(); if (!h) return bad('Not found.', 404);
+    const h = hk;
     const st = await post(h.url, { event: 'test', data: { message: 'Hello from Delegance. Your webhook works.' }, sent_at: now() }, h.secret);
     await DB.prepare('UPDATE webhooks SET last_status = ?, last_at = ? WHERE id = ?').bind(typeof st === 'number' ? st : 0, now(), h.id).run();
     return json({ ok: typeof st === 'number' && st < 400, status: st });

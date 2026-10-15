@@ -1,5 +1,5 @@
 // Delegance CRM v2: deals, activities, reports, search, notifications, templates, bulk + import.
-import { now, uid, json, bad, clean, cleanEmail, parse, body, can, audit, sendEmail, limited } from './_lib.js';
+import { now, uid, json, bad, clean, cleanEmail, parse, body, can, audit, sendEmail, limited, SEEN, hiddenFrom } from './_lib.js';
 import { emit } from './_auto.js';
 
 export const DEAL_STAGES = ['new', 'contacted', 'call', 'proposal', 'negotiation', 'won', 'lost'];
@@ -50,7 +50,7 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
       const { results } = await DB.prepare(`SELECT d.*, c.name contact_name, c.company, u.name owner_name,
           (SELECT MAX(created_at) FROM crm_notes n WHERE n.deal_id = d.id) last_note
         FROM crm_deals d LEFT JOIN crm_contacts c ON c.id = d.contact_id LEFT JOIN users u ON u.id = d.owner_id
-        ${mine ? 'WHERE d.owner_id = ?' : ''} ORDER BY d.updated_at DESC LIMIT 1000`).bind(...(mine ? [me.id] : [])).all();
+        WHERE ${SEEN('c')} ${mine ? 'AND d.owner_id = ?' : ''} ORDER BY d.updated_at DESC LIMIT 1000`).bind(me.id, ...(mine ? [me.id] : [])).all();
       return json({ items: results.map(dealOut), stages: DEAL_STAGES.map(s => ({ id: s, name: STAGE_NAME[s], probability: STAGE_PROB[s] })) });
     }
     if (!p[1] && m === 'POST') {
@@ -66,7 +66,7 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
       return json({ ok: true, id }, 201);
     }
     const d = p[1] && await DB.prepare('SELECT * FROM crm_deals WHERE id = ?').bind(p[1]).first();
-    if (!d) return bad('Deal not found.', 404);
+    if (!d || (d.contact_id && await hiddenFrom(env, await DB.prepare('SELECT private, owner_id FROM crm_contacts WHERE id = ?').bind(d.contact_id).first(), me))) return bad('Deal not found.', 404);
     if (!p[2] && m === 'GET') {
       const [c, notes, tasks, team] = await Promise.all([
         d.contact_id ? DB.prepare('SELECT id, name, company, email, phone, kind FROM crm_contacts WHERE id = ?').bind(d.contact_id).first() : null,
@@ -128,7 +128,7 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
   // ----- Send an email to a contact from the CRM (logged on the timeline) -----
   if (p[0] === 'contacts' && p[2] === 'email' && m === 'POST') {
     const c = await DB.prepare('SELECT * FROM crm_contacts WHERE id = ?').bind(p[1]).first();
-    if (!c) return bad('Contact not found.', 404);
+    if (!c || await hiddenFrom(env, c, me)) return bad('Contact not found.', 404);
     if (!c.email) return bad('This contact has no email address.');
     if (await limited(env, 'crmmail:' + me.id, 60, 3600)) return bad('That is a lot of emails this hour. Please wait a little.', 429);
     const b = await body(req), subject = clean(b.subject, 160), text = clean(b.body, 8000);
@@ -140,14 +140,14 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
     return json({ ok: true });
   }
   if (p[0] === 'templates') {
-    if (!p[1] && m === 'GET') { const { results } = await DB.prepare('SELECT id, name, subject, body FROM email_templates ORDER BY name').all(); return json({ items: results }); }
+    if (!p[1] && m === 'GET') { const { results } = await DB.prepare('SELECT t.id, t.name, t.subject, t.body, t.shared, t.created_by = ? mine FROM email_templates t WHERE t.shared = 1 OR t.created_by = ? ORDER BY t.name').bind(me.id, me.id).all(); return json({ items: results }); }
     if (!p[1] && m === 'POST') {
       const b = await body(req), name = clean(b.name, 80), subject = clean(b.subject, 160), text = clean(b.body, 8000);
       if (!name || !subject || !text) return bad('A template needs a name, subject and message.');
-      await DB.prepare('INSERT INTO email_templates (id, name, subject, body, created_by, created_at) VALUES (?,?,?,?,?,?)').bind(uid('tp_'), name, subject, text, me.id, now()).run();
+      await DB.prepare('INSERT INTO email_templates (id, name, subject, body, created_by, created_at, shared) VALUES (?,?,?,?,?,?,?)').bind(uid('tp_'), name, subject, text, me.id, now(), b.shared === false || b.shared === 0 || b.shared === '0' ? 0 : 1).run();
       return json({ ok: true }, 201);
     }
-    if (p[1] && m === 'DELETE') { await DB.prepare('DELETE FROM email_templates WHERE id = ?').bind(p[1]).run(); return json({ ok: true }); }
+    if (p[1] && m === 'DELETE') { const r = await DB.prepare('DELETE FROM email_templates WHERE id = ? AND (created_by = ? OR created_by IS NULL OR ? = 1)').bind(p[1], me.id, can(me, 'super_admin') ? 1 : 0).run(); return r.meta.changes ? json({ ok: true }) : bad('Only the person who made this template can delete it.', 403); }
   }
 
   // ----- Bulk actions + import -----
@@ -193,8 +193,8 @@ export async function crmRoutes(path, m, req, env, me, url, later) {
     if (q.length < 2) return json({ contacts: [], deals: [], tasks: [] });
     const like = `%${q}%`;
     const [c, d, t] = await Promise.all([
-      DB.prepare('SELECT id, name, company, email FROM crm_contacts WHERE name LIKE ? OR company LIKE ? OR email LIKE ? OR phone LIKE ? ORDER BY updated_at DESC LIMIT 6').bind(like, like, like, like).all(),
-      DB.prepare('SELECT d.id, d.title, d.stage, d.value_usd, c.name contact_name FROM crm_deals d LEFT JOIN crm_contacts c ON c.id = d.contact_id WHERE d.title LIKE ? OR c.name LIKE ? OR c.company LIKE ? ORDER BY d.updated_at DESC LIMIT 6').bind(like, like, like).all(),
+      DB.prepare(`SELECT c.id, c.name, c.company, c.email FROM crm_contacts c WHERE (c.name LIKE ? OR c.company LIKE ? OR c.email LIKE ? OR c.phone LIKE ?) AND ${SEEN('c')} ORDER BY c.updated_at DESC LIMIT 6`).bind(like, like, like, like, me.id).all(),
+      DB.prepare(`SELECT d.id, d.title, d.stage, d.value_usd, c.name contact_name FROM crm_deals d LEFT JOIN crm_contacts c ON c.id = d.contact_id WHERE (d.title LIKE ? OR c.name LIKE ? OR c.company LIKE ?) AND ${SEEN('c')} ORDER BY d.updated_at DESC LIMIT 6`).bind(like, like, like, me.id).all(),
       DB.prepare("SELECT id, title, due, status FROM crm_tasks WHERE title LIKE ? AND status != 'done' ORDER BY due IS NULL, due LIMIT 5").bind(like).all(),
     ]);
     return json({ contacts: c.results, deals: d.results, tasks: t.results });

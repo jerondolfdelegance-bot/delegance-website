@@ -22,7 +22,7 @@ export async function integrationRoutes(path, m, req, env, me) {
     const all = can(me, 'admin');
     if (!p[1] && m === 'GET') {
       const { results } = await DB.prepare(`SELECT k.*, u.name owner FROM api_keys k LEFT JOIN users u ON u.id = k.user_id ${all ? '' : 'WHERE k.user_id = ?'} ORDER BY k.created_at DESC`).bind(...(all ? [] : [me.id])).all();
-      return json({ items: results.map(keyOut) });
+      return json({ items: results.map(k => ({ ...keyOut(k), mine: k.user_id === me.id })) });
     }
     if (!p[1] && m === 'POST') {
       const b = await body(req), name = clean(b.name, 60) || 'API key';
@@ -119,8 +119,8 @@ export const MCP_TOOLS = [
   T('search_crm', 'Search Delegance contacts, deals and open tasks by name, company, email or phone.', { query: S }, ['query']),
   T('list_contacts', 'List contacts, newest activity first. Optional filters.', { kind: { type: 'string', enum: ['lead', 'client', 'partner'] }, tag: S, limit: N }),
   T('get_contact', 'Get one contact with its deals, tasks, requests and activity timeline.', { id: S }, ['id']),
-  T('create_contact', 'Create a contact (lead, client or partner).', { name: S, email: S, company: S, phone: S, country: S, source: S, kind: { type: 'string', enum: ['lead', 'client', 'partner'] } }, ['name'], true),
-  T('update_contact', 'Update a contact. Only the fields you pass change. tags replaces the whole tag list.', { id: S, name: S, email: S, company: S, phone: S, country: S, source: S, kind: S, tags: { type: 'array', items: S } }, ['id'], true),
+  T('create_contact', 'Create a contact (lead, client or partner).', { name: S, email: S, company: S, phone: S, country: S, source: S, linkedin: S, kind: { type: 'string', enum: ['lead', 'client', 'partner'] } }, ['name'], true),
+  T('update_contact', 'Update a contact. Only the fields you pass change. tags replaces the whole tag list.', { id: S, name: S, email: S, company: S, phone: S, country: S, source: S, linkedin: S, kind: S, tags: { type: 'array', items: S } }, ['id'], true),
   T('list_deals', 'List deals in the pipeline with value, stage, win chance and whether they have gone quiet.', { stage: STAGE, mine: B }),
   T('get_deal', 'Get one deal with its contact, tasks and activity.', { id: S }, ['id']),
   T('create_deal', 'Create a deal. Pass contact_id, or contact_name (+ company/email) to create the contact too.', { title: S, contact_id: S, contact_name: S, company: S, email: S, value_usd: N, stage: STAGE, close_date: { type: 'string', description: 'YYYY-MM-DD' } }, ['title'], true),
