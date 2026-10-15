@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/dash.css?v=9">
+<link rel="stylesheet" href="/assets/dash.css?v=10">
 <link rel="stylesheet" href="/assets/motion.css?v=1">
 <script src="/assets/motion.js?v=1"></script>
 <link rel="stylesheet" href="/assets/theme.css?v=1">
@@ -46,6 +46,19 @@
       <p class="err" role="alert"></p>
       <button class="btn btn-silver wide" type="submit">Sign in</button>
       <p class="fine"><button type="button" class="linkbtn" id="toForgot">Forgot your password?</button></p>
+      <div class="or" aria-hidden="true"><span>or</span></div>
+      <button class="btn wide alt-in" type="button" id="pkIn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 11-5.7"/><circle cx="18" cy="15" r="2.5"/><path d="M18 17.5V22m0-2h2"/></svg>Sign in with a passkey</button>
+      <button class="btn wide alt-in" type="button" id="toEmail"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email me a sign-in code</button>
+      <p class="err" id="pkErr" role="alert"></p>
+    </form>
+    <form id="fEmail" class="af" novalidate hidden>
+      <h1>Sign in with a code</h1>
+      <p class="lead" id="emLead">Type the email you sign in with. We'll email you a 6-digit code that works for 10 minutes.</p>
+      <div id="emStep1"><label class="fld"><span>Email</span><input name="email" type="email" autocomplete="username" required></label><div class="ts" data-ts></div></div>
+      <div id="emStep2" hidden><div class="fld"><span id="emLbl">6-digit code from the email</span><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="code-in" aria-labelledby="emLbl"></div></div>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-silver wide" type="submit" id="emBtn">Email me a code</button>
+      <p class="fine"><button type="button" class="linkbtn" id="emAgain" hidden>Send a new code</button> <button type="button" class="linkbtn" data-back>Back to sign in</button></p>
     </form>
     <form id="fCode" class="af" novalidate hidden>
       <h1>Enter your code</h1>
@@ -96,7 +109,7 @@
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
-  function show(id){['fIn','fUp','fSet','fCode','fForgot'].forEach(function(f){document.getElementById(f).hidden=f!==id});$('#modeTabs').hidden=!(id==='fIn'||id==='fUp');document.querySelectorAll('#modeTabs button').forEach(function(b){b.setAttribute('aria-selected',String((b.dataset.mode==='in')===(id==='fIn')))});var i=document.querySelector('#'+id+' input');if(i)i.focus()}
+  function show(id){['fIn','fUp','fSet','fCode','fForgot','fEmail'].forEach(function(f){document.getElementById(f).hidden=f!==id});$('#modeTabs').hidden=!(id==='fIn'||id==='fUp');document.querySelectorAll('#modeTabs button').forEach(function(b){b.setAttribute('aria-selected',String((b.dataset.mode==='in')===(id==='fIn')))});var i=document.querySelector('#'+id+' input');if(i)i.focus()}
   async function post(u,d){var r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(d)});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Something went wrong. Please try again.');return j}
   function go(){var n=new URLSearchParams(location.search).get('next');location.replace(n&&/^\/(?!\/)[a-z0-9\-\/#]*$/i.test(n)?n:'/dashboard')}
   function wire(form,fn){form.addEventListener('submit',async function(e){e.preventDefault();var b=form.querySelector('button[type=submit]'),er=form.querySelector('.err');er.textContent='';DLGMotion.busy(b,true);try{await fn(Object.fromEntries(new FormData(form)));DLGMotion.busy(b,'done')}catch(x){er.textContent=x.message;DLGMotion.busy(b,false);if(form.id==='fCode'&&OTP){OTP.shake();OTP.clear()}if(form.id==='fUp'||form.id==='fForgot')tsReset(form.id);if(form.id==='fCode'&&/expired|again/.test(x.message))setTimeout(function(){show('fIn')},1800)}})}
@@ -110,10 +123,29 @@
   wire($('#fUp'),async function(d){if(!d.intent)throw new Error('Pick Hire a VA or Work as a VA.');d.consent=!!d.consent;d.turnstile=tsToken('fUp');await post('/api/auth/signup',d);if(d.intent==='work'||d.intent==='both'){location.href='/apply';return}go()});
   wire($('#fForgot'),async function(d){d.turnstile=tsToken('fForgot');var r=await post('/api/auth/forgot',d);var ok=$('#fForgot .ok');ok.textContent=r.email?'If '+d.email+' has a Delegance account, a reset link is on its way. Check your inbox (and spam) in a minute.':'Email sending is not switched on yet. Message admin@delegance.app and we will send you a link.';ok.hidden=false;tsReset('fForgot')});
   $('#toForgot').onclick=function(){$('#fForgot [name=email]').value=$('#fIn [name=email]').value;show('fForgot');tsRender('fForgot')};
+
+  // ---- Email sign-in code ----
+  var emSent=false,EOTP=null;
+  $('#toEmail').onclick=function(){$('#fEmail [name=email]').value=$('#fIn [name=email]').value;emSent=false;$('#emStep1').hidden=false;$('#emStep2').hidden=true;$('#emBtn').textContent='Email me a code';$('#emAgain').hidden=true;show('fEmail');tsRender('fEmail')};
+  $('#emAgain').onclick=function(){emSent=false;$('#emStep1').hidden=false;$('#emStep2').hidden=true;$('#emBtn').textContent='Email me a code';this.hidden=true;tsReset('fEmail')};
+  wire($('#fEmail'),async function(d){
+    if(!emSent){var r=await post('/api/auth/email-code',{email:d.email,turnstile:tsToken('fEmail')});if(!r.email)throw new Error('Email sending is not switched on yet. Use your password, or message admin@delegance.app.');emSent=true;$('#emStep1').hidden=true;$('#emStep2').hidden=false;$('#emLead').textContent='If '+d.email+' has a Delegance account, a code is on its way. Check your inbox (and spam).';$('#emBtn').textContent='Sign in';$('#emAgain').hidden=false;if(!EOTP)EOTP=DLGMotion.otp($('#fEmail [name=code]'),function(){$('#fEmail').requestSubmit()});setTimeout(function(){EOTP.focus()},50);return}
+    var v=await post('/api/auth/email-code/verify',{email:$('#fEmail [name=email]').value,code:d.code});
+    if(v.mfa){ticket=v.ticket;show('fCode');if(!OTP)OTP=DLGMotion.otp($('#fCode [name=code]'),function(){$('#fCode').requestSubmit()});setTimeout(function(){OTP.focus()},50);return}go()});
+  // ---- Passkey sign-in (Face ID, fingerprint, Windows Hello, phone) ----
+  var b64d=function(s){s=s.replace(/-/g,'+').replace(/_/g,'/');var b=atob(s+'==='.slice((s.length+3)%4)),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
+  var b64e=function(buf){var s='',u=new Uint8Array(buf);for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  if(!window.PublicKeyCredential)$('#pkIn').hidden=true;
+  $('#pkIn').onclick=async function(){var b=this,er=$('#pkErr');er.textContent='';b.disabled=true;
+    try{var o=await post('/api/auth/passkey/login-options',{});
+      var c=await navigator.credentials.get({publicKey:{challenge:b64d(o.challenge),rpId:o.rpId,timeout:o.timeout,userVerification:'required',allowCredentials:[]}});
+      if(!c)throw new Error('No passkey was chosen.');
+      await post('/api/auth/passkey/login',{credential:{id:c.id,rawId:b64e(c.rawId),type:c.type,response:{clientDataJSON:b64e(c.response.clientDataJSON),authenticatorData:b64e(c.response.authenticatorData),signature:b64e(c.response.signature),userHandle:c.response.userHandle?b64e(c.response.userHandle):null}}});go()}
+    catch(x){er.textContent=x.name==='NotAllowedError'?'Passkey sign-in was cancelled or timed out. Try again, or use your password.':x.message;b.disabled=false}};
   document.querySelectorAll('[data-back]').forEach(function(b){b.onclick=function(){show('fIn')}});
   document.querySelector('#modeTabs [data-mode=up]').addEventListener('click',function(){tsRender('fUp')});
   // Cloudflare Turnstile: free, privacy-friendly "I am human" check, only on sign-up and reset.
-  fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;TS=c.turnstile;var s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;s.onload=function(){['fUp','fForgot'].forEach(function(f){if(!document.getElementById(f).hidden)tsRender(f)})};document.head.appendChild(s)}).catch(function(){});
+  fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;TS=c.turnstile;var s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;s.onload=function(){['fUp','fForgot','fEmail'].forEach(function(f){if(!document.getElementById(f).hidden)tsRender(f)})};document.head.appendChild(s)}).catch(function(){});
   function tsRender(f){if(!TS||!window.turnstile||tsIds[f]!=null)return;tsIds[f]=turnstile.render(document.querySelector('#'+f+' [data-ts]'),{sitekey:TS,theme:'dark',size:'flexible'})}
   function tsToken(f){return TS&&window.turnstile&&tsIds[f]!=null?turnstile.getResponse(tsIds[f]):''}
   function tsReset(f){if(TS&&window.turnstile&&tsIds[f]!=null)turnstile.reset(tsIds[f])}
