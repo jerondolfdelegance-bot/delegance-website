@@ -1,0 +1,61 @@
+/* Delegance motion kit styles (pairs with motion.js). */
+:root{--gold:#e2c27a;--gold2:#a8873e}
+/* Word flip */
+[data-words]{display:inline-block;position:relative}
+.wf{display:inline-grid;vertical-align:bottom;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.wf>span{grid-area:1/1;display:inline-block;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s,filter .5s}
+.wf>span.in{animation:wfIn .5s cubic-bezier(.2,.8,.2,1) both}
+.wf>span.out{transform:translateY(-105%);opacity:0;filter:blur(4px)}
+@keyframes wfIn{from{transform:translateY(105%);opacity:0;filter:blur(4px)}}
+/* Shine sweep on primary buttons */
+.btn-silver,.btn-acc{position:relative;overflow:hidden;isolation:isolate}
+.btn-silver::after,.btn-acc::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 48%,rgba(255,236,190,.55) 52%,transparent 70%);transform:translateX(-120%);pointer-events:none}
+.btn-silver:hover::after,.btn-acc:hover::after,.btn-silver:focus-visible::after,.btn-acc:focus-visible::after,.btn-silver.shine-once::after{animation:shine .9s ease-out}
+@keyframes shine{to{transform:translateX(120%)}}
+[data-magnetic]{transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+/* Text shimmer (one pass) on silver headings */
+.silver.shimmer{background-size:220% 100%;animation:shimmer 2.4s ease-out .4s both}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+/* Busy / done buttons */
+.is-busy{color:transparent!important;pointer-events:none}
+.is-busy::before{content:"";position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;border:2px solid rgba(10,10,11,.25);border-top-color:#0a0a0b;animation:spin .7s linear infinite;z-index:1}
+.btn:not(.btn-silver):not(.btn-acc).is-busy::before{border-color:rgba(255,255,255,.2);border-top-color:#fff}
+.is-done{pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* OTP boxes */
+.otp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:340px}
+.otp input{min-height:54px!important;padding:0!important;text-align:center;font:600 22px ui-monospace,Menlo,monospace!important;border-radius:12px!important;caret-color:var(--gold);transition:border-color .15s,transform .15s,box-shadow .15s}
+.otp input:focus{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(226,194,122,.18);transform:translateY(-1px)}
+.otp.full input{border-color:rgba(226,194,122,.6)!important}
+.otp.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.otp-src{position:absolute!important;width:1px!important;height:1px!important;opacity:0;pointer-events:none}
+/* Password meter */
+.pm{display:flex;align-items:center;gap:10px;margin-top:8px}
+.pm-bar{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.pm-bar i{height:4px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .25s}
+.pm-t{font-size:12px;color:var(--dim,#6f6f78);min-width:64px;text-align:right}
+.pm[data-s="1"] i:nth-child(-n+1){background:#ff8a8a}
+.pm[data-s="2"] i:nth-child(-n+2){background:#f0c674}
+.pm[data-s="3"] i:nth-child(-n+3){background:#7fd1a8}
+.pm[data-s="4"] i{background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.pm[data-s="4"] .pm-t{color:var(--gold)}
+/* Skeleton loading */
+.skel{display:grid;gap:16px}
+.skel i{display:block;height:var(--h,90px);border-radius:16px;background:linear-gradient(100deg,rgba(255,255,255,.04) 40%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 60%);background-size:300% 100%;animation:skel 1.4s ease-in-out infinite}
+@keyframes skel{from{background-position:100% 0}to{background-position:0 0}}
+/* Charts grow in */
+.bar i{animation:growX .9s cubic-bezier(.2,.8,.2,1) both;transform-origin:left}
+.vb i{animation:growY .9s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom}
+.vb:nth-child(n) i{animation-delay:calc(var(--i,0) * 40ms)}
+@keyframes growX{from{transform:scaleX(0)}}
+@keyframes growY{from{transform:scaleY(0)}}
+.ring{animation:ringIn 1.1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ringIn{from{--p:0;opacity:.4}}
+/* Cards lift in */
+.main.enter .card,.main.enter .hero{animation:liftIn .45s cubic-bezier(.2,.8,.2,1) both}
+.main.enter .grid>.card:nth-child(2){animation-delay:40ms}.main.enter .grid>.card:nth-child(3){animation-delay:80ms}.main.enter .grid>.card:nth-child(4){animation-delay:120ms}
+@keyframes liftIn{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){
+  .wf>span,.btn-silver::after,.btn-acc::after,.silver.shimmer,.bar i,.vb i,.ring,.main.enter .card,.main.enter .hero,.otp.shake,.skel i{animation:none!important;transition:none!important}
+}
