@@ -12,13 +12,19 @@
 <meta property="og:title" content="Virtual assistant profile · Delegance">
 <meta property="og:description" content="Portfolio, experience, skills and availability. Reviewed by Delegance.">
 <meta property="og:image" content="https://delegance.app/og.jpg">
+<meta property="og:image:secure_url" content="https://delegance.app/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta name="twitter:image" content="https://delegance.app/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://desk.delegance.app">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/talent.css?v=3">
+<link rel="stylesheet" href="/assets/talent.css?v=4">
 <link rel="stylesheet" href="/assets/theme.css?v=1">
 <script src="/assets/theme.js?v=1" defer></script>
 </head>
@@ -34,17 +40,19 @@
 <footer class="tf"><div class="wrap"><span>© 2026 Delegance · Contact details stay private until both sides sign a Delegance agreement.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
 
 <script src="/assets/talent.js?v=1"></script>
+<script src="/assets/me.js?v=3" defer></script>
 <script>
 (function () {
   var T = window.T, esc = T.esc, I = T.I;
   var slug = (location.pathname.match(/^\/va\/([a-z0-9-]{3,60})/) || [])[1] || new URLSearchParams(location.search).get('id') || '';
-  var root = document.getElementById('pf'), c = null;
+  var root = document.getElementById('pf'), c = null, GAL = [];
   var ago = function (iso) { var d = new Date(iso); return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }); };
   function sec(title, inner) { return inner ? '<section class="sec"><h2>' + title + '</h2>' + inner + '</section>' : ''; }
   function render() {
     var d = c.details || {}, first = c.name.split(' ')[0];
     var link = 'https://delegance.app/va/' + c.slug;
     document.title = c.name + ' · ' + c.headline + ' · Delegance';
+    GAL = [];
     root.innerHTML = '<div class="pf"><aside class="pf-side">' + T.port(c.photo, '', true) +
       '<button class="btn silver-b" id="msgBtn">' + I.chat + ' Message ' + esc(first) + '</button>' +
       '<button class="btn" id="hireBtn">' + I.brief + ' Hire through Delegance</button>' +
@@ -62,10 +70,14 @@
       sec('Services', (d.services || []).length ? '<div class="chips">' + d.services.map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>' : '') +
       sec('Skills and tools', '<div class="chips">' + (c.skills || []).concat(c.tools || []).map(function (s) { return '<span class="chip">' + esc(s) + '</span>'; }).join('') + '</div>') +
       sec('Portfolio', (d.projects || []).length ? '<div class="proj-g">' + d.projects.map(function (p) {
-        return '<article class="proj">' + (p.image ? '<div class="im" data-img="' + esc(p.image) + '"><img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy"></div>' : '') +
+        var g = p.gallery && p.gallery.length ? p.gallery : p.image ? [p.image] : [], pv = !g.length && p.preview, k = GAL.length;
+        GAL.push({ title: p.title, url: p.url, imgs: g.length ? g : pv && pv.image ? [pv.image] : [], site: !!pv });
+        var media = g.length ? '<button type="button" class="im" data-gal="' + k + '" aria-label="See ' + g.length + ' photo' + (g.length > 1 ? 's' : '') + ' of ' + esc(p.title) + '"><img src="' + esc(g[0]) + '" alt="" loading="lazy">' + (g.length > 1 ? '<span class="im-n">+' + (g.length - 1) + '</span>' : '') + '</button>'
+          : pv ? '<button type="button" class="im pv" data-gal="' + k + '" aria-label="Preview of ' + esc(p.title) + ' website"><span class="pv-bar"><i></i><i></i><i></i><em>' + esc(pv.host || '') + '</em></span>' + (pv.image ? '<img src="' + esc(pv.image) + '" alt="" loading="lazy">' : '<span class="pv-t">' + esc(pv.title || p.title) + '</span>') + '<span class="pv-tag">Website preview</span></button>' : '';
+        return '<article class="proj">' + media +
           '<div class="b"><b>' + esc(p.title) + '</b>' + (p.summary ? '<span class="small muted">' + esc(p.summary) + '</span>' : '') +
           ((p.tags || []).length ? '<div class="chips">' + p.tags.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
-          (p.url ? '<a class="small" style="text-decoration:underline;margin-top:auto" href="' + esc(T.safe(p.url)) + '" target="_blank" rel="noopener nofollow">View project</a>' : '') + '</div></article>';
+          (p.url ? '<a class="small" style="text-decoration:underline;margin-top:auto" href="' + esc(T.safe(p.url)) + '" target="_blank" rel="noopener nofollow">Visit website</a>' : '') + '</div></article>';
       }).join('') + '</div>' : '') +
       sec('Experience', (d.experience || []).length ? '<div class="tl">' + d.experience.map(function (x) {
         return '<div class="it"><b>' + esc(x.role) + '</b>' + (x.company ? ' · ' + esc(x.company) : '') + '<div class="xs dim">' + esc(x.start || '') + (x.current ? ' – Present' : x.end ? ' – ' + esc(x.end) : '') + '</div>' + (x.summary ? '<p class="small muted" style="margin-top:4px">' + esc(x.summary) + '</p>' : '') + '</div>';
@@ -79,7 +91,17 @@
     document.getElementById('hireBtn').onclick = hireForm;
     document.getElementById('copyBtn').onclick = function () { navigator.clipboard.writeText(link).then(function () { T.toast('Link copied.'); }, function () { T.toast(link); }); };
     document.getElementById('shareBtn').onclick = function () { if (navigator.share) navigator.share({ title: c.name + ' · Delegance', text: c.headline, url: link }).catch(function () {}); else document.getElementById('copyBtn').click(); };
-    root.addEventListener('click', function (e) { var im = e.target.closest('[data-img]'); if (!im) return; var lb = document.createElement('div'); lb.className = 'lb'; lb.innerHTML = '<img src="' + esc(im.dataset.img) + '" alt="">'; lb.onclick = function () { lb.remove(); }; document.body.appendChild(lb); });
+    root.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-gal]'), im = e.target.closest('[data-img]'), g = b ? GAL[+b.dataset.gal] : im ? { imgs: [im.dataset.img], title: '' } : null;
+      if (!g || !g.imgs.length) { if (b && g && g.url) window.open(T.safe(g.url), '_blank', 'noopener'); return; }
+      var i = 0, back = document.activeElement, lb = document.createElement('div'); lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', g.title || 'Photo');
+      function draw() { lb.innerHTML = '<figure><img src="' + esc(g.imgs[i]) + '" alt="' + esc(g.title || '') + ' ' + (i + 1) + '"><figcaption>' + esc(g.title || '') + (g.imgs.length > 1 ? ' · ' + (i + 1) + ' of ' + g.imgs.length : '') + (g.url ? ' · <a href="' + esc(T.safe(g.url)) + '" target="_blank" rel="noopener nofollow">' + (g.site ? 'Open the website' : 'Visit website') + '</a>' : '') + '</figcaption></figure>' + (g.imgs.length > 1 ? '<button type="button" class="lb-p" aria-label="Previous photo">‹</button><button type="button" class="lb-n" aria-label="Next photo">›</button>' : '') + '<button type="button" class="lb-x" aria-label="Close">×</button>'; lb.querySelector('.lb-x').focus(); }
+      function go(d) { i = (i + d + g.imgs.length) % g.imgs.length; draw(); }
+      function close() { lb.remove(); document.removeEventListener('keydown', key); if (back) back.focus(); }
+      function key(ev) { if (ev.key === 'Escape') close(); else if (ev.key === 'ArrowRight' && g.imgs.length > 1) go(1); else if (ev.key === 'ArrowLeft' && g.imgs.length > 1) go(-1); }
+      lb.onclick = function (ev) { if (ev.target.closest('.lb-p')) return go(-1); if (ev.target.closest('.lb-n')) return go(1); if (ev.target.closest('a')) return; if (ev.target.closest('.lb-x') || !ev.target.closest('figure')) close(); };
+      document.addEventListener('keydown', key); document.body.appendChild(lb); draw();
+    });
     chat.mount();
   }
 

@@ -14,12 +14,18 @@
 <meta property="og:description" content="A free professional profile you can share with any job application. Get hired through Delegance.">
 <meta property="og:url" content="https://delegance.app/apply">
 <meta property="og:image" content="https://delegance.app/og.jpg">
+<meta property="og:image:secure_url" content="https://delegance.app/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta name="twitter:image" content="https://delegance.app/og.jpg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://desk.delegance.app">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/talent.css?v=3">
+<link rel="stylesheet" href="/assets/talent.css?v=4">
 <link rel="stylesheet" href="/assets/theme.css?v=1">
 <script src="/assets/theme.js?v=1" defer></script>
 </head>
@@ -45,6 +51,10 @@
     <button type="button" data-tab="share" role="tab">Share</button>
   </div>
   <div id="statusBox"></div>
+  <details class="card recov" id="recov"><summary><b>Already have a profile?</b> Get your edit link by email</summary>
+    <form id="recForm" class="stack" novalidate style="margin-top:12px"><p class="small muted">Type the private email you used on your profile. If it matches, we email you a fresh edit link (it replaces any older one).</p>
+      <label class="small" for="recEmail">Email</label><input class="in" id="recEmail" type="email" autocomplete="email" required>
+      <div id="recTs"></div><button class="btn silver-b">Email me my edit link</button><p class="small muted" id="recMsg" role="status"></p></form></details>
 
   <section id="pMsgs" class="hide" style="padding-bottom:50px"></section>
   <section id="pShare" class="hide" style="padding-bottom:50px"></section>
@@ -166,7 +176,7 @@
       var k = x[0], ph = x[1], t = x[2], val = v[k] == null ? '' : Array.isArray(v[k]) ? v[k].join(', ') : v[k];
       if (t === 'area') h += '</div><textarea class="in" data-k="' + k + '" placeholder="' + esc(ph) + '" style="min-height:80px">' + esc(val) + '</textarea><div class="grid2">';
       else if (t === 'check') h += '<label class="row small muted"><input type="checkbox" data-k="' + k + '"' + (v[k] ? ' checked' : '') + '> ' + esc(ph) + '</label>';
-      else if (t === 'img') { var id = 'pi' + Math.random().toString(36).slice(2, 8); if (v.image_id) projImgs[id] = { id: v.image_id, url: v.image }; h += '</div><div class="row" data-img="' + id + '"><label class="btn sm"><input type="file" accept="image/jpeg,image/png,image/webp" hidden>' + (v.image_id ? 'Change image' : 'Add an image') + '</label><span class="xs dim" data-st>' + (v.image ? 'Image added' : 'JPEG or PNG') + '</span>' + (v.image ? '<img src="' + esc(v.image) + '" alt="" style="height:44px;border-radius:6px">' : '') + '</div><div class="grid2">'; }
+      else if (t === 'img') { var id = 'pi' + Math.random().toString(36).slice(2, 8); projImgs[id] = (v.gallery && v.gallery.length && v.images ? v.images.map(function (iid, n) { return { id: iid, url: v.gallery[n] }; }) : v.image_id ? [{ id: v.image_id, url: v.image }] : []); h += '</div><div class="pgal" data-img="' + id + '"><div class="pgal-th"></div><label class="btn sm"><input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>Add photos</label><span class="xs dim" data-st>Up to 6 photos or screenshots. Only a link? We show a preview of the website automatically.</span></div><div class="grid2">'; setTimeout(function () { drawGal(id); }); }
       else h += '<input class="in" data-k="' + k + '" placeholder="' + esc(ph) + '" value="' + esc(val) + '"' + (x[3] === 'full' ? ' style="grid-column:1/-1"' : '') + '>';
     });
     h += '</div><button type="button" class="rm">Remove</button>';
@@ -177,17 +187,29 @@
     var a = e.target.closest('[data-add]'); if (a) return addRep(a.dataset.add);
     var r = e.target.closest('.rm'); if (r) { r.closest('.rep').remove(); preview(); }
   });
+  function drawGal(id) {
+    var wrap = document.querySelector('[data-img="' + id + '"]'); if (!wrap) return;
+    wrap.querySelector('.pgal-th').innerHTML = (projImgs[id] || []).map(function (p, n) { return '<span class="pgal-i"><img src="' + esc(p.url) + '" alt="Project photo ' + (n + 1) + '"><button type="button" class="pgal-x" data-gx="' + n + '" aria-label="Remove photo ' + (n + 1) + '">×</button></span>'; }).join('');
+  }
+  form.addEventListener('click', function (e) {
+    var x = e.target.closest('[data-gx]'); if (!x) return;
+    var id = x.closest('[data-img]').dataset.img; projImgs[id].splice(+x.dataset.gx, 1); drawGal(id); preview();
+  });
   form.addEventListener('change', async function (e) {
-    var wrap = e.target.closest('[data-img]'); if (!wrap || e.target.type !== 'file' || !e.target.files[0]) return;
-    var st = wrap.querySelector('[data-st]'); st.textContent = 'Uploading…';
-    try { var blob = await shrink(e.target.files[0], 1600, 'image/jpeg', 0.86); var r = await T.api('candidates/photo', { raw: blob, type: 'image/jpeg' }); projImgs[wrap.dataset.img] = { id: r.photo_id, url: r.url };
-      var old = wrap.querySelector('img'); if (old) old.remove(); wrap.insertAdjacentHTML('beforeend', '<img src="' + esc(r.url) + '" alt="" style="height:44px;border-radius:6px">'); st.textContent = 'Image added'; }
-    catch (err) { st.textContent = 'Upload failed'; T.toast(err.message, true); }
+    var wrap = e.target.closest('[data-img]'); if (!wrap || e.target.type !== 'file' || !e.target.files.length) return;
+    var id = wrap.dataset.img, list = projImgs[id] = projImgs[id] || [], files = [].slice.call(e.target.files, 0, Math.max(0, 6 - list.length)), st = wrap.querySelector('[data-st]');
+    if (!files.length) { T.toast('A project can have up to 6 photos.', true); e.target.value = ''; return; }
+    for (var n = 0; n < files.length; n++) {
+      st.textContent = 'Uploading ' + (n + 1) + ' of ' + files.length + '…';
+      try { var blob = await shrink(files[n], 1600, 'image/jpeg', 0.86); var r = await T.api('candidates/photo', { raw: blob, type: 'image/jpeg' }); list.push({ id: r.photo_id, url: r.url }); drawGal(id); }
+      catch (err) { T.toast(err.message, true); }
+    }
+    st.textContent = list.length + ' of 6 photos'; e.target.value = ''; preview();
   });
   function readReps(kind) {
     return [].slice.call(document.getElementById(kind).children).map(function (el) {
       var o = {}; el.querySelectorAll('[data-k]').forEach(function (i) { o[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value.trim(); });
-      var im = el.querySelector('[data-img]'); if (im && projImgs[im.dataset.img]) o.image_id = projImgs[im.dataset.img].id;
+      var im = el.querySelector('[data-img]'); if (im && projImgs[im.dataset.img]) { o.images = projImgs[im.dataset.img].map(function (p) { return p.id; }); o.image_id = o.images[0] || null; }
       if (o.tags) o.tags = o.tags.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
       return o;
     });
@@ -280,8 +302,8 @@
     b.disabled = false;
   });
   // Free Cloudflare Turnstile check for new applications (profiles go live at once).
-  var TS = null, tsId = null;
-  if (!/me=/.test(location.hash) && !localStorage.getItem('dlg-va-me')) fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) { if (!c.turnstile) return; TS = c.turnstile; var s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true; s.onload = function () { tsId = turnstile.render('#tsBox', { sitekey: TS, theme: 'dark', size: 'flexible' }); }; document.head.appendChild(s); }).catch(function () {});
+  var TS = null, tsId = null, recTs = null;
+  if (!/me=/.test(location.hash) && !localStorage.getItem('dlg-va-me')) fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) { if (!c.turnstile) return; TS = c.turnstile; var s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true; s.onload = function () { tsId = turnstile.render('#tsBox', { sitekey: TS, theme: 'dark', size: 'flexible' }); recTs = turnstile.render('#recTs', { sitekey: TS, theme: 'dark', size: 'flexible' }); }; document.head.appendChild(s); }).catch(function () {});
 
   // ---- VA dashboard ----
   var threads = [], openT = null, tab = 'msgs';
@@ -307,6 +329,7 @@
       '<div class="card stack"><h2 class="h" style="font-size:20px">Private dashboard link</h2><p class="small muted">Only you should have this. It opens this dashboard on any device.</p><div class="row" style="flex-wrap:nowrap"><input class="in" readonly value="' + esc(dash) + '"><button type="button" class="btn sm" data-copy="' + esc(dash) + '">Copy</button></div><button type="button" class="btn sm" id="delMe" style="align-self:flex-start;color:var(--bad)">Delete my profile</button></div></div>';
     document.querySelectorAll('[data-copy]').forEach(function (b) { b.onclick = function () { navigator.clipboard.writeText(b.dataset.copy).then(function () { T.toast('Copied.'); }); }; });
     document.getElementById('delMe').onclick = async function () { if (!confirm('Delete your Delegance profile, photo and messages for good?')) return; try { await T.api('candidates/me', { body: { id: cred.id, token: cred.token, action: 'delete' } }); localStorage.removeItem('dlg-va-me'); location.href = '/apply'; } catch (err) { T.toast(err.message, true); } };
+    document.getElementById('recov').classList.add('hide'); linkBox();
     fill(me); await loadThreads(); setTab(justCreated ? 'share' : tab);
   }
   async function loadThreads() {
@@ -335,6 +358,29 @@
     var c = document.getElementById('tcnt'); c.classList.add('hide');
   }
 
+
+
+  async function site(path, data) { var r = await fetch('/api/' + path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {}) }); var j = await r.json().catch(function () { return {}; }); if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.'); return j; }
+  // ---- Lost edit link ----
+  document.getElementById('recForm').onsubmit = async function (e) {
+    e.preventDefault(); var em = document.getElementById('recEmail').value.trim(), msg = document.getElementById('recMsg'), b = this.querySelector('button');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { msg.textContent = 'Type a valid email address.'; return; }
+    b.disabled = true; msg.textContent = 'Sending…';
+    try { await site('va/recover', { email: em, turnstile: TS && window.turnstile && recTs != null ? turnstile.getResponse(recTs) : '' }); msg.textContent = 'If that email is on a Delegance VA profile, a fresh edit link is on its way. Check your inbox and spam folder.'; }
+    catch (err) { msg.textContent = err.message; b.disabled = false; if (TS && window.turnstile && recTs != null) turnstile.reset(recTs); }
+  };
+  if (/recover/.test(location.hash)) { var rd = document.getElementById('recov'); rd.open = true; setTimeout(function () { rd.scrollIntoView({ block: 'center' }); }, 300); }
+
+  // ---- Connect this profile to a Delegance account (then edit from the dashboard) ----
+  async function linkBox() {
+    var d = null; try { var r = await fetch('/api/auth/me', { credentials: 'same-origin' }); d = r.ok ? await r.json() : null; } catch (e) {}
+    var box = document.createElement('div'); box.className = 'note'; box.style.marginBottom = '14px';
+    if (!d || !d.user) box.innerHTML = '<a href="/login?next=' + encodeURIComponent('/me') + '">Sign in or create a Delegance account</a>, then come back here to connect this profile. After that you can edit it from your dashboard on any device, no link needed.';
+    else if (d.user.va && d.user.va.slug === me.slug) box.innerHTML = '<span class="pill">Connected</span> This profile is connected to your Delegance account (' + esc(d.user.email) + '). Edit it any time from your dashboard or your profile page.';
+    else { box.innerHTML = '<b style="color:var(--text)">Edit from your dashboard?</b> Connect this profile to your Delegance account (' + esc(d.user.email) + ') and you will never need this link again. <button type="button" class="btn sm" id="linkBtn" style="margin-left:6px">Connect to my account</button>';
+      setTimeout(function () { var lb = document.getElementById('linkBtn'); if (lb) lb.onclick = async function () { lb.disabled = true; try { await site('auth/va-profile/link', { id: cred.id, token: cred.token }); box.innerHTML = '<span class="pill">Connected</span> Done. You can now edit this profile from your dashboard or from your profile page.'; } catch (err) { lb.disabled = false; T.toast(err.message, true); } }; }); }
+    document.getElementById('statusBox').appendChild(box);
+  }
   addRep('experience'); addRep('projects'); preview();
   if (cred) { form.classList.add('hide'); loadMe().catch(function (err) { cred = null; try { localStorage.removeItem('dlg-va-me'); } catch (e) {} form.classList.remove('hide'); document.getElementById('statusBox').innerHTML = '<div class="note bad" style="margin-bottom:14px">' + esc(err.message) + '</div>'; });
     setInterval(function () { if (cred && me && !document.hidden) loadThreads(); }, 30000); }
