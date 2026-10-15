@@ -7,6 +7,7 @@ import { emit, runDue, autoRoutes } from './_auto.js';
 import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int.js';
 import { socialRoutes, outreachRoutes, contractRoutes, contractPublic, desk as deskBridge } from './_v4.js';
 import { teamRoutes } from './_team.js';
+import { b64u, verifyRegistration, verifyAssertion } from './_passkey.js';
 const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements|social|outreach|contracts|chat|people|updates|roadmap)/;
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
@@ -66,6 +67,14 @@ export async function onRequest(ctx) {
   }
 }
 
+
+
+// Passkeys belong to delegance.app (localhost while testing on this computer).
+function rp(req) { const u = new URL(req.url); return u.hostname === 'localhost' ? { rpId: 'localhost', origin: u.origin } : { rpId: 'delegance.app', origin: 'https://delegance.app' }; }
+// A short security email whenever sign-in methods change, so a stranger cannot add one silently.
+async function notifySecurity(env, me, subject, intro) {
+  try { await sendEmail(env, { to: me.email, subject, intro: `Hi ${String(me.name || '').split(' ')[0]},\n\n${intro}\n\nNot you? Open Delegance, go to Account settings, remove it and change your password.`, button: 'Open account settings', link: 'https://delegance.app/dashboard#settings' }); } catch {}
+}
 
 // A fresh private edit link for a VA profile. Replaces the old one (only the newest link works).
 const sha256hex = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -150,6 +159,69 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     later(sendEmail(env, { to: email, subject: 'Your Delegance VA profile edit link', intro: `Hi ${String(c.name || '').split(' ')[0] || 'there'},\n\nHere is a fresh link to edit your Delegance VA profile. It replaces any older link. Keep it private: anyone with it can edit your profile.`, button: 'Edit my profile', link, outro: 'Tip: sign in to Delegance and open this link once, then choose "Connect to my account". After that you can edit from your dashboard any time.' }));
     await audit(env, email, 'va.recover', c.id);
     return done;
+  }
+  if (path === 'auth/email-code' && m === 'POST') {
+    // Forgot your password? Sign in with a 6-digit code sent to your inbox. Same answer whether or not the email exists.
+    const b = await body(req), email = cleanEmail(b.email);
+    const done = json({ ok: true, email: mailReady(env) });
+    if (await limited(env, 'ecode-ip:' + ip, 10, 3600)) return bad('Too many requests. Please wait an hour.', 429);
+    if (!email) return bad('Enter your email.');
+    if (await limited(env, 'ecode-send:' + email, 4, 3600)) return done;
+    if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
+    const u = await DB.prepare('SELECT id, name, status, pass_hash FROM users WHERE email = ?').bind(email).first();
+    if (!u || u.status !== 'active') return done;
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
+    await DB.prepare("UPDATE auth_tokens SET used_at = ? WHERE user_id = ? AND kind = 'ecode' AND used_at IS NULL").bind(now(), u.id).run();
+    await DB.prepare("INSERT INTO auth_tokens (id, user_id, kind, expires_at, created_by, created_at) VALUES (?, ?, 'ecode', ?, 'self', ?)").bind(await sha256('ecode:' + u.id + ':' + code), u.id, Date.now() + 600_000, now()).run();
+    later(sendEmail(env, { to: email, subject: `${code} is your Delegance sign-in code`, title: code, intro: `Hi ${String(u.name || '').split(' ')[0]},\n\nYour Delegance sign-in code is ${code}. It works once and expires in 10 minutes.\n\nDid not ask for it? You can ignore this email; nobody can sign in without the code.`, button: 'Open Delegance', link: 'https://delegance.app/login' }));
+    await audit(env, email, 'auth.email_code_sent', ip);
+    return done;
+  }
+  if (path === 'auth/email-code/verify' && m === 'POST') {
+    const b = await body(req), email = cleanEmail(b.email), code = String(b.code || '').replace(/\D/g, '');
+    if (await limited(env, 'ecode-vip:' + ip, 30, 900)) return bad('Too many tries. Please wait 15 minutes.', 429);
+    if (!email || code.length !== 6) return bad('Enter the 6-digit code from the email.');
+    const u = await DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+    if (!u || u.status !== 'active') return bad('That code is not right or has expired.', 401);
+    if (await limited(env, 'ecode-try:' + u.id, 5, 600)) {
+      await DB.prepare("UPDATE auth_tokens SET used_at = ? WHERE user_id = ? AND kind = 'ecode' AND used_at IS NULL").bind(now(), u.id).run();
+      return bad('Too many wrong codes. Ask for a new code in 10 minutes.', 429);
+    }
+    const row = await DB.prepare("SELECT id, expires_at, used_at FROM auth_tokens WHERE id = ? AND kind = 'ecode'").bind(await sha256('ecode:' + u.id + ':' + code)).first();
+    if (!row || row.used_at || row.expires_at < Date.now()) { await audit(env, email, 'auth.email_code_failed', ip); return bad('That code is not right or has expired.', 401); }
+    await DB.prepare('UPDATE auth_tokens SET used_at = ? WHERE id = ?').bind(now(), row.id).run();
+    await DB.prepare('UPDATE users SET failed = 0, locked_until = NULL WHERE id = ?').bind(u.id).run();
+    if (u.totp_enabled) return json({ mfa: true, ticket: await makeLink(env, u.id, 'mfa', 5 / 60) });
+    const cookie = await startSession(env, req, u);
+    await audit(env, email, 'auth.login', ip + ' (email code)');
+    return json({ ok: true, user: publicUser(u) }, 200, { 'Set-Cookie': cookie });
+  }
+  if (path === 'auth/passkey/login-options' && m === 'POST') {
+    if (await limited(env, 'pk-opt:' + ip, 30, 900)) return bad('Too many tries. Please wait a little.', 429);
+    const { rpId } = rp(req), challenge = b64u.enc(crypto.getRandomValues(new Uint8Array(32)));
+    await DB.prepare("INSERT INTO auth_tokens (id, user_id, kind, expires_at, created_by, created_at) VALUES (?, '-', 'pk-auth', ?, 'self', ?)").bind(await sha256(challenge), Date.now() + 300_000, now()).run();
+    return json({ challenge, rpId, timeout: 120000, userVerification: 'required', allowCredentials: [] });
+  }
+  if (path === 'auth/passkey/login' && m === 'POST') {
+    if (await limited(env, 'pk-login:' + ip, 20, 900)) return bad('Too many tries. Please wait 15 minutes.', 429);
+    const b = await body(req), cred = b.credential || {}, r = cred.response || {};
+    let challenge = ''; try { challenge = JSON.parse(new TextDecoder().decode(b64u.dec(r.clientDataJSON))).challenge; } catch {}
+    const ch = challenge && await DB.prepare("SELECT id, expires_at, used_at FROM auth_tokens WHERE id = ? AND kind = 'pk-auth'").bind(await sha256(challenge)).first();
+    if (!ch || ch.used_at || ch.expires_at < Date.now()) return bad('This sign-in expired. Please try again.', 410);
+    await DB.prepare('UPDATE auth_tokens SET used_at = ? WHERE id = ?').bind(now(), ch.id).run();
+    const pk = await DB.prepare('SELECT * FROM passkeys WHERE id = ?').bind(String(cred.id || '')).first();
+    if (!pk) return bad('This passkey is not registered with Delegance. Sign in another way, then add it in Account settings.', 401);
+    const u = await DB.prepare('SELECT * FROM users WHERE id = ?').bind(pk.user_id).first();
+    if (!u || u.status !== 'active') return bad('This account is turned off. Contact admin@delegance.app.', 401);
+    if (r.userHandle && b64u.enc(new TextEncoder().encode(u.id)) !== r.userHandle) return bad('That passkey does not match its account.', 401);
+    let counter;
+    try { counter = await verifyAssertion({ credential: cred, ...rp(req), expectChallenge: challenge, publicKey: pk.public_key, alg: pk.alg, storedCounter: pk.counter }); }
+    catch (e) { await audit(env, u.email, 'auth.passkey_failed', ip + ' ' + e.message); return bad(e.message, 401); }
+    await DB.prepare('UPDATE passkeys SET counter = ?, last_used = ? WHERE id = ?').bind(counter, now(), pk.id).run();
+    await DB.prepare('UPDATE users SET failed = 0, locked_until = NULL WHERE id = ?').bind(u.id).run();
+    const cookie = await startSession(env, req, u);
+    await audit(env, u.email, 'auth.login', ip + ' (passkey: ' + (pk.name || 'device') + ')');
+    return json({ ok: true, user: publicUser(u) }, 200, { 'Set-Cookie': cookie });
   }
   if (path === 'auth/forgot' && m === 'POST') {
     const b = await body(req), email = cleanEmail(b.email);
@@ -324,6 +396,41 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
   if (path === 'auth/va-profile' && m === 'DELETE') {
     await DB.prepare('UPDATE users SET candidate_id = NULL, updated_at = ? WHERE id = ?').bind(now(), me.id).run();
     await audit(env, me.email, 'va.unlinked', me.candidate_id || '');
+    return json({ ok: true });
+  }
+  if (path === 'auth/passkeys' && m === 'GET') {
+    const { results } = await DB.prepare('SELECT id, name, created_at, last_used FROM passkeys WHERE user_id = ? ORDER BY created_at').bind(me.id).all();
+    return json({ items: results });
+  }
+  if (path === 'auth/passkey/register-options' && m === 'POST') {
+    if (await limited(env, 'pk-reg:' + me.id, 20, 3600)) return bad('Too many tries. Please wait a little.', 429);
+    const { rpId } = rp(req), challenge = b64u.enc(crypto.getRandomValues(new Uint8Array(32)));
+    await DB.prepare("INSERT INTO auth_tokens (id, user_id, kind, expires_at, created_by, created_at) VALUES (?, ?, 'pk-reg', ?, 'self', ?)").bind(await sha256(challenge), me.id, Date.now() + 300_000, now()).run();
+    const { results } = await DB.prepare('SELECT id FROM passkeys WHERE user_id = ?').bind(me.id).all();
+    return json({ challenge, rp: { id: rpId, name: 'Delegance' }, user: { id: b64u.enc(new TextEncoder().encode(me.id)), name: me.email, displayName: me.name || me.email },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }], timeout: 120000, attestation: 'none',
+      authenticatorSelection: { residentKey: 'required', requireResidentKey: true, userVerification: 'required' }, excludeCredentials: results.map(x => ({ type: 'public-key', id: x.id })) });
+  }
+  if (path === 'auth/passkey/register' && m === 'POST') {
+    const b = await body(req), cred = b.credential || {};
+    let challenge = ''; try { challenge = JSON.parse(new TextDecoder().decode(b64u.dec((cred.response || {}).clientDataJSON))).challenge; } catch {}
+    const ch = challenge && await DB.prepare("SELECT id, user_id, expires_at, used_at FROM auth_tokens WHERE id = ? AND kind = 'pk-reg'").bind(await sha256(challenge)).first();
+    if (!ch || ch.user_id !== me.id || ch.used_at || ch.expires_at < Date.now()) return bad('This request expired. Please try again.', 410);
+    await DB.prepare('UPDATE auth_tokens SET used_at = ? WHERE id = ?').bind(now(), ch.id).run();
+    let k; try { k = await verifyRegistration({ credential: cred, ...rp(req), expectChallenge: challenge }); } catch (e) { return bad(e.message); }
+    if (await DB.prepare('SELECT 1 FROM passkeys WHERE id = ?').bind(k.credId).first()) return bad('This passkey is already added.');
+    const count = await DB.prepare('SELECT COUNT(*) c FROM passkeys WHERE user_id = ?').bind(me.id).first();
+    if (count.c >= 10) return bad('You can have up to 10 passkeys. Remove one first.');
+    const name = clean(b.name, 60) || 'My device';
+    await DB.prepare('INSERT INTO passkeys (id, user_id, public_key, alg, counter, name, created_at) VALUES (?,?,?,?,?,?,?)').bind(k.credId, me.id, k.publicKey, k.alg, k.counter, name, now()).run();
+    await audit(env, me.email, 'auth.passkey_added', name);
+    await notifySecurity(env, me, 'A passkey was added to your account', `A new passkey "${name}" can now sign in to your Delegance account.`);
+    return json({ ok: true }, 201);
+  }
+  if (p[0] === 'auth' && p[1] === 'passkeys' && p[2] && m === 'DELETE') {
+    const r = await DB.prepare('DELETE FROM passkeys WHERE id = ? AND user_id = ?').bind(decodeURIComponent(p[2]), me.id).run();
+    if (!r.meta.changes) return bad('Passkey not found.', 404);
+    await audit(env, me.email, 'auth.passkey_removed', p[2].slice(0, 12));
     return json({ ok: true });
   }
   if (path === 'auth/password' && m === 'POST') {
