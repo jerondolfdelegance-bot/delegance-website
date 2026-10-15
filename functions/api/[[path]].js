@@ -676,6 +676,34 @@ async function dashboard(env, me) {
     out.my_tasks = await all("SELECT t.id, t.title, t.due, t.status, c.name contact_name, t.contact_id FROM crm_tasks t LEFT JOIN crm_contacts c ON c.id = t.contact_id WHERE t.assignee_id = ? AND t.status != 'done' ORDER BY t.due IS NULL, t.due LIMIT 8", me.id);
     out.requests = await all("SELECT r.id, r.title, r.status, r.created_at, c.name contact_name, r.contact_id FROM crm_requests r LEFT JOIN crm_contacts c ON c.id = r.contact_id WHERE r.status IN ('new','in_progress') ORDER BY r.created_at DESC LIMIT 6");
     out.recent = await all('SELECT c.id, c.name, c.company, c.kind, c.updated_at FROM crm_contacts c WHERE ' + SEEN('c') + ' ORDER BY COALESCE(c.last_activity, c.updated_at) DESC LIMIT 6', me.id);
+    // Home: "next steps" checklist + a live feed so the dashboard feels lived-in.
+    const dayStart = now().slice(0, 10);
+    const [team, booking, autos, claude, accts, posts, firstMsg] = await Promise.all([
+      one("SELECT COUNT(*) n FROM users WHERE role IN ('admin','staff') AND status != 'disabled' AND id != ?", me.id),
+      one("SELECT 1 x FROM settings WHERE key = 'booking'"),
+      one('SELECT COUNT(*) n FROM automations WHERE created_by = ? OR sharing != \'private\'', me.id),
+      one("SELECT 1 x FROM api_keys WHERE user_id = ? AND revoked_at IS NULL AND name LIKE '%laude%'", me.id),
+      one('SELECT COUNT(*) n FROM accounts WHERE enabled = 1'),
+      one('SELECT COUNT(*) n FROM posts'),
+      one("SELECT 1 x FROM chat_messages WHERE user_id = ? LIMIT 1", me.id),
+    ]);
+    out.setup = [
+      ['photo', 'Add your photo', '#profile', !!me.avatar],
+      ['2step', 'Turn on 2-step sign-in', '#account', !!me.totp_enabled],
+      ['team', 'Invite a teammate', '#people', team.n > 0, 'admin'],
+      ['contact', 'Add your first contact', '#contacts', (out.counts.contacts || 0) > 0],
+      ['booking', 'Set your booking hours', '#calendar', !!booking.x, 'admin'],
+      ['recipe', 'Switch on an automation', '#automations', autos.n > 0, 'admin'],
+      ['claude', 'Connect Claude', '#integrations', !!claude.x],
+      ['post', 'Schedule your first post', '#social', posts.n > 0 && accts.n > 0],
+      ['chat', 'Say hello in #team', '#chat/team', !!firstMsg.x],
+    ].filter(x => !x[4] || can(me, x[4])).map(x => ({ key: x[0], label: x[1], link: x[2], done: x[3] }));
+    out.feed = (await all(`SELECT * FROM (
+        SELECT 'chat' kind, m.created_at at, u.name who, u.avatar avatar, m.body text, m.channel_id ref FROM chat_messages m JOIN users u ON u.id = m.user_id WHERE m.channel_id = 'team' OR m.channel_id LIKE 'cl_%'
+        UNION ALL SELECT 'lead', c.created_at, c.name, NULL, COALESCE(c.source, 'New lead'), c.id FROM crm_contacts c WHERE c.private = 0
+        UNION ALL SELECT 'post', p.scheduled_at, p.created_by, NULL, p.body, p.id FROM posts p WHERE p.status IN ('scheduled','review') AND p.scheduled_at >= ?
+        UNION ALL SELECT 'va', c.created_at, c.name, NULL, c.headline, c.slug FROM candidates c WHERE c.status = 'approved'
+      ) ORDER BY at DESC LIMIT 8`, dayStart)).map(f => ({ ...f, text: String(f.text || '').slice(0, 140) }));
   }
   if (can(me, 'admin')) {
     out.people = await all('SELECT role, status, COUNT(*) n FROM users GROUP BY role, status');
