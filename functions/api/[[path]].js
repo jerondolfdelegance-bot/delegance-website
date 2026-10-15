@@ -1,7 +1,7 @@
 // Delegance Accounts + CRM API: one router for /api/*.
 import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwordProblem, json, bad, clean, cleanEmail, parse, body, limited, audit,
   startSession, clearCookie, endSession, currentUser, can, publicUser, makeLink, checkTotp, newTotpSecret, recoveryCodes, seal, unseal, needsMfa,
-  sendEmail, mailReady, teamInbox, humanOk, SEEN, hiddenFrom, ACCENTS } from './_lib.js';
+  sendEmail, mailReady, teamInbox, humanOk, SEEN, hiddenFrom, ACCENTS, token } from './_lib.js';
 import { crmRoutes, notificationRoutes, notify, adminIds, newDeal, logActivity } from './_crm.js';
 import { emit, runDue, autoRoutes } from './_auto.js';
 import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int.js';
@@ -160,6 +160,40 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     await audit(env, email, 'va.recover', c.id);
     return done;
   }
+  if (path === 'newsletter' && m === 'POST') {
+    // Double opt-in: nobody is added until they click the link in the confirmation email.
+    const b = await body(req), email = cleanEmail(b.email);
+    const done = json({ ok: true, email: mailReady(env) });
+    if (b.website) return done; // bot trap
+    if (await limited(env, 'nl-ip:' + ip, 6, 3600)) return bad('Too many requests. Please try again later.', 429);
+    if (!email) return bad('Enter a valid email address.');
+    if (await limited(env, 'nl:' + email, 2, 86400)) return done;
+    const cur = await DB.prepare('SELECT status, unsub_token FROM newsletter WHERE email = ?').bind(email).first();
+    if (cur && cur.status === 'active') return done;
+    const t = token(), unsub = (cur && cur.unsub_token) || token(), ts = now();
+    await DB.prepare('INSERT INTO newsletter (email, status, confirm_hash, unsub_token, source, created_at, updated_at) VALUES (?, \'pending\', ?, ?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET status = \'pending\', confirm_hash = excluded.confirm_hash, updated_at = excluded.updated_at')
+      .bind(email, await sha256(t), unsub, clean(b.source, 40) || 'website', ts, ts).run();
+    later(sendEmail(env, { to: email, subject: 'Confirm your Delegance newsletter', intro: 'Hi,\n\nPlease confirm you want the Delegance newsletter: practical tips on delegating, new guides and product updates, about once a month. No spam, and you can leave any time.\n\nDid not sign up? Just ignore this email and nothing happens.', button: 'Yes, subscribe me', link: 'https://delegance.app/api/newsletter/confirm?t=' + encodeURIComponent(t) }));
+    await audit(env, email, 'newsletter.requested', ip);
+    return done;
+  }
+  if (path === 'newsletter/confirm' && m === 'GET') {
+    const t = String(new URL(req.url).searchParams.get('t') || '');
+    const row = t.length >= 30 && await DB.prepare("SELECT email FROM newsletter WHERE confirm_hash = ? AND status = 'pending'").bind(await sha256(t)).first();
+    if (row) { await DB.prepare("UPDATE newsletter SET status = 'active', confirm_hash = NULL, confirmed_at = ?, updated_at = ? WHERE email = ?").bind(now(), now(), row.email).run(); await audit(env, row.email, 'newsletter.confirmed', ip); }
+    return new Response(null, { status: 302, headers: { Location: row ? '/?subscribed=1' : '/?subscribed=expired' } });
+  }
+  if (path === 'newsletter/unsubscribe' && (m === 'GET' || m === 'POST')) {
+    const t = String(new URL(req.url).searchParams.get('t') || '');
+    const row = t.length >= 30 && await DB.prepare('SELECT email FROM newsletter WHERE unsub_token = ?').bind(t).first();
+    if (row) { await DB.prepare("UPDATE newsletter SET status = 'unsubscribed', updated_at = ? WHERE email = ?").bind(now(), row.email).run(); await audit(env, row.email, 'newsletter.unsubscribed', ip); }
+    return m === 'POST' ? json({ ok: true }) : new Response(null, { status: 302, headers: { Location: '/?unsubscribed=1' } });
+  }
+  if (path === 'public/updates' && m === 'GET') {
+    const { results } = await DB.prepare('SELECT id, version, title, body, released_at FROM product_updates ORDER BY released_at DESC, id DESC LIMIT 100').all();
+    const { results: rm } = await DB.prepare("SELECT title, body, status, area FROM roadmap WHERE status IN ('in_progress','planned') ORDER BY CASE status WHEN 'in_progress' THEN 0 ELSE 1 END, sort LIMIT 80").all();
+    return json({ updates: results, roadmap: rm }, 200, { 'Cache-Control': 'public, max-age=300' });
+  }
   if (path === 'auth/email-code' && m === 'POST') {
     // Forgot your password? Sign in with a 6-digit code sent to your inbox. Same answer whether or not the email exists.
     const b = await body(req), email = cleanEmail(b.email);
@@ -282,8 +316,9 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     if (!name || !email) return bad('Add your name and email so we can reply.');
     if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
     const needs = (Array.isArray(b.needs) ? b.needs : []).map(x => clean(x, 60)).filter(Boolean).slice(0, 10);
-    const details = [needs.length ? 'Needs: ' + needs.join(', ') : '', b.when ? 'Start: ' + clean(b.when, 60) : '', b.how ? 'Amount: ' + clean(b.how, 60) : '', clean(b.message, 1500)].filter(Boolean).join('\n');
-    const contactId = await upsertLead(env, { name, email, company: clean(b.company, 120), source: 'Website request' }, later);
+    const ref = clean(b.ref, 40).replace(/[^a-z0-9_-]/gi, '');
+    const details = [needs.length ? 'Needs: ' + needs.join(', ') : '', b.when ? 'Start: ' + clean(b.when, 60) : '', b.how ? 'Amount: ' + clean(b.how, 60) : '', ref ? 'Referred by: ' + ref : '', clean(b.message, 1500)].filter(Boolean).join('\n');
+    const contactId = await upsertLead(env, { name, email, company: clean(b.company, 120), source: ref ? 'Website request (ref: ' + ref + ')' : 'Website request' }, later);
     const t = now();
     await DB.prepare('INSERT INTO crm_requests (id, contact_id, title, details, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?)')
       .bind(uid('rq_'), contactId, needs.length ? needs.slice(0, 3).join(', ') : 'New request', details, 'new', t, t).run();
