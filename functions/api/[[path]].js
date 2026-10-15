@@ -5,7 +5,7 @@ import { ROLES, ROLE_NAMES, STAGES, now, uid, sha256, hashPassword, same, passwo
 import { crmRoutes, notificationRoutes, notify, adminIds, newDeal, logActivity } from './_crm.js';
 import { emit, runDue, autoRoutes } from './_auto.js';
 import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int.js';
-import { socialRoutes, outreachRoutes, contractRoutes, contractPublic } from './_v4.js';
+import { socialRoutes, outreachRoutes, contractRoutes, contractPublic, desk as deskBridge } from './_v4.js';
 import { teamRoutes } from './_team.js';
 const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements|social|outreach|contracts|chat|people|updates|roadmap)/;
 
@@ -23,6 +23,7 @@ export async function onRequest(ctx) {
   const lazyCron = async () => { if (!(await limited(env, 'lazycron', 1, 120))) ctx.waitUntil(runDue(env).catch(e => console.error('cron', e && e.message))); };
   try {
     // Machine endpoints: scheduler, lead capture, Claude MCP, API keys. No cookies, so no CSRF check.
+    if (path === 'health') { let desk = false; try { desk = !!(await deskBridge(env, 'ping', {}, null)).ok; } catch {} return json({ ok: true, desk, email: mailReady(env) }); }
     if (path === 'cron') { if (await limited(env, 'cron:' + ip, 30, 3600)) return bad('Too many.', 429); const n = await runDue(env); return json({ ok: true, ran: n }); }
     if (path.startsWith('hooks/')) return await leadHook(req, env, path.slice(6), ctx);
     if (path === 'mcp' || path.startsWith('mcp/')) {
