@@ -66,6 +66,15 @@ export async function onRequest(ctx) {
   }
 }
 
+
+// A fresh private edit link for a VA profile. Replaces the old one (only the newest link works).
+const sha256hex = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
+async function vaEditLink(env, id) {
+  const t = [...crypto.getRandomValues(new Uint8Array(24))].map(b => b.toString(16).padStart(2, '0')).join('');
+  await env.DB.prepare('UPDATE candidates SET edit_hash = ? WHERE id = ?').bind(await sha256hex(t), id).run();
+  return `https://delegance.app/me#me=${id}.${t}`;
+}
+
 // Lets the MCP server reuse every API route with the key owner's permissions.
 function internalCaller(env, me, ctx) {
   return async (method, pathQ, data) => {
@@ -127,6 +136,20 @@ async function publicRoutes(path, m, req, env, ip, ctx) {
     const cookie = await startSession(env, req, row);
     await audit(env, row.email, 'auth.login', ip + ' (2-step)');
     return json({ ok: true }, 200, { 'Set-Cookie': cookie });
+  }
+  if (path === 'va/recover' && m === 'POST') {
+    // Lost your VA edit link? We email a fresh one to the private email on the profile. Same answer either way.
+    const b = await body(req), email = cleanEmail(b.email);
+    const done = json({ ok: true, email: mailReady(env) });
+    if (await limited(env, 'varec-ip:' + ip, 8, 3600)) return bad('Too many requests. Please wait an hour.', 429);
+    if (!email || await limited(env, 'varec:' + email, 3, 3600)) return done;
+    if (!(await humanOk(env, b.turnstile, ip))) return bad('Please complete the "I am human" check.', 400);
+    let c = {}; try { c = await deskBridge(env, 'candidate-find', { email }, null); } catch {}
+    if (!c.id) return done;
+    const link = await vaEditLink(env, c.id);
+    later(sendEmail(env, { to: email, subject: 'Your Delegance VA profile edit link', intro: `Hi ${String(c.name || '').split(' ')[0] || 'there'},\n\nHere is a fresh link to edit your Delegance VA profile. It replaces any older link. Keep it private: anyone with it can edit your profile.`, button: 'Edit my profile', link, outro: 'Tip: sign in to Delegance and open this link once, then choose "Connect to my account". After that you can edit from your dashboard any time.' }));
+    await audit(env, email, 'va.recover', c.id);
+    return done;
   }
   if (path === 'auth/forgot' && m === 'POST') {
     const b = await body(req), email = cleanEmail(b.email);
@@ -274,7 +297,35 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
   }
   if (path === 'auth/notify' && m === 'POST') { const b = await body(req); await DB.prepare('UPDATE users SET notify = ? WHERE id = ?').bind(b.on ? 1 : 0, me.id).run(); return json({ ok: true }); }
 
-  if (path === 'auth/me') return json({ user: { ...publicUser(me), notify: !!me.notify }, email: mailReady(env) });
+  if (path === 'auth/me') {
+    const va = me.candidate_id ? await DB.prepare('SELECT slug, name, status FROM candidates WHERE id = ?').bind(me.candidate_id).first() : null;
+    return json({ user: { ...publicUser(me), notify: !!me.notify, va: va || null }, email: mailReady(env) });
+  }
+  if (path === 'auth/va-profile/link' && m === 'POST') {
+    // Prove you control a VA profile (its current edit link) to connect it to this account.
+    const b = await body(req), id = String(b.id || ''), t = String(b.token || '');
+    if (await limited(env, 'valink:' + me.id, 10, 3600)) return bad('Too many tries. Please wait an hour.', 429);
+    if (!/^cd[a-f0-9]{20}$/.test(id) || t.length < 30) return bad('That edit link is not valid.', 400);
+    const c = await DB.prepare('SELECT id, slug, edit_hash FROM candidates WHERE id = ?').bind(id).first();
+    if (!c || c.edit_hash !== await sha256hex(t)) return bad('That edit link is not valid anymore. Ask for a fresh one on the edit page.', 400);
+    const other = await DB.prepare('SELECT id FROM users WHERE candidate_id = ? AND id != ?').bind(id, me.id).first();
+    if (other) return bad('This profile is already connected to another Delegance account. Email admin@delegance.app if that is wrong.', 409);
+    await DB.prepare('UPDATE users SET candidate_id = ?, updated_at = ? WHERE id = ?').bind(id, now(), me.id).run();
+    await audit(env, me.email, 'va.linked', id);
+    return json({ ok: true, slug: c.slug });
+  }
+  if (path === 'auth/va-profile/edit-link' && m === 'POST') {
+    if (!me.candidate_id) return bad('No VA profile is connected to your account yet.', 404);
+    if (await limited(env, 'vaedit:' + me.id, 20, 3600)) return bad('Too many tries. Please wait a little.', 429);
+    const url2 = await vaEditLink(env, me.candidate_id);
+    await audit(env, me.email, 'va.edit_link', me.candidate_id);
+    return json({ url: url2 });
+  }
+  if (path === 'auth/va-profile' && m === 'DELETE') {
+    await DB.prepare('UPDATE users SET candidate_id = NULL, updated_at = ? WHERE id = ?').bind(now(), me.id).run();
+    await audit(env, me.email, 'va.unlinked', me.candidate_id || '');
+    return json({ ok: true });
+  }
   if (path === 'auth/password' && m === 'POST') {
     const b = await body(req);
     if (await limited(env, 'pw:' + me.id, 10, 3600)) return bad('Too many tries. Please wait.', 429);
