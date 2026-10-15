@@ -8,7 +8,7 @@ import { keyUser, integrationRoutes, leadHook, mcp, bookingPublic } from './_int
 import { socialRoutes, outreachRoutes, contractRoutes, contractPublic, desk as deskBridge } from './_v4.js';
 import { teamRoutes } from './_team.js';
 import { b64u, verifyRegistration, verifyAssertion } from './_passkey.js';
-const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements|social|outreach|contracts|chat|people|updates|roadmap)/;
+const KEY_BLOCKED = /^(users|auth\/|apikeys|leadhooks|automations|webhooks|booking\/settings|audit|candidates|announcements|social|outreach|contracts|chat|people|updates|roadmap|newsletter)/;
 
 const DUMMY = { hash: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=', salt: 'AAAAAAAAAAAAAAAAAAAAAA==' };
 const TEAM = ['staff', 'admin', 'super_admin'];
@@ -432,6 +432,32 @@ async function privateRoutes(path, m, req, env, me, url, ctx) {
     await DB.prepare('UPDATE users SET candidate_id = NULL, updated_at = ? WHERE id = ?').bind(now(), me.id).run();
     await audit(env, me.email, 'va.unlinked', me.candidate_id || '');
     return json({ ok: true });
+  }
+  if (path === 'auth/export' && m === 'GET') {
+    // Your data, as a file: profile, devices, sign-in methods, your tasks, messages and recent account activity.
+    if (await limited(env, 'export:' + me.id, 5, 3600)) return bad('Too many downloads. Please try again later.', 429);
+    const q = async (sql, ...a) => (await DB.prepare(sql).bind(...a).all()).results;
+    const out = {
+      exported_at: now(), profile: publicUser(me),
+      sessions: await q('SELECT created_at, last_seen, ua, place FROM sessions WHERE user_id = ?', me.id),
+      known_devices: await q('SELECT label, first_seen, last_seen FROM known_devices WHERE user_id = ?', me.id).catch(() => []),
+      passkeys: await q('SELECT name, created_at, last_used FROM passkeys WHERE user_id = ?', me.id).catch(() => []),
+      tasks: await q('SELECT title, due, status, created_at FROM tasks WHERE assignee_id = ? OR created_by = ? ORDER BY created_at DESC LIMIT 2000', me.id, me.id).catch(() => []),
+      chat_messages: await q('SELECT channel_id, body, created_at FROM chat_messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 5000', me.id).catch(() => []),
+      activity: await q('SELECT action, detail, created_at FROM audit WHERE actor = ? ORDER BY created_at DESC LIMIT 500', me.email).catch(() => []),
+    };
+    await audit(env, me.email, 'account.export', '');
+    return new Response(JSON.stringify(out, null, 2), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Content-Disposition': 'attachment; filename="delegance-my-data.json"', 'Cache-Control': 'no-store' } });
+  }
+  if (path === 'newsletter/subscribers' && m === 'GET' && can(me, 'admin')) {
+    const { results } = await DB.prepare('SELECT email, status, source, created_at, confirmed_at FROM newsletter ORDER BY created_at DESC LIMIT 5000').all();
+    if (new URL(req.url).searchParams.get('format') === 'csv') {
+      const cell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/^[=+\-@]/, "'$&") + '"';
+      const csv = 'email,status,source,signed_up,confirmed\n' + results.map(r => [r.email, r.status, r.source, r.created_at, r.confirmed_at].map(cell).join(',')).join('\n');
+      await audit(env, me.email, 'newsletter.export', String(results.length));
+      return new Response(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="delegance-newsletter.csv"', 'Cache-Control': 'no-store' } });
+    }
+    return json({ total: results.length, active: results.filter(r => r.status === 'active').length, pending: results.filter(r => r.status === 'pending').length, items: results.slice(0, 200) });
   }
   if (path === 'auth/passkeys' && m === 'GET') {
     const { results } = await DB.prepare('SELECT id, name, created_at, last_used FROM passkeys WHERE user_id = ? ORDER BY created_at').bind(me.id).all();

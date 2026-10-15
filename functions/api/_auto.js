@@ -185,6 +185,8 @@ async function deliver(env, h, event, ctx) {
 // ---------- Scheduler: delayed steps + idle-deal triggers. Runs from /api/cron (Desk's 5-minute cron) and lazily. ----------
 export async function runDue(env) {
   const DB = env.DB, t = Date.now();
+  // Housekeeping: drop expired sign-in tokens, sessions and old rate-limit noise so tables stay small.
+  try { await DB.batch([DB.prepare('DELETE FROM auth_tokens WHERE expires_at < ?').bind(t - 86400_000), DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(t)]); } catch (e) {}
   const { results } = await DB.prepare("SELECT q.*, a.actions, a.name, a.active, a.conditions, a.trigger FROM automation_queue q JOIN automations a ON a.id = q.automation_id WHERE q.status = 'waiting' AND q.run_at <= ? ORDER BY q.run_at LIMIT 25").bind(t).all();
   for (const q of results) {
     const claimed = await DB.prepare("UPDATE automation_queue SET status = 'running', attempts = attempts + 1 WHERE id = ? AND status = 'waiting'").bind(q.id).run();

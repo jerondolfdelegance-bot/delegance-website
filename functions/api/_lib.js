@@ -65,7 +65,23 @@ export async function startSession(env, req, user) {
   await env.DB.prepare('INSERT INTO sessions (id, user_id, created_at, expires_at, ua, place, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(await sha256(t), user.id, now(), Date.now() + SESSION_DAYS * 86400_000, clean(req.headers.get('User-Agent'), 160), place, now()).run();
   await env.DB.prepare('UPDATE users SET last_login = ?, failed = 0, locked_until = NULL WHERE id = ?').bind(now(), user.id).run();
+  try { await newDeviceAlert(env, req, user, place); } catch (e) {}
   return `${COOKIE}=${t}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}`;
+}
+
+// New-device alert: the first sign-in from a new browser, system or country gets a short email.
+// The very first sign-in on an account just records the device quietly.
+const uaLabel = ua => { ua = String(ua || ''); const b = (ua.match(/Edg|OPR|Chrome|Firefox|Safari/) || ['Browser'])[0].replace('Edg', 'Edge').replace('OPR', 'Opera'); const o = /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Mac OS/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'device'; return b + ' on ' + o; };
+async function newDeviceAlert(env, req, user, place) {
+  const label = uaLabel(req.headers.get('User-Agent')), cc = (req.cf && req.cf.country) || '?';
+  const fp = await sha256(label + '|' + cc), t = now();
+  const seen = await env.DB.prepare('SELECT 1 FROM known_devices WHERE user_id = ? AND fp = ?').bind(user.id, fp).first();
+  if (seen) { await env.DB.prepare('UPDATE known_devices SET last_seen = ? WHERE user_id = ? AND fp = ?').bind(t, user.id, fp).run(); return; }
+  const any = await env.DB.prepare('SELECT 1 FROM known_devices WHERE user_id = ? LIMIT 1').bind(user.id).first();
+  await env.DB.prepare('INSERT INTO known_devices (user_id, fp, label, first_seen, last_seen) VALUES (?,?,?,?,?)').bind(user.id, fp, label + (place ? ' · ' + place : ''), t, t).run();
+  if (!any) return;
+  await audit(env, user.email, 'auth.new_device', label + ' · ' + (place || cc));
+  await sendEmail(env, { to: user.email, subject: 'New sign-in to your Delegance account', intro: `Hi ${String(user.name || '').split(' ')[0]},\n\nYour Delegance account just signed in from ${label}${place ? ' in ' + place : ''}.\n\nIf this was you, there is nothing to do. If not, open Account settings, sign out of other devices and change your password right away.`, button: 'Review my account', link: 'https://delegance.app/dashboard#account' });
 }
 export const clearCookie = `${COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0`;
 export async function endSession(env, req) { const t = cookieOf(req); if (t) await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(await sha256(t)).run(); }
