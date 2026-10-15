@@ -582,3 +582,13 @@ section{padding:130px 0}
 .est-out b{display:block;font:700 26px Montserrat,sans-serif;color:var(--strong,var(--text))}.est-out span{font-size:12px;color:var(--muted)}
 .est-card .btn{justify-self:start}
 @media (max-width:860px){.est-in{grid-template-columns:1fr;gap:24px}.est-out b{font-size:20px}}
+/* Guides index sections + reading tools */
+.gsec{font:600 clamp(22px,2.6vw,30px)/1.2 Montserrat,Inter,sans-serif;margin:46px 0 18px}.gsec-p{color:var(--muted);margin:-8px 0 20px}
+.gprog{position:fixed;top:0;left:0;height:3px;width:0;z-index:200;background:linear-gradient(90deg,var(--gold,#e2c27a),#f4e3b5);transition:width .1s linear}
+.gtoc{margin:0 0 28px;padding:16px 18px;border:1px solid var(--line);border-left:3px solid var(--gold,#e2c27a);border-radius:3px;background:var(--card)}
+.gtoc b{display:block;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.gtoc ol{margin:0;padding-left:20px;display:grid;gap:4px}.gtoc a{color:var(--text);text-decoration:none}.gtoc a:hover{text-decoration:underline}
+.gshare{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0 0}.gshare button,.gshare a{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--text);font:500 13px Inter,sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.gshare button:hover,.gshare a:hover{border-color:var(--gold,#e2c27a)}
+@media (prefers-reduced-motion:reduce){.gprog{transition:none}}
+@media print{.gprog,.gtoc,.gshare,header.site,footer.site,.gcta,.gmoresec{display:none!important}}
