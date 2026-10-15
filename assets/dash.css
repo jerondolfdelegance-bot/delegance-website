@@ -412,5 +412,5 @@ img.av.img{border-radius:50%;object-fit:cover;display:inline-block}
 @media (min-width:2400px){html{zoom:1.45;--z:1.45}body.topbar .side{padding-left:max(24px,calc((100vw / 1.45 - 1280px)/2));padding-right:max(24px,calc((100vw / 1.45 - 1280px)/2))}}
 .side{height:calc(100vh / var(--z,1))}body.topbar .side{height:auto}
 body.topbar .app{grid-template-rows:auto 1fr;align-content:start}
-.space{white-space:nowrap}
+body.topbar .space{white-space:nowrap}.side .space span{overflow-wrap:anywhere}
 body.topbar .nav{flex:1}
