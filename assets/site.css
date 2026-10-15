@@ -565,3 +565,20 @@ section{padding:130px 0}
 /* Tools strip: each tool's official logo (from its own website) on a small white tile */
 .tool{gap:10px;padding:7px 16px 7px 8px}
 .tool .tl{width:26px;height:26px;flex:none;padding:3px;border-radius:6px;background:#fff;object-fit:contain;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+/* Footer newsletter */
+.fnl{margin-top:18px;max-width:340px}.fnl label{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.fnl div{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--card)}
+.fnl input{flex:1;min-width:0;min-height:44px;padding:0 12px;border:0;background:none;color:var(--text);font:inherit}
+.fnl button{min-height:44px;padding:0 14px;border:0;background:var(--gold,#e2c27a);color:#1a1408;font:600 13px Inter,sans-serif;cursor:pointer}
+.fnl input:focus-visible{outline:2px solid var(--gold,#e2c27a);outline-offset:-2px}.fnl-m{font-size:13px;color:var(--muted);margin-top:6px;min-height:1em}
+.site-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100;padding:12px 18px;border-radius:4px;background:#141417;color:#f2f2f3;border:1px solid rgba(226,194,122,.5);font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+/* Time back estimator */
+.est-in{display:grid;grid-template-columns:1fr 1.1fr;gap:48px;align-items:center}
+.est-card{display:grid;gap:22px;padding:28px;border:1px solid var(--line);border-radius:4px;background:var(--card);position:relative}
+.est-card::before{content:"";position:absolute;top:-1px;left:-1px;width:22px;height:22px;border-top:2px solid var(--gold,#e2c27a);border-left:2px solid var(--gold,#e2c27a)}
+.est-card label span{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--muted);margin-bottom:10px}.est-card label b{color:var(--text);font-size:16px}
+.est-card input[type=range]{width:100%;accent-color:var(--gold,#e2c27a);min-height:28px}
+.est-out{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.est-out div{padding:14px;border:1px solid var(--line);border-radius:3px;text-align:center}
+.est-out b{display:block;font:700 26px Montserrat,sans-serif;color:var(--strong,var(--text))}.est-out span{font-size:12px;color:var(--muted)}
+.est-card .btn{justify-self:start}
+@media (max-width:860px){.est-in{grid-template-columns:1fr;gap:24px}.est-out b{font-size:20px}}
