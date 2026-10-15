@@ -40,7 +40,7 @@
     var mark = function () {
       document.querySelectorAll('a.vcard[href="' + mine + '"]').forEach(function (a) {
         if (a.querySelector('.own-tag')) return;
-        var tag = document.createElement('span'); tag.className = 'own-tag'; tag.textContent = 'You'; a.appendChild(tag);
+        var tag = document.createElement('span'); tag.className = 'own-tag'; tag.textContent = 'You'; (a.querySelector('h3') || a).appendChild(tag);
       });
     };
     mark(); new MutationObserver(mark).observe(document.body, { childList: true, subtree: true });
