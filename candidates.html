@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/talent.css?v=4">
+<link rel="stylesheet" href="/assets/talent.css?v=5">
 <link rel="stylesheet" href="/assets/theme.css?v=1">
 <script src="/assets/theme.js?v=1" defer></script>
 </head>
@@ -49,12 +49,19 @@
     <div class="filters" role="search">
       <input class="in" id="q" type="search" placeholder="Search skills, tools or names (e.g. Canva, customer support, Shopify)" aria-label="Search candidates">
       <select class="in" id="av" aria-label="Availability"><option value="">Any availability</option><option>Full-time</option><option>Part-time</option><option>Project-based</option></select>
+      <select class="in" id="ct" aria-label="Country"><option value="">Any country</option></select>
+      <select class="in" id="so" aria-label="Sort"><option value="">Verified first</option><option value="new">Newest</option><option value="exp">Most experienced</option><option value="az">Name A to Z</option></select>
     </div>
+    <div class="vtools"><label class="vchk"><input type="checkbox" id="vo"> Verified only</label><button type="button" class="vtab" id="savedTab" aria-pressed="false">♡ Saved <b id="savedN">0</b></button><button type="button" class="vtab" id="shareSaved" hidden>Share my saved list</button><button type="button" class="vtab" id="clearF" hidden>Clear filters</button></div>
+    <div class="vshare" id="shareBar" hidden></div>
+    <div id="recent" hidden><h2 class="vsub">Recently viewed</h2><div class="vrecent" id="recentList"></div></div>
     <div class="chips" id="sk" style="margin-bottom:20px"></div>
     <div class="gal" id="gal" aria-live="polite">
       <div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div><div class="skel" style="height:380px"></div>
     </div>
     <p class="small dim" id="count" style="margin-top:16px"></p>
+    <div class="cmpbar" id="cmpBar" hidden role="region" aria-label="Compare"><span id="cmpTxt"></span><button type="button" class="btn sm silver-b" id="cmpGo">Compare</button><button type="button" class="btn sm" id="cmpClr">Clear</button></div>
+    <dialog class="cmpdlg" id="cmpDlg" aria-label="Compare VAs"><div class="cmpin"><div class="cmphead"><h2 class="h" style="font-size:22px">Compare VAs</h2><button type="button" class="x" id="cmpX" aria-label="Close">×</button></div><div id="cmpBody"></div></div></dialog>
 
     <div class="card" style="margin-top:44px;display:flex;gap:20px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:240px"><h2 class="h" style="font-size:24px;margin-bottom:6px">Are you a virtual assistant?</h2><p class="muted small">Build a free professional profile with your portfolio, experience and skills. Share your Delegance link with any job application, and get hired through us.</p></div>
@@ -65,39 +72,108 @@
 
 <footer class="tf"><div class="wrap"><span>© 2026 Delegance</span><nav><a href="/">Home</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></div></footer>
 
-<script src="/assets/talent.js?v=1"></script>
-<script src="/assets/me.js?v=3" defer></script>
+<script src="/assets/talent.js?v=2"></script>
+<script src="/assets/me.js?v=4" defer></script>
 <script>
 (function () {
-  var all = [], skill = '', T = window.T;
-  var gal = document.getElementById('gal');
-  function card(c) {
-    return '<a class="vcard" href="/va/' + encodeURIComponent(c.slug) + '">' + T.port(c.photo, '', true) +
-      '<div class="b"><h3>' + T.esc(c.name) + (c.verified ? ' <span title="Verified by Delegance" style="color:#e2c27a">✓</span>' : '') + '</h3><div class="hl">' + T.esc(c.headline) + '</div>' +
-      '<div class="meta">' + [c.location, c.availability, c.years ? c.years + (c.years > 1 ? ' years' : ' year') + ' experience' : ''].filter(Boolean).map(T.esc).join(' · ') + '</div>' +
-      '<div class="chips">' + (c.skills || []).slice(0, 4).map(function (s) { return '<span class="chip">' + T.esc(s) + '</span>'; }).join('') + '</div></div></a>';
+  var T = window.T, all = [], skill = '', onlySaved = false, shared = null, cmp = [];
+  var $ = function (id) { return document.getElementById(id); }, gal = $('gal');
+  var store = { get: function (k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { return []; } }, set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  var saved = store.get('dlg-saved');
+  var country = function (c) { var p = String(c.location || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); return p.length ? p[p.length - 1] : ''; };
+  // Shareable search: ?q=&skill=&av=&country=&sort=&verified=1 and #list=slug,slug
+  var qs = new URLSearchParams(location.search);
+  $('q').value = qs.get('q') || ''; skill = qs.get('skill') || ''; $('av').value = qs.get('av') || ''; $('so').value = qs.get('sort') || ''; $('vo').checked = qs.get('verified') === '1';
+  var lm = location.hash.match(/list=([a-z0-9,-]+)/); if (lm) shared = lm[1].split(',').slice(0, 30);
+  function sync() {
+    var p = new URLSearchParams(); if ($('q').value.trim()) p.set('q', $('q').value.trim()); if (skill) p.set('skill', skill); if ($('av').value) p.set('av', $('av').value); if ($('ct').value) p.set('country', $('ct').value); if ($('so').value) p.set('sort', $('so').value); if ($('vo').checked) p.set('verified', '1');
+    history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + (shared ? '#list=' + shared.join(',') : ''));
+    $('clearF').hidden = !p.toString();
   }
-  function render() {
-    var q = document.getElementById('q').value.trim().toLowerCase(), av = document.getElementById('av').value;
-    var list = all.filter(function (c) {
+  function card(c) {
+    var on = saved.indexOf(c.slug) >= 0, inC = cmp.indexOf(c.slug) >= 0;
+    return '<div class="vwrap"><a class="vcard" href="/va/' + encodeURIComponent(c.slug) + '">' + T.port(c.photo, '', true) +
+      '<div class="b"><h3>' + T.esc(c.name) + (c.verified ? ' <span title="Verified by Delegance" class="vok">✓</span>' : '') + '</h3><div class="hl">' + T.esc(c.headline) + '</div>' +
+      '<div class="meta">' + [c.location, c.availability, c.years ? c.years + (c.years > 1 ? ' years' : ' year') + ' experience' : ''].filter(Boolean).map(T.esc).join(' · ') + '</div>' +
+      '<div class="chips">' + (c.skills || []).slice(0, 4).map(function (s) { return '<span class="chip">' + T.esc(s) + '</span>'; }).join('') + '</div></div></a>' +
+      '<div class="vact"><button type="button" class="vheart' + (on ? ' on' : '') + '" data-save="' + T.esc(c.slug) + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove ' : 'Save ') + T.esc(c.name) + '">' + (on ? '♥' : '♡') + '</button>' +
+      '<label class="vcmp' + (inC ? ' on' : '') + '"><input type="checkbox" data-cmp="' + T.esc(c.slug) + '"' + (inC ? ' checked' : '') + '> Compare</label></div></div>';
+  }
+  function list() {
+    var q = $('q').value.trim().toLowerCase(), av = $('av').value, ct = $('ct').value, vo = $('vo').checked, so = $('so').value;
+    var l = all.filter(function (c) {
+      if (shared && shared.indexOf(c.slug) < 0) return false;
+      if (onlySaved && saved.indexOf(c.slug) < 0) return false;
       if (av && c.availability !== av) return false;
+      if (ct && country(c) !== ct) return false;
+      if (vo && !c.verified) return false;
       if (skill && (c.skills || []).concat(c.tools || []).indexOf(skill) < 0) return false;
       if (!q) return true;
       var hay = [c.name, c.headline, c.location, c.about].concat(c.skills || [], c.tools || [], (c.details && c.details.services) || []).join(' ').toLowerCase();
       return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
     });
-    gal.innerHTML = list.length ? list.map(card).join('') : '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px">' + (all.length ? 'No candidates match that search yet. Try fewer words.' : 'Our first candidates are being reviewed. Check back soon, or <a href="/apply" style="text-decoration:underline">create your own profile</a>.') + '</div>';
-    document.getElementById('count').textContent = all.length ? list.length + ' of ' + all.length + ' candidate' + (all.length > 1 ? 's' : '') : '';
+    if (so === 'new') l.sort(function (a, b) { return String(b.updated_at).localeCompare(String(a.updated_at)); });
+    else if (so === 'exp') l.sort(function (a, b) { return (b.years || 0) - (a.years || 0); });
+    else if (so === 'az') l.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+    return l;
+  }
+  function render() {
+    var l = list();
+    gal.innerHTML = l.length ? l.map(card).join('') : '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px">' + (onlySaved && !saved.length ? 'You have not saved anyone yet. Tap ♡ on a VA to save them here.' : all.length ? 'No candidates match. Try fewer filters. <button type="button" class="linkish" data-clear>Clear filters</button>' : 'Our first candidates are being reviewed. Check back soon, or <a href="/apply" style="text-decoration:underline">create your own profile</a>.') + '</div>';
+    $('count').textContent = all.length ? l.length + ' of ' + all.length + ' candidate' + (all.length > 1 ? 's' : '') : '';
+    $('savedN').textContent = saved.length; $('shareSaved').hidden = !saved.length;
+    $('savedTab').setAttribute('aria-pressed', String(onlySaved)); $('savedTab').classList.toggle('on', onlySaved);
+    $('shareBar').hidden = !shared; if (shared) $('shareBar').innerHTML = '<span>Showing a shortlist someone shared with you (' + l.length + ').</span> <button type="button" class="linkish" id="allBtn">See all candidates</button>';
+    var ab = $('allBtn'); if (ab) ab.onclick = function () { shared = null; sync(); render(); };
+    $('cmpBar').hidden = !cmp.length; $('cmpTxt').textContent = cmp.length + ' of 3 picked to compare'; $('cmpGo').disabled = cmp.length < 2;
+    recent(); sync();
+  }
+  function recent() {
+    var r = store.get('dlg-recent').map(function (s) { return all.find(function (c) { return c.slug === s; }); }).filter(Boolean).slice(0, 6);
+    $('recent').hidden = !r.length || !!shared;
+    $('recentList').innerHTML = r.map(function (c) { return '<a href="/va/' + encodeURIComponent(c.slug) + '" class="vr">' + (c.photo ? '<img src="' + T.esc(c.photo) + '" alt="" loading="lazy">' : '<span></span>') + '<b>' + T.esc(c.name) + '</b></a>'; }).join('');
   }
   function chips() {
     var n = {}; all.forEach(function (c) { (c.skills || []).forEach(function (s) { n[s] = (n[s] || 0) + 1; }); });
     var top = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; }).slice(0, 14);
-    document.getElementById('sk').innerHTML = top.map(function (s) { return '<button type="button" class="chip' + (s === skill ? ' on' : '') + '" data-s="' + T.esc(s) + '">' + T.esc(s) + '</button>'; }).join('');
+    $('sk').innerHTML = top.map(function (s) { return '<button type="button" class="chip' + (s === skill ? ' on' : '') + '" data-s="' + T.esc(s) + '" aria-pressed="' + (s === skill) + '">' + T.esc(s) + '</button>'; }).join('');
   }
-  document.getElementById('sk').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; skill = skill === b.dataset.s ? '' : b.dataset.s; chips(); render(); });
-  document.getElementById('q').addEventListener('input', render);
-  document.getElementById('av').addEventListener('change', render);
-  T.api('candidates').then(function (d) { all = d; chips(); render(); }).catch(function () { gal.innerHTML = '<div class="card" style="grid-column:1/-1">Could not load candidates right now. Please refresh in a moment.</div>'; });
+  function countries() {
+    var set = {}; all.forEach(function (c) { var k = country(c); if (k) set[k] = 1; });
+    $('ct').innerHTML = '<option value="">Any country</option>' + Object.keys(set).sort().map(function (k) { return '<option>' + T.esc(k) + '</option>'; }).join('');
+    $('ct').value = qs.get('country') || '';
+  }
+  function showCompare() {
+    var l = cmp.map(function (s) { return all.find(function (c) { return c.slug === s; }); }).filter(Boolean);
+    var row = function (label, fn) { return '<tr><th scope="row">' + label + '</th>' + l.map(function (c) { return '<td>' + fn(c) + '</td>'; }).join('') + '</tr>'; };
+    var tags = function (a) { return (a || []).length ? '<div class="chips">' + a.map(function (x) { return '<span class="chip">' + T.esc(x) + '</span>'; }).join('') + '</div>' : '—'; };
+    $('cmpBody').innerHTML = '<div class="cmpwrap"><table class="cmptbl"><thead><tr><td></td>' + l.map(function (c) { return '<th scope="col">' + T.port(c.photo, 'round') + '<b>' + T.esc(c.name) + (c.verified ? ' <span class="vok">✓</span>' : '') + '</b><a href="/va/' + encodeURIComponent(c.slug) + '">Open profile</a></th>'; }).join('') + '</tr></thead><tbody>' +
+      row('Headline', function (c) { return T.esc(c.headline); }) + row('Based in', function (c) { return T.esc(c.location || '—'); }) + row('Availability', function (c) { return T.esc(c.availability || '—'); }) +
+      row('Experience', function (c) { return c.years ? c.years + ' years' : '—'; }) + row('Working hours', function (c) { return T.esc(c.hours || '—'); }) + row('Rate', function (c) { return T.esc(c.rate || 'Ask Delegance'); }) +
+      row('Skills', function (c) { return tags(c.skills); }) + row('Tools', function (c) { return tags(c.tools); }) + row('Languages', function (c) { return tags(c.languages); }) +
+      row('Portfolio', function (c) { return ((c.details && c.details.projects) || []).length + ' project' + (((c.details && c.details.projects) || []).length === 1 ? '' : 's'); }) +
+      '</tbody></table></div><p class="small muted" style="margin-top:14px">Not sure who fits best? <a href="/book" style="text-decoration:underline">Book a free call</a> and Delegance will help you choose.</p>';
+    $('cmpDlg').showModal();
+  }
+  gal.addEventListener('click', function (e) {
+    var h = e.target.closest('[data-save]'); if (h) { e.preventDefault(); var s = h.dataset.save, i = saved.indexOf(s); if (i >= 0) saved.splice(i, 1); else saved.unshift(s); store.set('dlg-saved', saved); T.toast(i >= 0 ? 'Removed from your saved VAs.' : 'Saved. Find them under ♡ Saved.'); render(); return; }
+    if (e.target.closest('[data-clear]')) clearAll();
+  });
+  gal.addEventListener('change', function (e) {
+    var c = e.target.closest('[data-cmp]'); if (!c) return; var s = c.dataset.cmp, i = cmp.indexOf(s);
+    if (c.checked && i < 0) { if (cmp.length >= 3) { c.checked = false; T.toast('You can compare up to 3 VAs at a time.', true); return; } cmp.push(s); } else if (!c.checked && i >= 0) cmp.splice(i, 1);
+    render();
+  });
+  function clearAll() { $('q').value = ''; skill = ''; $('av').value = ''; $('ct').value = ''; $('so').value = ''; $('vo').checked = false; onlySaved = false; chips(); render(); }
+  $('clearF').onclick = clearAll;
+  $('cmpGo').onclick = showCompare; $('cmpClr').onclick = function () { cmp = []; render(); }; $('cmpX').onclick = function () { $('cmpDlg').close(); };
+  $('cmpDlg').addEventListener('click', function (e) { if (e.target === this) this.close(); });
+  $('savedTab').onclick = function () { onlySaved = !onlySaved; render(); };
+  $('shareSaved').onclick = function () { var u = location.origin + '/candidates#list=' + saved.join(','); (navigator.share ? navigator.share({ title: 'My Delegance VA shortlist', url: u }) : navigator.clipboard.writeText(u).then(function () { T.toast('Link copied. Anyone with it sees your shortlist.'); })).catch(function () {}); };
+  $('sk').addEventListener('click', function (e) { var b = e.target.closest('[data-s]'); if (!b) return; skill = skill === b.dataset.s ? '' : b.dataset.s; chips(); render(); });
+  ['q'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['av', 'ct', 'so', 'vo'].forEach(function (id) { $(id).addEventListener('change', render); });
+  T.api('candidates').then(function (d) { all = d; countries(); chips(); render(); }).catch(function () { gal.innerHTML = '<div class="card" style="grid-column:1/-1">Could not load candidates right now. Please refresh in a moment.</div>'; });
 })();
 </script>
 </body>

@@ -24,7 +24,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/talent.css?v=4">
+<link rel="stylesheet" href="/assets/talent.css?v=5">
 <link rel="stylesheet" href="/assets/theme.css?v=1">
 <script src="/assets/theme.js?v=1" defer></script>
 </head>
@@ -39,8 +39,8 @@
 
 <footer class="tf"><div class="wrap"><span>© 2026 Delegance · Contact details stay private until both sides sign a Delegance agreement.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
 
-<script src="/assets/talent.js?v=1"></script>
-<script src="/assets/me.js?v=3" defer></script>
+<script src="/assets/talent.js?v=2"></script>
+<script src="/assets/me.js?v=4" defer></script>
 <script>
 (function () {
   var T = window.T, esc = T.esc, I = T.I;
@@ -56,7 +56,9 @@
     root.innerHTML = '<div class="pf"><aside class="pf-side">' + T.port(c.photo, '', true) +
       '<button class="btn silver-b" id="msgBtn">' + I.chat + ' Message ' + esc(first) + '</button>' +
       '<button class="btn" id="hireBtn">' + I.brief + ' Hire through Delegance</button>' +
+      '<a class="btn" id="intBtn" href="/book?va=' + encodeURIComponent(c.slug) + '&amp;name=' + encodeURIComponent(c.name) + '">' + I.cal + ' Request an interview</a>' +
       '<div class="share-row"><button class="btn sm" id="shareBtn">' + I.share + ' Share</button><button class="btn sm" id="copyBtn">' + I.link + ' Copy link</button></div>' +
+      '<div class="share-row"><button class="btn sm" id="saveBtn" aria-pressed="false"></button><button class="btn sm" id="pdfBtn">' + I.dl + ' Save as PDF</button></div>' +
       '<div class="note small"><span class="verified">' + I.shield + ' Reviewed by Delegance</span><br>Contact details are private. Chat here, or let Delegance arrange the work for you.</div></aside>' +
       '<div><span class="eyebrow">Virtual assistant</span><h1 class="h"><span class="silver">' + esc(c.name) + '</span></h1><p class="hl">' + esc(c.headline) + '</p>' +
       '<div class="row">' + (c.verified ? '<span class="pill" style="color:#e2c27a;border-color:rgba(226,194,122,.45)">✓ Verified by Delegance</span>' : '') + (c.availability ? '<span class="pill">' + esc(c.availability) + '</span>' : '') + (c.location ? '<span class="pill b">' + esc(c.location) + '</span>' : '') + '</div>' +
@@ -73,7 +75,7 @@
         var g = p.gallery && p.gallery.length ? p.gallery : p.image ? [p.image] : [], pv = !g.length && p.preview, k = GAL.length;
         GAL.push({ title: p.title, url: p.url, imgs: g.length ? g : pv && pv.image ? [pv.image] : [], site: !!pv });
         var media = g.length ? '<button type="button" class="im" data-gal="' + k + '" aria-label="See ' + g.length + ' photo' + (g.length > 1 ? 's' : '') + ' of ' + esc(p.title) + '"><img src="' + esc(g[0]) + '" alt="" loading="lazy">' + (g.length > 1 ? '<span class="im-n">+' + (g.length - 1) + '</span>' : '') + '</button>'
-          : pv ? '<button type="button" class="im pv" data-gal="' + k + '" aria-label="Preview of ' + esc(p.title) + ' website"><span class="pv-bar"><i></i><i></i><i></i><em>' + esc(pv.host || '') + '</em></span>' + (pv.image ? '<img src="' + esc(pv.image) + '" alt="" loading="lazy">' : '<span class="pv-t">' + esc(pv.title || p.title) + '</span>') + '<span class="pv-tag">Website preview</span></button>' : '';
+          : pv ? '<button type="button" class="im pv" data-gal="' + k + '" aria-label="Preview of ' + esc(p.title) + ' website"><span class="pv-bar"><i></i><i></i><i></i><em>' + esc(pv.host || '') + '</em></span>' + (pv.image ? '<img src="' + esc(pv.image) + '" alt="" loading="lazy">' : '<span class="pv-t">' + esc(p.title) + '</span>') + '<span class="pv-tag">Website preview</span></button>' : '';
         return '<article class="proj">' + media +
           '<div class="b"><b>' + esc(p.title) + '</b>' + (p.summary ? '<span class="small muted">' + esc(p.summary) + '</span>' : '') +
           ((p.tags || []).length ? '<div class="chips">' + p.tags.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
@@ -89,6 +91,12 @@
       '</div></div>';
     document.getElementById('msgBtn').onclick = function () { chat.open(); };
     document.getElementById('hireBtn').onclick = hireForm;
+    var SV = function () { try { return JSON.parse(localStorage.getItem('dlg-saved') || '[]'); } catch (e) { return []; } };
+    var paintSave = function () { var on = SV().indexOf(c.slug) >= 0, b = document.getElementById('saveBtn'); b.textContent = on ? '♥ Saved' : '♡ Save'; b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on); };
+    paintSave();
+    document.getElementById('saveBtn').onclick = function () { var l = SV(), i = l.indexOf(c.slug); if (i >= 0) l.splice(i, 1); else l.unshift(c.slug); try { localStorage.setItem('dlg-saved', JSON.stringify(l)); } catch (e) {} paintSave(); T.toast(i >= 0 ? 'Removed from your saved VAs.' : 'Saved. See all your saved VAs on the candidates page.'); };
+    document.getElementById('pdfBtn').onclick = function () { window.print(); };
+    try { var rv = JSON.parse(localStorage.getItem('dlg-recent') || '[]').filter(function (x) { return x !== c.slug; }); rv.unshift(c.slug); localStorage.setItem('dlg-recent', JSON.stringify(rv.slice(0, 8))); } catch (e) {}
     document.getElementById('copyBtn').onclick = function () { navigator.clipboard.writeText(link).then(function () { T.toast('Link copied.'); }, function () { T.toast(link); }); };
     document.getElementById('shareBtn').onclick = function () { if (navigator.share) navigator.share({ title: c.name + ' · Delegance', text: c.headline, url: link }).catch(function () {}); else document.getElementById('copyBtn').click(); };
     root.addEventListener('click', function (e) {

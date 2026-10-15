@@ -1,1 +1,1 @@
-{ "version": 1, "include": ["/api/*", "/va/*", "/db/*", "/wrangler.toml", "/README.md"], "exclude": [] }
+{"version": 1, "include": ["/api/*", "/va/*", "/db/*", "/wrangler.toml", "/README.md", "/sitemap.xml", "/updates.xml"], "exclude": []}
