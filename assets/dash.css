@@ -486,3 +486,11 @@ body:not(.topbar) .side>*{flex-shrink:0}
 .chain li,.ppl,.intent label,.choose button,.qbtn,.nsl a,.ctabs button,.gsr a,.melink,.oq,.secret,.codes span,.stepper li:first-child button,.menu,.xbtn,.search input,.space{border-radius:var(--r-in)}
 .bub,.thread .b,.cb{border-radius:14px 14px 14px 3px}
 .seg{overflow-x:auto;scrollbar-width:none;max-width:100%}.seg::-webkit-scrollbar{display:none}
+/* Sign-in: other ways in */
+.af .or{display:flex;align-items:center;gap:12px;margin:18px 0 12px;color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.14em}
+.af .or::before,.af .or::after{content:"";flex:1;height:1px;background:var(--line2)}
+.af .alt-in{gap:10px;margin-top:8px;background:transparent;border:1px solid var(--line2);color:var(--strong)}
+.af .alt-in:hover{border-color:var(--acc);background:rgba(var(--ink),.04)}
+/* Passkeys list */
+.pk-list{display:grid;gap:8px;margin:12px 0}.pk-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line2);border-radius:var(--r-in,4px)}
+.pk-row b{display:block;font-size:14px}.pk-row span{font-size:12px;color:var(--muted)}.pk-row .btn{margin-left:auto}

@@ -592,6 +592,29 @@
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     html += '<div class="card" style="margin-bottom:16px"><h2>Delegance app</h2>' + (standalone ? '<p class="status-ok" role="status"><i aria-hidden="true"></i>You are using the installed app.</p>' : '<p class="sub" style="margin-bottom:12px">Put Delegance on your home screen or desktop. It opens full-screen like a normal app, on iPhone, iPad, Android, Windows, Mac and Chromebook.</p>' + (window.DLG_INSTALL ? '<button class="btn btn-acc" id="instApp">Install the app</button>' : ios ? '<p class="fine">On iPhone or iPad: in Safari tap the <b>Share</b> button, then <b>Add to Home Screen</b>, then <b>Add</b>.</p>' : '<p class="fine">In Chrome or Edge: click the install icon at the right end of the address bar, or open the browser menu and choose <b>Install Delegance</b> (on Android: <b>Add to Home screen</b>).</p>')) + '</div>';
     setTimeout(function () { var ib = document.getElementById('instApp'); if (ib) ib.onclick = async function () { var p = window.DLG_INSTALL; if (!p) return; p.prompt(); var r = await p.userChoice; window.DLG_INSTALL = null; toast(r.outcome === 'accepted' ? 'Installing Delegance…' : 'No problem. You can install it any time from here.'); route(); }; });
+    html += '<div class="card" style="margin-bottom:16px"><h2>Passkeys</h2><p class="sub">Sign in with your face, fingerprint or device PIN instead of a password. Passkeys cannot be phished and count as 2-step sign-in.</p><div id="pkList" class="pk-list"><p class="sub">Loading…</p></div>' + (window.PublicKeyCredential ? '<button type="button" class="btn btn-acc" id="pkAdd">Add a passkey on this device</button>' : '<p class="sub">This browser does not support passkeys.</p>') + '</div>';
+    setTimeout(async function () {
+      var b64d = function (x) { x = x.replace(/-/g, '+').replace(/_/g, '/'); var b = atob(x + '==='.slice((x.length + 3) % 4)), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; };
+      var b64e = function (buf) { var t = '', u = new Uint8Array(buf); for (var i = 0; i < u.length; i++) t += String.fromCharCode(u[i]); return btoa(t).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+      var guess = function () { var u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android phone' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows PC' : 'This device'; };
+      async function list() {
+        var box = document.getElementById('pkList'); if (!box) return;
+        try { var d = await api('auth/passkeys'); box.innerHTML = d.items.length ? d.items.map(function (k) { return '<div class="pk-row"><div><b>' + esc(k.name || 'Passkey') + '</b><span>Added ' + esc(new Date(k.created_at).toLocaleDateString()) + (k.last_used ? ' · last used ' + esc(ago(k.last_used)) : ' · not used yet') + '</span></div><button type="button" class="btn btn-sm btn-danger" data-pkrm="' + esc(k.id) + '">Remove</button></div>'; }).join('') : '<p class="sub">No passkeys yet.</p>';
+          box.querySelectorAll('[data-pkrm]').forEach(function (b) { b.onclick = async function () { if (!confirm('Remove this passkey? That device will need your password or a code to sign in.')) return; try { await api('auth/passkeys/' + encodeURIComponent(b.dataset.pkrm), 'DELETE'); toast('Passkey removed.'); list(); } catch (x) { toast(x.message, true); } }; });
+        } catch (x) { box.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; }
+      }
+      list();
+      var add = document.getElementById('pkAdd'); if (add) add.onclick = async function () {
+        add.disabled = true;
+        try {
+          var o = await api('auth/passkey/register-options', 'POST', {});
+          var c = await navigator.credentials.create({ publicKey: { challenge: b64d(o.challenge), rp: o.rp, user: { id: b64d(o.user.id), name: o.user.name, displayName: o.user.displayName }, pubKeyCredParams: o.pubKeyCredParams, timeout: o.timeout, attestation: 'none', authenticatorSelection: o.authenticatorSelection, excludeCredentials: o.excludeCredentials.map(function (x) { return { type: 'public-key', id: b64d(x.id) }; }) } });
+          await api('auth/passkey/register', 'POST', { name: guess(), credential: { id: c.id, rawId: b64e(c.rawId), type: c.type, response: { clientDataJSON: b64e(c.response.clientDataJSON), attestationObject: b64e(c.response.attestationObject) } } });
+          toast('Passkey added. Next time, choose "Sign in with a passkey".'); list();
+        } catch (x) { toast(x.name === 'NotAllowedError' ? 'Passkey setup was cancelled.' : x.name === 'InvalidStateError' ? 'This device already has a Delegance passkey.' : x.message, true); }
+        add.disabled = false;
+      };
+    });
     html += '<div class="grid g2"><div class="card"><h2>Profile</h2><form id="profF"><label class="fld"><span>Name</span><input name="name" required maxlength="80" value="' + esc(ME.name) + '"></label><label class="fld"><span>Job title (optional)</span><input name="title" maxlength="80" value="' + esc(ME.title || '') + '"></label><button class="btn btn-acc">Save</button></form></div>';
     html += '<div class="card"><h2>Password</h2><form id="pwF"><label class="fld"><span>Current password</span><input type="password" name="current" autocomplete="current-password" required></label><label class="fld"><span>New password</span><input type="password" name="password" autocomplete="new-password" minlength="10" required data-strength><small>At least 10 characters. Changing it signs out your other devices.</small></label><button class="btn btn-acc">Change password</button></form></div></div>';
     html += '<div class="grid g2" style="margin-top:16px"><div class="card"><h2>2-step sign-in ' + pill(ME.mfa ? 'active' : 'pending', ME.mfa ? 'On' : 'Off') + '</h2><div id="mfaBox">' + (ME.mfa
