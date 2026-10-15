@@ -9,7 +9,7 @@ const media = id => `${DESK}/public/media/${id}.jpg`;
 // Server-to-server call into Desk, which holds the social tokens and the VA private details.
 export async function desk(env, path, payload, me) {
   if (!env.BRIDGE_KEY) throw new Error('The link to Delegance Desk is not set up yet.');
-  const r = await fetch(`${env.DESK_URL || DESK}/bridge/${path}`, {
+  const r = await fetch(`${env.DESK_URL || DESK}/public/bridge/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env.BRIDGE_KEY, 'X-Bridge-Email': me ? me.email : 'delegance', 'X-Bridge-Role': me && can(me, 'admin') ? 'admin' : 'member' },
     body: JSON.stringify(payload || {}),
