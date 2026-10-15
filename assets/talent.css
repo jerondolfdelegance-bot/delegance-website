@@ -228,3 +228,37 @@ html{background:var(--bg)}
 .mt-tips:empty{display:none}
 .mt-tips li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--muted)}
 .mt-tips li span{flex:0 0 auto;font-size:11.5px;font-weight:600;color:var(--ok);border:1px solid #294a3b;border-radius:99px;padding:1px 7px}
+/* Portfolio: photos, website previews, gallery */
+.proj .im{position:relative;display:block;width:100%;padding:0;border:0;border-bottom:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:zoom-in;overflow:hidden}
+.proj .im img{transition:transform .4s ease}.proj .im:hover img{transform:scale(1.03)}
+.proj .im:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.im-n{position:absolute;right:10px;bottom:10px;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.72);color:#fff;font:600 12px Inter,sans-serif}
+.im.pv{display:flex;flex-direction:column;background:var(--bg2)}
+.im.pv img{flex:1;min-height:0}
+.pv-bar{display:flex;align-items:center;gap:5px;padding:7px 10px;background:rgba(var(--ink,255,255,255),.06);border-bottom:1px solid var(--line);flex:none}
+.pv-bar i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.pv-bar em{margin-left:8px;font:500 11px Inter,sans-serif;font-style:normal;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-t{flex:1;display:grid;place-items:center;padding:16px;text-align:center;font:600 15px Montserrat,sans-serif;color:var(--text)}
+.pv-tag{position:absolute;left:10px;bottom:10px;padding:3px 9px;border-radius:3px;background:rgba(0,0,0,.72);color:#fff;font:600 11px Inter,sans-serif;letter-spacing:.02em}
+.lb{cursor:default}.lb figure{margin:0;display:grid;gap:10px;justify-items:center;max-width:min(1100px,100%)}
+.lb figure img{max-height:80vh}
+.lb figcaption{color:#e8e8ea;font-size:14px;text-align:center}.lb figcaption a{color:#e2c27a;text-decoration:underline}
+.lb-p,.lb-n,.lb-x{position:fixed;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.lb-p{left:16px;top:50%;transform:translateY(-50%)}.lb-n{right:16px;top:50%;transform:translateY(-50%)}.lb-x{right:16px;top:16px}
+.lb-p:focus-visible,.lb-n:focus-visible,.lb-x:focus-visible{outline:2px solid #e2c27a}
+.pgal{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.pgal-th{display:flex;flex-wrap:wrap;gap:8px}.pgal-th:empty{display:none}
+.pgal-i{position:relative;width:72px;height:54px;border-radius:4px;overflow:hidden;border:1px solid var(--line)}.pgal-i img{width:100%;height:100%;object-fit:cover}
+.pgal-x{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.72);color:#fff;font-size:14px;line-height:1;cursor:pointer}
+.pgal-x:focus-visible{outline:2px solid #e2c27a}.pgal [data-st]{flex-basis:100%}
+@media (max-width:560px){.lb-p,.lb-n{top:auto;bottom:18px;transform:none}}
+/* Your own profile */
+.own-bar{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;padding:10px 16px;background:var(--gold,#e2c27a);color:#1a1408;font-size:14px;text-align:center}
+.own-bar b{font-weight:700}
+.own-edit{min-height:38px;padding:0 16px;border:0;border-radius:3px;background:#1a1408;color:#fff;font:600 14px Inter,sans-serif;cursor:pointer}
+.own-edit:focus-visible{outline:2px solid #1a1408;outline-offset:2px}
+.vcard{position:relative}.own-tag{position:absolute;top:10px;right:10px;z-index:3;padding:3px 10px;border-radius:999px;background:var(--gold,#e2c27a);color:#1a1408;font:700 11px Inter,sans-serif;letter-spacing:.04em}
+.recov{margin-bottom:16px}.recov summary{cursor:pointer;list-style:none;font-size:14px;color:var(--muted)}.recov summary::-webkit-details-marker{display:none}
+.recov summary b{color:var(--text);margin-right:6px}.recov[open] summary{margin-bottom:4px}
+/* Light mode: hero badges on a light glass instead of dark grey */
+html[data-theme="light"] .t-badges span{background:rgba(255,255,255,.72);border-color:rgba(26,20,8,.14);color:#1a1408}
+html[data-theme="light"] .t-badges svg{color:#2f7a45}
