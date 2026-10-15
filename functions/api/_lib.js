@@ -34,7 +34,7 @@ export function passwordProblem(pw, email) {
   return null;
 }
 
-const BASE_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' };
+const BASE_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'" };
 export const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), { status, headers: { ...BASE_HEADERS, ...headers } });
 export const bad = (error, status = 400) => json({ error }, status);
 export const clean = (v, max = 200) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim().slice(0, max);
@@ -73,8 +73,17 @@ export async function currentUser(env, req) {
   const t = cookieOf(req);
   if (!t) return null;
   const id = await sha256(t);
-  const s = await env.DB.prepare('SELECT s.id sid, s.expires_at, s.last_seen, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ?').bind(id).first();
+  const s = await env.DB.prepare('SELECT s.id sid, s.expires_at, s.last_seen, s.place s_place, s.ua s_ua, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ?').bind(id).first();
   if (!s || s.expires_at < Date.now() || s.status !== 'active') { if (s) await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(id).run(); return null; }
+  // Session risk check on every request: a signed-in session that suddenly comes from another country or another
+  // kind of browser is treated as stolen: it is ended and the person signs in again (with their 2-step code).
+  const cc = (req.cf && req.cf.country) || null, was = s.s_place ? s.s_place.split(', ').pop() : null;
+  const fam = ua => (String(ua || '').match(/Edg|OPR|Chrome|Firefox|Safari|okhttp|curl/) || ['?'])[0];
+  if ((cc && was && /^[A-Z]{2}$/.test(was) && cc !== was && cc !== 'XX' && cc !== 'T1') || (s.s_ua && fam(s.s_ua) !== fam(req.headers.get('User-Agent')))) {
+    await env.DB.prepare('DELETE FROM sessions WHERE id = ?').bind(id).run();
+    await audit(env, s.email, 'session.risk_ended', `${was || '?'} -> ${cc || '?'} · ${fam(s.s_ua)} -> ${fam(req.headers.get('User-Agent'))}`);
+    return null;
+  }
   if (s.expires_at - Date.now() < 7 * 86400_000) await env.DB.prepare('UPDATE sessions SET expires_at = ?, last_seen = ? WHERE id = ?').bind(Date.now() + SESSION_DAYS * 86400_000, now(), id).run();
   else if (!s.last_seen || Date.now() - Date.parse(s.last_seen) > 600_000) await env.DB.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(now(), id).run();
   return s;
