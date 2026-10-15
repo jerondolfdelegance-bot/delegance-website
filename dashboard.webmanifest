@@ -1,0 +1,21 @@
+{
+  "id": "/dashboard",
+  "name": "Delegance",
+  "short_name": "Delegance",
+  "description": "Your Delegance dashboard: pipeline, contacts, social, automations and your team.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "icons": [
+    { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Pipeline", "url": "/dashboard#pipeline" },
+    { "name": "Social", "url": "/dashboard#social" },
+    { "name": "My day", "url": "/dashboard#tasks" }
+  ]
+}

@@ -127,8 +127,9 @@
         <b>Preview</b>
         <div id="sidePrev"></div>
         <label class="row small muted" id="consentRow" style="flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" name="consent" style="margin-top:4px"> <span>I agree that Delegance shows my public profile to clients and keeps my private details to contact me, as described in the <a href="/privacy" style="text-decoration:underline">Privacy Policy</a>. I can edit or delete my profile at any time.</span></label>
+        <div data-ts id="tsBox" style="min-height:0"></div>
         <button class="btn silver-b" type="submit" id="submitBtn">Submit my profile</button>
-        <p class="xs dim" id="submitNote">Delegance reviews every profile before it goes live, usually within two business days.</p>
+        <p class="xs dim" id="submitNote">Your profile goes live on the Delegance job board as soon as you submit. Delegance adds a gold Verified badge after a quick check. Your email, phone and address are never shown.</p>
       </div>
     </aside>
   </form>
@@ -270,11 +271,14 @@
     if (!cred && !p.consent) return T.toast('Please tick the agreement box first.', true);
     b.disabled = true;
     try {
-      if (cred) { p.id = cred.id; p.token = cred.token; p.action = 'update'; p.consent = true; await T.api('candidates/me', { body: p }); T.toast('Saved. Changes go live after a quick check by Delegance.'); await loadMe(); }
-      else { var r = await T.api('candidates/apply', { body: p }); cred = { id: r.id, token: r.token }; try { localStorage.setItem('dlg-va-me', JSON.stringify(cred)); } catch (e2) {} history.replaceState(null, '', '/me#me=' + r.id + '.' + r.token); await loadMe(true); }
-    } catch (err) { T.toast(err.message, true); }
+      if (cred) { p.id = cred.id; p.token = cred.token; p.action = 'update'; p.consent = true; await T.api('candidates/me', { body: p }); T.toast('Saved. Your changes are live.'); await loadMe(); }
+      else { p.turnstile = TS && window.turnstile && tsId != null ? turnstile.getResponse(tsId) : ''; var r = await T.api('candidates/apply', { body: p }); cred = { id: r.id, token: r.token }; try { localStorage.setItem('dlg-va-me', JSON.stringify(cred)); } catch (e2) {} history.replaceState(null, '', '/me#me=' + r.id + '.' + r.token); await loadMe(true); }
+    } catch (err) { T.toast(err.message, true); if (TS && window.turnstile && tsId != null) turnstile.reset(tsId); }
     b.disabled = false;
   });
+  // Free Cloudflare Turnstile check for new applications (profiles go live at once).
+  var TS = null, tsId = null;
+  if (!/me=/.test(location.hash) && !localStorage.getItem('dlg-va-me')) fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) { if (!c.turnstile) return; TS = c.turnstile; var s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true; s.onload = function () { tsId = turnstile.render('#tsBox', { sitekey: TS, theme: 'dark', size: 'flexible' }); }; document.head.appendChild(s); }).catch(function () {});
 
   // ---- VA dashboard ----
   var threads = [], openT = null, tab = 'msgs';
@@ -291,8 +295,8 @@
     document.getElementById('tabs').classList.remove('hide');
     document.getElementById('consentRow').classList.add('hide');
     document.getElementById('submitBtn').textContent = 'Save changes';
-    document.getElementById('submitNote').textContent = 'Changes go live after a quick check by Delegance.';
-    var S = { pending: ['y', 'Waiting for review', 'Delegance is reviewing your profile. It goes live in the candidate gallery once approved.'], approved: ['', 'Live', 'Your profile is public at ' + link], hidden: ['b', 'Hidden', 'Your profile is hidden from the gallery right now. Contact admin@delegance.app if you have questions.'], rejected: ['y', 'Not approved', 'Your profile was not approved. You can improve it and save again, or email admin@delegance.app.'] }[me.status] || ['', me.status, ''];
+    document.getElementById('submitNote').textContent = 'Changes go live as soon as you save.'; var tb = document.getElementById('tsBox'); if (tb) tb.remove();
+    var S = { pending: ['y', 'Waiting for review', 'Delegance is reviewing your profile. It goes live in the candidate gallery once approved.'], approved: ['', me.verified ? 'Live · Verified' : 'Live', 'Your profile is public at ' + link + (me.verified ? '. Delegance verified you, so you show near the top.' : '. Delegance adds a Verified badge after a quick check.')], hidden: ['b', 'Hidden', 'Your profile is hidden from the gallery right now. Contact admin@delegance.app if you have questions.'], rejected: ['y', 'Not approved', 'Your profile was not approved. You can improve it and save again, or email admin@delegance.app.'] }[me.status] || ['', me.status, ''];
     document.getElementById('statusBox').innerHTML = (justCreated ? '<div class="note ok" style="margin-bottom:14px"><b style="color:var(--text)">Profile submitted!</b> Bookmark this page now. It is your private dashboard link (anyone with it can edit your profile):<div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="in" readonly value="' + esc(dash) + '" style="font-size:13px"><button type="button" class="btn sm" id="copyDash">Copy</button></div></div>' : '') +
       '<div class="note" style="margin-bottom:14px"><span class="pill ' + S[0] + '">' + esc(S[1]) + '</span> ' + esc(S[2]) + '</div>';
     if (document.getElementById('copyDash')) document.getElementById('copyDash').onclick = function () { navigator.clipboard.writeText(dash).then(function () { T.toast('Copied. Keep it safe.'); }); };
@@ -319,7 +323,7 @@
     box.innerHTML = '<div class="threads"><div class="ls">' + threads.map(function (x) { var last = x.messages[x.messages.length - 1] || {}; return '<button type="button" data-t="' + x.id + '" class="' + (x.id === openT ? 'on' : '') + '"><b class="small">' + esc(x.client) + '</b><div class="xs dim" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(last.body || '') + '</div></button>'; }).join('') + '</div>' +
       '<div class="cv"><div class="ms">' + t.messages.map(function (m) { return '<div class="bub ' + (m.from === 'you' ? 'me' : m.from === 'delegance' ? 'dl' : 'them') + '">' + (m.from === 'delegance' ? '<b>Delegance:</b> ' : '') + esc(m.body) + '</div>'; }).join('') + '</div>' +
       '<form class="ft" id="rf"><textarea class="in" rows="1" placeholder="Reply to ' + esc(t.client) + '…" style="min-height:42px;border-radius:20px;resize:none"></textarea><button class="btn silver-b sm" style="min-height:42px">Send</button></form></div></div>' +
-      '<p class="xs dim" style="margin-top:10px">Emails and phone numbers are hidden automatically. Delegance can see these chats to keep everyone safe and to arrange the hire.</p>';
+      (t.contact && t.contact.email ? '<div class="note ok" style="margin-top:10px"><b style="color:var(--text)">Agreement signed.</b> You can now reach ' + esc(t.client) + ' directly: <a href="mailto:' + esc(t.contact.email) + '">' + esc(t.contact.email) + '</a></div>' : '<p class="xs dim" style="margin-top:10px">Emails and phone numbers stay hidden until you and the client both sign a Delegance agreement. Delegance can see these chats to keep everyone safe and to arrange the hire.</p>');
     var ms = box.querySelector('.ms'); ms.scrollTop = ms.scrollHeight;
     box.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { openT = b.dataset.t; paintThreads(); }; });
     var rf = document.getElementById('rf'), ta = rf.querySelector('textarea');

@@ -9,10 +9,12 @@
 <link rel="canonical" href="https://delegance.app/login">
 <meta name="theme-color" content="#0a0a0b">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/dashboard.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/dash.css?v=3">
+<link rel="stylesheet" href="/assets/dash.css?v=6">
 <link rel="stylesheet" href="/assets/motion.css?v=1">
 <script src="/assets/motion.js?v=1"></script>
 </head>
@@ -62,7 +64,12 @@
     </form>
     <form id="fUp" class="af" novalidate hidden>
       <h1>Create your account</h1>
-      <p class="lead">Free member account. Get guides, updates, and send requests to the team. Clients and virtual assistants get their own dashboards when we add them to a project.</p>
+      <p class="lead">Free account. Tell us which side you are on and we will set up the right space for you.</p>
+      <div class="fld" role="radiogroup" aria-label="I am here to"><span>I am here to</span><div class="intent">
+        <label><input type="radio" name="intent" value="hire" required><b>Hire a VA</b><small>I am a business or founder looking for help</small></label>
+        <label><input type="radio" name="intent" value="work"><b>Work as a VA</b><small>I want to build my portfolio and get hired</small></label>
+        <label class="both"><input type="radio" name="intent" value="both"><b>Both</b><small>I work as a VA and also hire help</small></label>
+      </div><small>You can switch any time from your dashboard.</small></div>
       <label class="fld"><span>Your name</span><input name="name" autocomplete="name" maxlength="80" required></label>
       <label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
       <label class="fld"><span>Password</span><span class="pw"><input name="password" type="password" autocomplete="new-password" minlength="10" required data-strength><button type="button" class="eye" aria-label="Show password">Show</button></span><small>At least 10 characters.</small></label>
@@ -97,7 +104,7 @@
   wire($('#fIn'),async function(d){var r=await post('/api/auth/login',d);if(r.mfa){ticket=r.ticket;show('fCode');if(!OTP)OTP=DLGMotion.otp($('#fCode [name=code]'),function(){$('#fCode').requestSubmit()});setTimeout(function(){OTP.focus()},50);return}go()});
   $('#useRec').onclick=function(){var i=$('#fCode [name=code]');if(OTP){OTP.el.remove();OTP=null;i.classList.remove('otp-src');i.removeAttribute('aria-hidden');i.tabIndex=0;delete i.dataset.otp}i.value='';i.inputMode='text';i.maxLength=9;i.placeholder='ab2c-d3ef';$('#codeLbl').textContent='Recovery code';i.focus();this.hidden=true};
   wire($('#fCode'),async function(d){await post('/api/auth/login-code',{ticket:ticket,code:d.code});go()});
-  wire($('#fUp'),async function(d){d.consent=!!d.consent;d.turnstile=tsToken('fUp');await post('/api/auth/signup',d);go()});
+  wire($('#fUp'),async function(d){if(!d.intent)throw new Error('Pick Hire a VA or Work as a VA.');d.consent=!!d.consent;d.turnstile=tsToken('fUp');await post('/api/auth/signup',d);if(d.intent==='work'||d.intent==='both'){location.href='/apply';return}go()});
   wire($('#fForgot'),async function(d){d.turnstile=tsToken('fForgot');var r=await post('/api/auth/forgot',d);var ok=$('#fForgot .ok');ok.textContent=r.email?'If '+d.email+' has a Delegance account, a reset link is on its way. Check your inbox (and spam) in a minute.':'Email sending is not switched on yet. Message admin@delegance.app and we will send you a link.';ok.hidden=false;tsReset('fForgot')});
   $('#toForgot').onclick=function(){$('#fForgot [name=email]').value=$('#fIn [name=email]').value;show('fForgot');tsRender('fForgot')};
   document.querySelectorAll('[data-back]').forEach(function(b){b.onclick=function(){show('fIn')}});

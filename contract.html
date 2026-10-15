@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your agreement · Delegance</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/dash.css?v=6">
+<style>
+.k-wrap{max-width:760px;margin:0 auto;padding:32px 16px 64px;position:relative;z-index:1}
+.k-wrap .logo{display:inline-block;margin-bottom:24px}
+.k-terms{white-space:pre-wrap;line-height:1.7;font-size:14px;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0 0}
+.k-parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.k-parties div{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.k-parties b{display:block}.k-parties span{display:block;font-size:13px;color:var(--muted)}
+.k-ok{color:#86efac!important}
+@media (max-width:560px){.k-parties{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+<main class="k-wrap" id="main">
+  <a class="logo" href="/"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="132" height="25"></a>
+  <div id="out"><div class="card"><p class="sub">Loading your agreement…</p></div></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var out = document.getElementById('out');
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var day = function (d) { return d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : ''; };
+  var h = location.hash.slice(1), dot = h.indexOf('.'), id = h.slice(0, dot), t = h.slice(dot + 1);
+  if (dot < 0) { out.innerHTML = '<div class="card"><h1>Link not complete</h1><p class="sub">Open the full link from your email, or ask admin@delegance.app for a new one.</p></div>'; return; }
+  async function call(path, data) {
+    var r = await fetch('/api/' + path, data ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) } : { headers: {} });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.');
+    return j;
+  }
+  function draw(k) {
+    var me = k.side === 'client' ? 'client' : 'va', signed = k[me + '_signed_at'];
+    var html = '<div class="card"><span class="eyebrow">Delegance agreement</span><h1 style="margin:6px 0 4px">' + esc(k.title) + '</h1><p class="sub">' + esc([k.rate, k.hours, k.start_date ? 'Starts ' + day(k.start_date) : ''].filter(Boolean).join(' · ')) + '</p>';
+    html += '<div class="k-parties"><div><b>Client</b>' + esc(k.client_name) + (k.client_company ? '<span>' + esc(k.client_company) + '</span>' : '') + '<span class="' + (k.client_signed_at ? 'k-ok' : '') + '">' + (k.client_signed_at ? 'Signed ' + day(k.client_signed_at) : 'Not signed yet') + '</span></div><div><b>Virtual assistant</b>' + esc(k.va_name) + '<span class="' + (k.va_signed_at ? 'k-ok' : '') + '">' + (k.va_signed_at ? 'Signed ' + day(k.va_signed_at) : 'Not signed yet') + '</span></div></div>';
+    html += '<p class="k-terms">' + esc(k.terms) + '</p></div>';
+    if (k.status === 'active' && k.contact) {
+      html += '<div class="card" style="margin-top:16px;border-color:rgba(74,222,128,.35)"><h2>You can now work together directly</h2><p class="sub">Both of you signed, so contact details are unlocked.</p><dl class="kv"><dt>Name</dt><dd>' + esc(k.contact.name) + (k.contact.company ? ' · ' + esc(k.contact.company) : '') + '</dd>' + (k.contact.email ? '<dt>Email</dt><dd><a href="mailto:' + esc(k.contact.email) + '">' + esc(k.contact.email) + '</a></dd>' : '') + (k.contact.phone ? '<dt>Phone</dt><dd><a href="tel:' + esc(k.contact.phone) + '">' + esc(k.contact.phone) + '</a></dd>' : '') + '</dl>' + (k.contact.note ? '<p class="fine">' + esc(k.contact.note) + '</p>' : '') + '</div>';
+    } else if (k.status === 'ended') {
+      html += '<div class="card" style="margin-top:16px"><p class="sub">This agreement has ended. Questions? Email admin@delegance.app.</p></div>';
+    } else if (signed) {
+      html += '<div class="card" style="margin-top:16px"><h2>Thank you, you have signed</h2><p class="sub">We are waiting for ' + esc(me === 'client' ? k.va_name : k.client_name) + ' to sign. As soon as they do, this page shows their contact details. Keep this link.</p></div>';
+    } else {
+      html += '<form class="card" id="sf" style="margin-top:16px" novalidate><h2>Sign this agreement</h2><label class="fld"><span>Type your full name</span><input name="name" required minlength="3" maxlength="100" autocomplete="name"></label><label class="chk"><input type="checkbox" name="agree"> <span>I have read and agree to this agreement. Typing my name counts as my signature.</span></label><p class="err" role="alert"></p><button class="btn btn-acc">Sign agreement</button></form>';
+    }
+    out.innerHTML = html;
+    var f = document.getElementById('sf');
+    if (f) f.onsubmit = async function (e) {
+      e.preventDefault(); var b = f.querySelector('button'), er = f.querySelector('.err'); er.textContent = '';
+      if (!f.agree.checked || f.name.value.trim().length < 3) { er.textContent = 'Type your full name and tick the box to sign.'; return; }
+      b.disabled = true;
+      try { draw(await call('contract/sign', { id: id, t: t, name: f.name.value, agree: true })); window.scrollTo(0, 0); } catch (x) { er.textContent = x.message; b.disabled = false; }
+    };
+  }
+  call('contract', { id: id, t: t }).then(draw, function (x) { out.innerHTML = '<div class="card"><h1>We could not open this agreement</h1><p class="sub">' + esc(x.message) + '</p></div>'; });
+})();
+</script>
+</body>
+</html>

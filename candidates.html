@@ -32,7 +32,7 @@
   <section class="t-hero"><div class="bgimg" aria-hidden="true"><img src="/img/meeting.webp" alt="" width="1600" height="900"></div><div class="wrap">
     <span class="eyebrow">Delegance candidates</span>
     <h1 class="h"><span class="silver">Find your virtual assistant.</span></h1>
-    <p>Every profile is reviewed by Delegance. Browse real portfolios, message a candidate directly, or let us arrange the hire for you.</p>
+    <p>Browse real portfolios and message a candidate directly. Gold ✓ means Delegance has verified them. Contact details unlock once you both sign a Delegance agreement.</p>
     <div class="t-badges"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Reviewed by Delegance</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Contact details kept private</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Chat or hire in one tap</span></div>
   </div></section>
 
@@ -63,7 +63,7 @@
   var gal = document.getElementById('gal');
   function card(c) {
     return '<a class="vcard" href="/va/' + encodeURIComponent(c.slug) + '">' + T.port(c.photo, '', true) +
-      '<div class="b"><h3>' + T.esc(c.name) + '</h3><div class="hl">' + T.esc(c.headline) + '</div>' +
+      '<div class="b"><h3>' + T.esc(c.name) + (c.verified ? ' <span title="Verified by Delegance" style="color:#e2c27a">✓</span>' : '') + '</h3><div class="hl">' + T.esc(c.headline) + '</div>' +
       '<div class="meta">' + [c.location, c.availability, c.years ? c.years + (c.years > 1 ? ' years' : ' year') + ' experience' : ''].filter(Boolean).map(T.esc).join(' · ') + '</div>' +
       '<div class="chips">' + (c.skills || []).slice(0, 4).map(function (s) { return '<span class="chip">' + T.esc(s) + '</span>'; }).join('') + '</div></div></a>';
   }

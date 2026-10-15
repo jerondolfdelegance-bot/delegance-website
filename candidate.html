@@ -28,7 +28,7 @@
 
 <main class="wrap" id="pf"><div class="pf"><div class="skel" style="height:450px"></div><div class="stack"><div class="skel" style="height:60px"></div><div class="skel" style="height:220px"></div></div></div></main>
 
-<footer class="tf"><div class="wrap"><span>© 2026 Delegance · Profiles are reviewed by Delegance. Contact details are kept private.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance · Contact details stay private until both sides sign a Delegance agreement.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
 
 <script src="/assets/talent.js?v=1"></script>
 <script>
@@ -48,7 +48,7 @@
       '<div class="share-row"><button class="btn sm" id="shareBtn">' + I.share + ' Share</button><button class="btn sm" id="copyBtn">' + I.link + ' Copy link</button></div>' +
       '<div class="note small"><span class="verified">' + I.shield + ' Reviewed by Delegance</span><br>Contact details are private. Chat here, or let Delegance arrange the work for you.</div></aside>' +
       '<div><span class="eyebrow">Virtual assistant</span><h1 class="h"><span class="silver">' + esc(c.name) + '</span></h1><p class="hl">' + esc(c.headline) + '</p>' +
-      '<div class="row">' + (c.availability ? '<span class="pill">' + esc(c.availability) + '</span>' : '') + (c.location ? '<span class="pill b">' + esc(c.location) + '</span>' : '') + '</div>' +
+      '<div class="row">' + (c.verified ? '<span class="pill" style="color:#e2c27a;border-color:rgba(226,194,122,.45)">✓ Verified by Delegance</span>' : '') + (c.availability ? '<span class="pill">' + esc(c.availability) + '</span>' : '') + (c.location ? '<span class="pill b">' + esc(c.location) + '</span>' : '') + '</div>' +
       '<div class="facts">' +
         '<div class="fact"><b>' + (c.years ? c.years + (c.years > 1 ? ' years' : ' year') : 'New') + '</b><span>Experience</span></div>' +
         (c.hours ? '<div class="fact"><b>' + esc(c.hours) + '</b><span>Working hours</span></div>' : '') +
@@ -113,10 +113,11 @@
       if (st) poll(true);
     }
     function badge() { var unread = msgs.filter(function (m) { return m.from !== 'you'; }).length - seen; var el = head.querySelector('.cnt'); if (unread > 0 && !win) { if (!el) { el = document.createElement('span'); el.className = 'cnt'; head.appendChild(el); } el.textContent = unread; } else if (el) el.remove(); }
+    var contact = null;
     function bubble(m) { var cls = m.from === 'you' ? 'me' : m.from === 'delegance' ? 'dl' : 'them'; return '<div class="bub ' + cls + '">' + (m.from === 'delegance' ? '<b>Delegance:</b> ' : '') + esc(m.body) + '</div>'; }
     function paint() {
       if (!win) return; var box = win.querySelector('.ms');
-      box.innerHTML = '<div class="bub dl">Messages are seen by ' + esc(c.name.split(' ')[0]) + ' and the Delegance team. Emails and phone numbers are hidden for everyone\'s safety.</div>' + (msgs.length ? msgs.map(bubble).join('') : '<div class="bub them">Hi! I\'m ' + esc(c.name.split(' ')[0]) + '. Tell me about the work you need help with.</div>');
+      box.innerHTML = (contact && contact.email ? '<div class="bub dl"><b>Agreement signed.</b> You can now reach ' + esc(contact.full_name || c.name) + ' directly: <a href="mailto:' + esc(contact.email) + '">' + esc(contact.email) + '</a>' + (contact.phone ? ' · ' + esc(contact.phone) : '') + '</div>' : '<div class="bub dl">Messages are seen by ' + esc(c.name.split(' ')[0]) + ' and the Delegance team. Emails and phone numbers stay hidden until you both sign a Delegance agreement.</div>') + (msgs.length ? msgs.map(bubble).join('') : '<div class="bub them">Hi! I\'m ' + esc(c.name.split(' ')[0]) + '. Tell me about the work you need help with.</div>');
       box.scrollTop = box.scrollHeight;
       seen = msgs.filter(function (m) { return m.from !== 'you'; }).length; save(); badge();
     }
@@ -140,14 +141,14 @@
       var btn = f.querySelector('.send'); btn.disabled = true;
       try {
         if (!st) { var r = await T.api('candidates/chat/start', { body: { slug: c.slug, name: f.name.value, email: f.email.value, message: text, website: f.website.value } }); st = { id: r.id, token: r.token }; save(); var g = f.querySelector('.grid2'); if (g) g.remove(); await poll(); }
-        else { var d = await T.api('candidates/chat/send', { body: { id: st.id, token: st.token, message: text } }); msgs = d.messages; paint(); }
+        else { var d = await T.api('candidates/chat/send', { body: { id: st.id, token: st.token, message: text } }); msgs = d.messages; contact = d.contact || null; paint(); }
         f.msg.value = ''; f.msg.style.height = 'auto';
       } catch (err) { T.toast(err.message, true); if (/not found/i.test(err.message)) { st = null; save(); } }
       btn.disabled = false;
     }
     async function poll() {
       if (!st) return;
-      try { var d = await T.api('candidates/chat/poll', { body: { id: st.id, token: st.token } }); var changed = d.messages.length !== msgs.length; msgs = d.messages; if (win && changed) paint(); else badge(); } catch (e) { if (/not found/i.test(e.message)) { st = null; save(); } }
+      try { var d = await T.api('candidates/chat/poll', { body: { id: st.id, token: st.token } }); var changed = d.messages.length !== msgs.length || !!d.contact !== !!contact; msgs = d.messages; contact = d.contact || null; if (win && changed) paint(); else badge(); } catch (e) { if (/not found/i.test(e.message)) { st = null; save(); } }
     }
     return { mount: mount, open: open };
   })();
