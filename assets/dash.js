@@ -18,7 +18,7 @@
     if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.');
     return j;
   }
-  function toast(msg, err) { var t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.setAttribute('role', 'status'); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { t.remove(); }, err ? 6000 : 3000); }
+  function toast(msg, err) { var t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.setAttribute('role', 'status'); t.innerHTML = '<i aria-hidden="true">' + (err ? '!' : '✓') + '</i>'; t.appendChild(document.createTextNode(msg)); document.body.appendChild(t); setTimeout(function () { t.remove(); }, err ? 6000 : 3000); }
   var day = function (d) { return d ? new Date(d.length === 10 ? d + 'T12:00:00' : d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: new Date(d).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined }) : ''; };
   function ago(d) { if (!d) return ''; var s = (Date.now() - new Date(d)) / 1000; if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + 'm ago'; if (s < 86400) return Math.floor(s / 3600) + 'h ago'; if (s < 604800) return Math.floor(s / 86400) + 'd ago'; return day(d); }
   var pill = function (s, label) { return '<span class="pill ' + esc(s) + '">' + esc(label || STATUS[s] || STAGE[s] || s) + '</span>'; };
@@ -27,7 +27,7 @@
   var hrs = function (m) { return (Math.round((m || 0) / 6) / 10).toLocaleString() + 'h'; };
   var empty = function (t) { return '<p class="empty">' + esc(t) + '</p>'; };
   var today = function () { return new Date().toISOString().slice(0, 10); };
-  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline tright">' + (actions || '') + '<span data-theme-toggle></span>' + (TEAM ? '<button class="ibtn" id="srchBtn" aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)">' + I.search + '</button>' : '') + '<button class="ibtn" id="bell" aria-label="Notifications" title="Notifications" data-n="0">' + I.bell + '<span class="dot" hidden></span></button><button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
+  function top(title, sub, actions) { return '<div class="top"><div><h1>' + esc(title) + '</h1>' + (sub ? '<p class="sub">' + esc(sub) + '</p>' : '') + '</div><div class="inline tright">' + (actions || '') + '<span data-theme-toggle></span>' + (TEAM ? '<button class="ibtn" id="quickBtn" aria-label="Quick add (N)" title="Quick add (N)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>' : '') + (TEAM ? '<button class="ibtn" id="srchBtn" aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)">' + I.search + '</button>' : '') + '<button class="ibtn" id="bell" aria-label="Notifications" title="Notifications" data-n="0">' + I.bell + '<span class="dot" hidden></span></button><button class="menu" id="menuBtn" aria-label="Open menu">' + I.menu + '</button></div></div>'; }
   function opts(list, sel, blank) { return (blank != null ? '<option value="">' + esc(blank) + '</option>' : '') + list.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(sel == null ? '' : sel) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join(''); }
   function modal(html, onSubmit) {
     dlg.innerHTML = '<form method="dialog" novalidate>' + html + '<p class="err" role="alert"></p><div class="acts"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn btn-acc" value="ok" id="dlgOk">Save</button></div></form>';
@@ -592,6 +592,7 @@
     var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     html += '<div class="card" style="margin-bottom:16px"><h2>Delegance app</h2>' + (standalone ? '<p class="status-ok" role="status"><i aria-hidden="true"></i>You are using the installed app.</p>' : '<p class="sub" style="margin-bottom:12px">Put Delegance on your home screen or desktop. It opens full-screen like a normal app, on iPhone, iPad, Android, Windows, Mac and Chromebook.</p>' + (window.DLG_INSTALL ? '<button class="btn btn-acc" id="instApp">Install the app</button>' : ios ? '<p class="fine">On iPhone or iPad: in Safari tap the <b>Share</b> button, then <b>Add to Home Screen</b>, then <b>Add</b>.</p>' : '<p class="fine">In Chrome or Edge: click the install icon at the right end of the address bar, or open the browser menu and choose <b>Install Delegance</b> (on Android: <b>Add to Home screen</b>).</p>')) + '</div>';
     setTimeout(function () { var ib = document.getElementById('instApp'); if (ib) ib.onclick = async function () { var p = window.DLG_INSTALL; if (!p) return; p.prompt(); var r = await p.userChoice; window.DLG_INSTALL = null; toast(r.outcome === 'accepted' ? 'Installing Delegance…' : 'No problem. You can install it any time from here.'); route(); }; });
+    html += '<div class="card" style="margin-bottom:16px"><h2>Your data</h2><p class="sub">Download a copy of everything Delegance keeps about you: profile, devices, sign-in methods, tasks, messages and account activity.</p><a class="btn" href="/api/auth/export" download>Download my data</a></div>';
     html += '<div class="card" style="margin-bottom:16px"><h2>Passkeys</h2><p class="sub">Sign in with your face, fingerprint or device PIN instead of a password. Passkeys cannot be phished and count as 2-step sign-in.</p><div id="pkList" class="pk-list"><p class="sub">Loading…</p></div>' + (window.PublicKeyCredential ? '<button type="button" class="btn btn-acc" id="pkAdd">Add a passkey on this device</button>' : '<p class="sub">This browser does not support passkeys.</p>') + '</div>';
     setTimeout(async function () {
       var b64d = function (x) { x = x.replace(/-/g, '+').replace(/_/g, '/'); var b = atob(x + '==='.slice((x.length + 3) % 4)), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; };
@@ -1002,6 +1003,8 @@
   V.updates = async function () {
     var d = await api('updates');
     var html = top('What\'s new', 'Every Delegance release, newest first', d.can_edit ? '<button class="btn btn-acc" id="addUp">Add update</button>' : '');
+    try { localStorage.setItem('dlg-seen-up', d.items[0] ? d.items[0].id : ''); } catch (e) {} var nb = document.querySelector('#nav a[href="#updates"] .nbadge'); if (nb) nb.remove();
+    if (ADMIN) { try { var nl = await api('newsletter/subscribers'); html += '<div class="card" style="margin-bottom:16px"><h2>Newsletter</h2><p class="sub">' + nl.active + ' confirmed subscriber' + (nl.active === 1 ? '' : 's') + (nl.pending ? ' · ' + nl.pending + ' waiting to confirm' : '') + '. People sign up in the website footer and on the What\'s new page, and confirm by email.</p>' + (nl.total ? '<a class="btn btn-sm" href="/api/newsletter/subscribers?format=csv" download>Download list (CSV)</a>' : '') + '</div>'; } catch (e) {} }
     html += '<ol class="ulog">' + d.items.map(function (u) { return '<li><span class="udot" aria-hidden="true"></span><div class="card"><div class="uhead"><b>' + esc(u.title) + '</b>' + (u.version ? '<span class="pill gold">' + esc(u.version) + '</span>' : '') + '<span class="sub">' + esc(day(u.released_at)) + '</span>' + (d.can_edit ? '<button class="btn btn-sm uedit" data-id="' + esc(u.id) + '" style="margin-left:auto">Edit</button>' : '') + '</div><p class="sub" style="margin-top:6px;white-space:pre-wrap">' + esc(u.body) + '</p></div></li>'; }).join('') + '</ol>';
     setTimeout(function () {
       var edit = function (u) { modal('<h2>' + (u ? 'Edit update' : 'Add update') + '</h2><div class="row2"><label class="fld"><span>Title</span><input name="title" required maxlength="120" value="' + esc(u ? u.title : '') + '"></label><label class="fld"><span>Version (optional)</span><input name="version" maxlength="30" value="' + esc(u ? u.version || '' : '') + '"></label></div><label class="fld"><span>Released</span><input type="date" name="released_at" value="' + esc(u ? u.released_at : today()) + '"></label><label class="fld"><span>What changed</span><textarea name="body" required maxlength="3000" style="min-height:120px">' + esc(u ? u.body : '') + '</textarea></label>' + (u ? '<p><button type="button" class="btn btn-sm btn-danger" id="uDel">Delete</button></p>' : ''), async function (f) { if (u) await api('updates/' + u.id, 'PATCH', f); else await api('updates', 'POST', f); toast('Saved.'); route(); }); var del = document.getElementById('uDel'); if (del) del.onclick = async function () { if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'Click again'; return; } await api('updates/' + u.id, 'DELETE'); dlg.close(); route(); }; };
@@ -1099,11 +1102,53 @@
     applyAccent(); loadChatBadge();
     document.querySelector('#soSide svg').setAttribute('width', '16');
   }
+
+  // ---------- Speed tools: shortcuts, quick add, what's new badge, phone bottom bar ----------
+  function quickAdd() {
+    if (!TEAM) return;
+    modal('<h2>Quick add</h2><p class="lead">What do you want to add?</p><div class="qadd-grid"><button type="button" class="qadd" data-qa="contact"><b>Contact</b><span>A new lead or client</span></button><button type="button" class="qadd" data-qa="deal"><b>Deal</b><span>A new opportunity</span></button><button type="button" class="qadd" data-qa="task"><b>Task</b><span>Something to do</span></button></div>', null);
+    var ok = document.getElementById('dlgOk'); if (ok) { ok.hidden = true; var cx = ok.previousElementSibling; if (cx) cx.textContent = 'Close'; }
+    document.querySelectorAll('[data-qa]').forEach(function (b) { b.onclick = async function () { var k = b.dataset.qa; dlg.close(); if (k === 'contact') addContact(); else if (k === 'deal') addDeal(); else addTask(await teamList()); }; });
+  }
+  function shortcuts() {
+    var rows = [['?', 'Show these shortcuts'], ['Ctrl / ⌘ + K', 'Search everything']].concat(TEAM ? [['N', 'Quick add a contact, deal or task'], ['G then H', 'Go to Home'], ['G then P', 'Go to Pipeline'], ['G then C', 'Go to Contacts'], ['G then D', 'Go to My day'], ['G then M', 'Go to Chat']] : [['G then H', 'Go to Home']]);
+    modal('<h2>Keyboard shortcuts</h2><table class="kbd-t">' + rows.map(function (r) { return '<tr><td>' + r[0].split(' ').map(function (k) { return /^(then|\+|\/)$/.test(k) ? '<span>' + k + '</span>' : '<kbd>' + esc(k) + '</kbd>'; }).join(' ') + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('') + '</table>', null);
+    var ok = document.getElementById('dlgOk'); if (ok) { ok.hidden = true; var cx = ok.previousElementSibling; if (cx) cx.textContent = 'Close'; }
+  }
+  var gWait = 0;
+  document.addEventListener('keydown', function (e) {
+    if (!ME || e.ctrlKey || e.metaKey || e.altKey || (ME.mfa_required && !ME.mfa)) return;
+    var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (dlg.open) return;
+    var k = e.key.toLowerCase();
+    if (e.key === '?') { e.preventDefault(); shortcuts(); return; }
+    if (gWait && Date.now() - gWait < 1500) { var go = { h: 'home', p: 'pipeline', c: 'contacts', d: 'myday', m: 'chat' }[k]; gWait = 0; if (go) { e.preventDefault(); location.hash = go; } return; }
+    if (k === 'g') { gWait = Date.now(); return; }
+    if (k === 'n' && TEAM) { e.preventDefault(); quickAdd(); }
+  });
+  document.addEventListener('click', function (e) { if (e.target.closest('#quickBtn')) quickAdd(); });
+  function whatsNewBadge() {
+    fetch('/api/public/updates').then(function (r) { return r.json(); }).then(function (d) {
+      var latest = d.updates && d.updates[0] && d.updates[0].id, seen = ''; try { seen = localStorage.getItem('dlg-seen-up') || ''; } catch (e) {}
+      var a = document.querySelector('#nav a[href="#updates"]'); if (!a || !latest || latest === seen || a.querySelector('.nbadge')) return;
+      var b = document.createElement('i'); b.className = 'nbadge'; b.textContent = 'New'; a.appendChild(b);
+    }).catch(function () {});
+  }
+  function bottomBar() {
+    if (document.getElementById('bbar')) return;
+    var links = [].slice.call(document.querySelectorAll('#nav a')).slice(0, 4); if (links.length < 2) return;
+    var bar = document.createElement('nav'); bar.id = 'bbar'; bar.className = 'bbar'; bar.setAttribute('aria-label', 'Quick navigation');
+    bar.innerHTML = links.map(function (a) { var ic = a.querySelector('svg'); return '<a href="' + a.getAttribute('href') + '">' + (ic ? ic.outerHTML : '') + '<span>' + esc(a.textContent.replace(/New$|\d+$/, '').trim()) + '</span></a>'; }).join('') + '<button type="button" id="bbMore"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>More</span></button>';
+    document.body.appendChild(bar);
+    document.getElementById('bbMore').onclick = function (e) { e.stopPropagation(); document.body.classList.add('nav-open'); };
+    var mark = function () { bar.querySelectorAll('a').forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === (location.hash || '#home')); }); };
+    mark(); window.addEventListener('hashchange', mark);
+  }
   document.addEventListener('keydown', function (e) { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && TEAM && !(ME && ME.mfa_required && !ME.mfa)) { e.preventDefault(); if (!dlg.open) openSearch(); } });
   setInterval(function () { if (document.visibilityState === 'visible' && ME) { loadBell(); loadChatBadge(); } }, 30000);
   window.addEventListener('hashchange', function () { if (ME && ME.mfa_required && !ME.mfa) return; route(); });
   document.addEventListener('click', function (e) { if (document.body.classList.contains('nav-open') && !e.target.closest('.side') && !e.target.closest('#menuBtn')) document.body.classList.remove('nav-open'); });
-  boot().then(function () { if (ME.mfa || !ME.mfa_required) { try { sessionStorage.removeItem('dlg-mfa-r'); } catch (e) {} } if (ME.mfa_required && !ME.mfa) return gate(); return route(); }).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
+  boot().then(function () { if (ME.mfa || !ME.mfa_required) { try { sessionStorage.removeItem('dlg-mfa-r'); } catch (e) {} } if (ME.mfa_required && !ME.mfa) return gate(); var rr = route(); setTimeout(function () { whatsNewBadge(); bottomBar(); }, 400); return rr; }).catch(function (x) { if (!/sign in/i.test(x.message)) main.innerHTML = '<p class="err">' + esc(x.message) + '</p>'; });
   // Installable app: offline shell + install prompt (shown on the Account page).
   if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
   document.addEventListener('dlg-theme', function () { if (ME) applyAccent(); });
