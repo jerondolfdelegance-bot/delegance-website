@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book a call · Delegance</title>
+<meta name="description" content="Pick a time for a free call with the Delegance team about virtual assistants, websites, apps and automations.">
+<link rel="canonical" href="https://delegance.app/book">
+<meta property="og:title" content="Book a call with Delegance">
+<meta property="og:description" content="Pick a time that suits you. We will talk about what you want to hand over.">
+<meta property="og:image" content="https://delegance.app/og.jpg">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/dash.css?v=5">
+<link rel="stylesheet" href="/assets/motion.css?v=1">
+<script src="/assets/motion.js?v=1"></script>
+<style>
+body{--acc:#e2c27a;--acc2:#a8873e;--accbg:rgba(226,194,122,.12);--glow1:#3a3220;--glow2:#2b2416}
+.bk{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.bk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.bk-top img{height:26px;width:auto}
+.bk-grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+.bk-info{padding:28px}
+.bk-info .eyebrow{font:600 11px Montserrat,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.bk-info h1{font-size:30px;margin:10px 0 10px}
+.bk-info p{color:var(--muted)}
+.bk-meta{list-style:none;display:grid;gap:10px;margin:20px 0 0}.bk-meta li{display:flex;gap:10px;align-items:center;color:#d5d6db;font-size:14px}.bk-meta svg{width:18px;height:18px;color:var(--gold)}
+.bk-pick{padding:24px}
+.days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:thin}
+.day{flex:none;width:76px;padding:10px 0;border-radius:14px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;text-align:center;font:500 12px Inter}
+.day b{display:block;font:600 20px Montserrat,sans-serif;margin:2px 0}
+.day[aria-pressed=true]{border-color:var(--gold);background:var(--goldbg);color:var(--gold)}
+.day:disabled{opacity:.35;cursor:default}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:18px;min-height:60px}
+.slot{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--text);font:600 14px Inter;cursor:pointer;transition:border-color .15s,background .15s}
+.slot:hover{border-color:var(--goldline)}.slot[aria-pressed=true]{background:var(--gold);color:#0a0a0b;border-color:transparent}
+.tzline{color:var(--dim);font-size:12px;margin-top:12px}
+.bk-form{margin-top:20px;border-top:1px solid var(--line);padding-top:20px}
+.done{text-align:center;padding:40px 20px}.done .check{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;background:var(--goldbg);color:var(--gold);font-size:30px}
+@media (max-width:860px){.bk-grid{grid-template-columns:1fr}.bk-info{padding:22px}.bk-pick{padding:18px}}
+</style>
+</head>
+<body>
+<div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+<main class="bk">
+  <div class="bk-top"><a href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="138" height="26"></a><a class="btn btn-sm" href="/">Back to site</a></div>
+  <div class="bk-grid">
+    <section class="card bk-info">
+      <span class="eyebrow">Book a call</span>
+      <h1 id="title">Discovery call</h1>
+      <p id="intro">A short call with the Delegance team about what you want to hand over.</p>
+      <ul class="bk-meta">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="mins">30 minutes</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg><span>Video call, link sent by email</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg><span>Free, no commitment</span></li>
+      </ul>
+    </section>
+    <section class="card bk-pick" id="pick" aria-live="polite">
+      <h2 style="font-size:18px;margin-bottom:14px">Pick a day and time</h2>
+      <div class="days" id="days" role="group" aria-label="Days"></div>
+      <div class="slots" id="slots" role="group" aria-label="Times"><div class="skel" style="grid-column:1/-1"><i style="--h:44px"></i></div></div>
+      <p class="tzline" id="tzl"></p>
+      <form class="bk-form" id="f" hidden novalidate>
+        <p id="chosen" style="font:600 15px Montserrat,sans-serif;margin-bottom:14px;color:var(--gold)"></p>
+        <div class="row2"><label class="fld"><span>Your name</span><input name="name" autocomplete="name" maxlength="80" required></label><label class="fld"><span>Email</span><input name="email" type="email" autocomplete="email" required></label></div>
+        <label class="fld"><span>Business or website (optional)</span><input name="company" maxlength="120"></label>
+        <label class="fld"><span>What would you like to talk about? (optional)</span><textarea name="notes" maxlength="1000" placeholder="e.g. I need help with my inbox and bookings, about 15 hours a week."></textarea></label>
+        <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="ts" id="ts"></div>
+        <p class="err" role="alert"></p>
+        <button class="btn btn-acc wide" type="submit">Confirm booking</button>
+      </form>
+    </section>
+  </div>
+</main>
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)}, esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC', data=null, day=null, pick=null, tsId=null;
+  async function req(m,u,b){var r=await fetch(u,{method:m,headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined});var j=await r.json().catch(function(){return{}});if(!r.ok)throw new Error(j.error||'Something went wrong. Please try again.');return j}
+  var dkey=function(iso){return new Date(iso).toLocaleDateString('en-CA',{timeZone:tz})};
+  var cm=location.hash.match(/^#cancel=([A-Za-z0-9_-]{20,})$/);
+  if(cm){history.replaceState(null,'',location.pathname);$('#pick').innerHTML='<div class="done"><h2>Cancel your call?</h2><p class="sub" style="color:var(--muted);margin:8px 0 18px">This frees the time for someone else. You can book again any time.</p><button class="btn btn-danger" id="cx">Yes, cancel it</button> <a class="btn" href="/book">Keep it</a><p class="err" style="margin-top:12px"></p></div>';$('#cx').onclick=async function(){try{DLGMotion.busy(this,true);await req('POST','/api/book/cancel',{token:cm[1]});$('#pick').innerHTML='<div class="done"><div class="check">✓</div><h2>Cancelled</h2><p style="color:var(--muted);margin-top:8px">Want a different time? <a href="/book">Book again</a>.</p></div>'}catch(x){DLGMotion.busy(this,false);$('#pick .err').textContent=x.message}};return}
+  req('GET','/api/book').then(function(d){
+    data=d;$('#title').textContent=d.title;$('#mins').textContent=d.minutes+' minutes';if(d.intro)$('#intro').textContent=d.intro;
+    $('#tzl').textContent='Times shown in your time zone: '+tz.replace(/_/g,' ');
+    if(!d.enabled||!d.slots.length){$('#slots').innerHTML='<p class="empty" style="grid-column:1/-1">'+(d.enabled?'No free times right now. Email admin@delegance.app and we will find one.':'Booking is closed right now. Email admin@delegance.app.')+'</p>';return}
+    var by={};d.slots.forEach(function(s){(by[dkey(s)]=by[dkey(s)]||[]).push(s)});
+    var keys=Object.keys(by).sort();
+    $('#days').innerHTML=keys.map(function(k){var dt=new Date(k+'T12:00:00');return '<button class="day" type="button" data-k="'+k+'" aria-pressed="false"><span>'+dt.toLocaleDateString(undefined,{weekday:'short'})+'</span><b>'+dt.getDate()+'</b><span>'+dt.toLocaleDateString(undefined,{month:'short'})+'</span></button>'}).join('');
+    function showDay(k){day=k;document.querySelectorAll('.day').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.k===k))});$('#slots').innerHTML=by[k].map(function(s){return '<button class="slot" type="button" data-s="'+s+'" aria-pressed="false">'+new Date(s).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'</button>'}).join('');document.querySelectorAll('.slot').forEach(function(b){b.onclick=function(){choose(b.dataset.s)}})}
+    document.querySelectorAll('.day').forEach(function(b){b.onclick=function(){showDay(b.dataset.k)}});
+    showDay(keys[0]);
+  }).catch(function(x){$('#slots').innerHTML='<p class="err">'+esc(x.message)+'</p>'});
+  function choose(s){pick=s;document.querySelectorAll('.slot').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===s))});$('#f').hidden=false;$('#chosen').textContent=new Date(s).toLocaleString(undefined,{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
+    if(tsId==null)fetch('/api/config').then(function(r){return r.json()}).then(function(c){if(!c.turnstile)return;var sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=function(){tsId=turnstile.render('#ts',{sitekey:c.turnstile,theme:'dark',size:'flexible'})};document.head.appendChild(sc);tsId=-1}).catch(function(){});
+    $('#f [name=name]').focus({preventScroll:true});$('#f').scrollIntoView({behavior:'smooth',block:'nearest'})}
+  $('#f').addEventListener('submit',async function(e){e.preventDefault();var b=this.querySelector('button[type=submit]'),er=this.querySelector('.err'),fd=Object.fromEntries(new FormData(this));er.textContent='';
+    if(!fd.name||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(fd.email)){er.textContent='Add your name and email.';return}
+    fd.start=pick;fd.tz=tz;fd.turnstile=tsId>=0&&window.turnstile?turnstile.getResponse(tsId):'';DLGMotion.busy(b,true);
+    try{var r=await req('POST','/api/book',fd);$('#pick').innerHTML='<div class="done"><div class="check">✓</div><h2>You are booked</h2><p style="color:var(--muted);margin:8px 0 4px">'+esc(new Date(r.start).toLocaleString(undefined,{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</p><p style="color:var(--muted)">We sent a calendar invite to '+esc(fd.email)+'.</p>'+(r.link?'<p style="margin-top:16px"><a class="btn btn-acc" href="'+esc(r.link)+'" target="_blank" rel="noopener">Meeting link</a></p>':'')+'<p style="margin-top:18px"><a class="btn" href="/">Back to Delegance</a></p></div>'}
+    catch(x){DLGMotion.busy(b,false);er.textContent=x.message;if(tsId>=0&&window.turnstile)turnstile.reset(tsId);if(/taken/.test(x.message))setTimeout(function(){location.reload()},1600)}});
+})();
+</script>
+</body>
+</html>
