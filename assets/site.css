@@ -541,7 +541,7 @@ footer.site{border-top:1px solid var(--line);padding:64px 0 40px;color:var(--dim
 :root{--max:1280px}
 .serif,.sec-head h2,.hero h1{font-weight:700;letter-spacing:-.025em}
 .sec-head h2{font-size:clamp(34px,4.6vw,60px)}
-.hero{padding:110px 0 90px;min-height:min(92vh,980px);display:flex;align-items:center;background:linear-gradient(100deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.88) 38%,rgba(11,10,8,.55) 70%,rgba(11,10,8,.35) 100%),url(/img/loft.webp) center/cover no-repeat}
+.hero{padding:110px 0 90px;min-height:min(calc(92vh / var(--z,1)),980px);display:flex;align-items:center;background:linear-gradient(100deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.88) 38%,rgba(11,10,8,.55) 70%,rgba(11,10,8,.35) 100%),url(/img/loft.webp) center/cover no-repeat}
 .hero>.wrap{width:100%}
 .hero h1{font-size:clamp(46px,6.4vw,92px)}
 .hero p.lead{font-size:clamp(17px,1.5vw,21px);max-width:600px}

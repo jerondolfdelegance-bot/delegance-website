@@ -19,7 +19,7 @@ html[data-theme=light] body[data-role=va]{--acc:#1e7a52;--acc2:#145a3b;--accbg:r
 html[data-theme=light] body[data-role=client]{--acc:#8a5a2b;--acc2:#6a431e;--accbg:rgba(138,90,43,.10)}
 html[data-theme=light] body[data-role=member]{--acc:#5a42c2;--acc2:#432f9c;--accbg:rgba(90,66,194,.10)}
 html[data-theme=light] .grain{opacity:.025}
-html[data-theme=light] .amb i{opacity:.55}
+html[data-theme=light] .amb i{opacity:.7;background:radial-gradient(circle,#efe0bd,transparent 70%)!important;filter:none!important;animation:none!important}
 html[data-theme=light] .btn-acc,html[data-theme=light] .btn.btn-acc{color:#fff}
 html[data-theme=light] img.logo-w,html[data-theme=light] .logo img,html[data-theme=light] .brand img,html[data-theme=light] .bk-top img,html[data-theme=light] .auth-home img,html[data-theme=light] .k-wrap .logo img{filter:invert(1) hue-rotate(180deg)}
 /* Theme switch */
@@ -55,3 +55,11 @@ html[data-theme=light] .qbtn{background:rgba(255,255,255,.75)}
 html[data-theme=light] .ring b{background:#fffdf8}
 html[data-theme=light] .tchat{background:rgba(255,255,255,.7)}
 html[data-theme=light] dialog::backdrop{background:rgba(40,30,10,.35)}
+
+/* Anything marked hidden stays hidden, even when a class gives it a display */
+[hidden]{display:none!important}
+/* Big monitors: scale the whole page up so it fills the screen the way it does on a laptop.
+   --z lets viewport-height rules divide by the zoom so full-height areas still fit. */
+@media (min-width:1600px){html{zoom:1.1;--z:1.1}}
+@media (min-width:1900px){html{zoom:1.25;--z:1.25}}
+@media (min-width:2400px){html{zoom:1.45;--z:1.45}}
