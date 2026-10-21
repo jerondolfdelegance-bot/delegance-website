@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Join Delegance as a virtual assistant · Free professional profile</title>
-<meta name="description" content="Create your free Delegance VA profile: portfolio, experience and skills on one professional page you can share with any job application. Get hired through Delegance.">
+<title>Become a Delegance AI Delegate · Free professional profile</title>
+<meta name="description" content="Create your free Delegance AI Delegate profile: portfolio, experience and skills on one professional page you can share with any job application. Get hired through Delegance.">
 <link rel="canonical" href="https://delegance.app/apply">
 <meta name="theme-color" content="#0a0a0b">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Delegance">
-<meta property="og:title" content="Join Delegance as a virtual assistant">
+<meta property="og:title" content="Become a Delegance AI Delegate">
 <meta property="og:description" content="A free professional profile you can share with any job application. Get hired through Delegance.">
 <meta property="og:url" content="https://delegance.app/apply">
 <meta property="og:image" content="https://delegance.app/og.jpg">
@@ -18,7 +18,7 @@
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta property="og:image:alt" content="Delegance: AI Delegates, websites and apps">
 <meta name="twitter:image" content="https://delegance.app/og.jpg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://desk.delegance.app">
@@ -39,8 +39,8 @@
 <main class="wrap">
   <section class="t-hero" id="intro" style="padding-bottom:10px">
     <div class="bgimg" aria-hidden="true"><img src="/img/t-inbox.webp" alt="" width="1200" height="801"></div>
-    <span class="eyebrow" id="eyebrow">Join as a virtual assistant</span>
-    <h1 class="h"><span class="silver" id="title">Your professional VA profile. Free.</span></h1>
+    <span class="eyebrow" id="eyebrow">Become an AI Delegate</span>
+    <h1 class="h"><span class="silver" id="title">Your AI Delegate profile. Free.</span></h1>
     <p id="lead">One polished page for your portfolio, experience and skills. Share your Delegance link with any job application, get found by our clients, and get hired through us. Your address, email and phone stay private.</p>
     <div class="t-badges" id="badges"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Free to join</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Your own portfolio link</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Get hired through Delegance</span></div>
   </section>
@@ -305,7 +305,7 @@
   var TS = null, tsId = null, recTs = null;
   if (!/me=/.test(location.hash) && !localStorage.getItem('dlg-va-me')) fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) { if (!c.turnstile) return; TS = c.turnstile; var s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true; s.onload = function () { tsId = turnstile.render('#tsBox', { sitekey: TS, theme: 'dark', size: 'flexible' }); recTs = turnstile.render('#recTs', { sitekey: TS, theme: 'dark', size: 'flexible' }); }; document.head.appendChild(s); }).catch(function () {});
 
-  // ---- VA dashboard ----
+  // ---- Delegate dashboard ----
   var threads = [], openT = null, tab = 'msgs';
   function setTab(t) { tab = t; document.querySelectorAll('#tabs [data-tab]').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === t); });
     form.classList.toggle('hide', t !== 'edit'); document.getElementById('pMsgs').classList.toggle('hide', t !== 'msgs'); document.getElementById('pShare').classList.toggle('hide', t !== 'share'); if (t === 'msgs') paintThreads(); }
@@ -337,7 +337,7 @@
     var seen = {}; try { seen = JSON.parse(localStorage.getItem('dlg-va-seen') || '{}'); } catch (e) {}
     var unread = threads.reduce(function (n, t) { return n + Math.max(0, t.messages.filter(function (m) { return m.from === 'client'; }).length - (seen[t.id] || 0)); }, 0);
     var c = document.getElementById('tcnt'); c.textContent = unread; c.classList.toggle('hide', !unread);
-    document.title = (unread ? '(' + unread + ') ' : '') + 'Delegance VA dashboard';
+    document.title = (unread ? '(' + unread + ') ' : '') + 'Delegance Delegate dashboard';
     if (tab === 'msgs') paintThreads();
   }
   function paintThreads() {
@@ -366,7 +366,7 @@
     e.preventDefault(); var em = document.getElementById('recEmail').value.trim(), msg = document.getElementById('recMsg'), b = this.querySelector('button');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { msg.textContent = 'Type a valid email address.'; return; }
     b.disabled = true; msg.textContent = 'Sending…';
-    try { await site('va/recover', { email: em, turnstile: TS && window.turnstile && recTs != null ? turnstile.getResponse(recTs) : '' }); msg.textContent = 'If that email is on a Delegance VA profile, a fresh edit link is on its way. Check your inbox and spam folder.'; }
+    try { await site('va/recover', { email: em, turnstile: TS && window.turnstile && recTs != null ? turnstile.getResponse(recTs) : '' }); msg.textContent = 'If that email is on a Delegance profile, a fresh edit link is on its way. Check your inbox and spam folder.'; }
     catch (err) { msg.textContent = err.message; b.disabled = false; if (TS && window.turnstile && recTs != null) turnstile.reset(recTs); }
   };
   if (/recover/.test(location.hash)) { var rd = document.getElementById('recov'); rd.open = true; setTimeout(function () { rd.scrollIntoView({ block: 'center' }); }, 300); }

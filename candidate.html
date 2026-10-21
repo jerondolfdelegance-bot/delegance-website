@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <script>(function(){try{var t=localStorage.getItem("dlg-theme")||"auto",d=t==="auto"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):t;document.documentElement.dataset.theme=d;document.documentElement.dataset.themePref=t}catch(e){document.documentElement.dataset.theme="dark"}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Virtual assistant profile · Delegance</title>
-<meta name="description" content="A virtual assistant profile on Delegance: portfolio, experience, skills and availability.">
+<title>AI Delegate profile · Delegance</title>
+<meta name="description" content="An AI Delegate profile on Delegance: portfolio, experience, skills and availability.">
 <meta name="theme-color" content="#0a0a0b">
 <meta property="og:type" content="profile">
 <meta property="og:site_name" content="Delegance">
-<meta property="og:title" content="Virtual assistant profile · Delegance">
+<meta property="og:title" content="AI Delegate profile · Delegance">
 <meta property="og:description" content="Portfolio, experience, skills and availability. Reviewed by Delegance.">
 <meta property="og:image" content="https://delegance.app/og.jpg">
 <meta property="og:image:secure_url" content="https://delegance.app/og.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Delegance: virtual assistants, websites and apps">
+<meta property="og:image:alt" content="Delegance: AI Delegates, websites and apps">
 <meta name="twitter:image" content="https://delegance.app/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -32,12 +32,12 @@
 <div class="amb" aria-hidden="true"><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
 <header class="th"><div class="wrap">
   <a class="brand" href="/" aria-label="Delegance home"><img src="/brand/delegance-logo-horizontal-flat.svg" alt="Delegance" width="148" height="28"></a>
-  <nav aria-label="Main"><a href="/candidates">All candidates</a><a class="btn sm hide-m" href="/apply">Join as a VA</a></nav>
+  <nav aria-label="Main"><a href="/candidates">All candidates</a><a class="btn sm hide-m" href="/apply">Become a Delegate</a></nav>
 </div></header>
 
 <main class="wrap" id="pf"><div class="pf"><div class="skel" style="height:450px"></div><div class="stack"><div class="skel" style="height:60px"></div><div class="skel" style="height:220px"></div></div></div></main>
 
-<footer class="tf"><div class="wrap"><span>© 2026 Delegance · Contact details stay private until both sides sign a Delegance agreement.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Join as a VA</a><a href="/privacy">Privacy</a></nav></div></footer>
+<footer class="tf"><div class="wrap"><span>© 2026 Delegance · Contact details stay private until both sides sign a Delegance agreement.</span><nav><a href="/candidates">Candidates</a><a href="/apply">Become a Delegate</a><a href="/privacy">Privacy</a></nav></div></footer>
 
 <script src="/assets/talent.js?v=2"></script>
 <script src="/assets/me.js?v=4" defer></script>
@@ -60,7 +60,7 @@
       '<div class="share-row"><button class="btn sm" id="shareBtn">' + I.share + ' Share</button><button class="btn sm" id="copyBtn">' + I.link + ' Copy link</button></div>' +
       '<div class="share-row"><button class="btn sm" id="saveBtn" aria-pressed="false"></button><button class="btn sm" id="pdfBtn">' + I.dl + ' Save as PDF</button></div>' +
       '<div class="note small"><span class="verified">' + I.shield + ' Reviewed by Delegance</span><br>Contact details are private. Chat here, or let Delegance arrange the work for you.</div></aside>' +
-      '<div><span class="eyebrow">Virtual assistant</span><h1 class="h"><span class="silver">' + esc(c.name) + '</span></h1><p class="hl">' + esc(c.headline) + '</p>' +
+      '<div><span class="eyebrow">AI Delegate</span><h1 class="h"><span class="silver">' + esc(c.name) + '</span></h1><p class="hl">' + esc(c.headline) + '</p>' +
       '<div class="row">' + (c.verified ? '<span class="pill" style="color:#e2c27a;border-color:rgba(226,194,122,.45)">✓ Verified by Delegance</span>' : '') + (c.availability ? '<span class="pill">' + esc(c.availability) + '</span>' : '') + (c.location ? '<span class="pill b">' + esc(c.location) + '</span>' : '') + '</div>' +
       '<div class="facts">' +
         '<div class="fact"><b>' + (c.years ? c.years + (c.years > 1 ? ' years' : ' year') : 'New') + '</b><span>Experience</span></div>' +
@@ -94,7 +94,7 @@
     var SV = function () { try { return JSON.parse(localStorage.getItem('dlg-saved') || '[]'); } catch (e) { return []; } };
     var paintSave = function () { var on = SV().indexOf(c.slug) >= 0, b = document.getElementById('saveBtn'); b.textContent = on ? '♥ Saved' : '♡ Save'; b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on); };
     paintSave();
-    document.getElementById('saveBtn').onclick = function () { var l = SV(), i = l.indexOf(c.slug); if (i >= 0) l.splice(i, 1); else l.unshift(c.slug); try { localStorage.setItem('dlg-saved', JSON.stringify(l)); } catch (e) {} paintSave(); T.toast(i >= 0 ? 'Removed from your saved VAs.' : 'Saved. See all your saved VAs on the candidates page.'); };
+    document.getElementById('saveBtn').onclick = function () { var l = SV(), i = l.indexOf(c.slug); if (i >= 0) l.splice(i, 1); else l.unshift(c.slug); try { localStorage.setItem('dlg-saved', JSON.stringify(l)); } catch (e) {} paintSave(); T.toast(i >= 0 ? 'Removed from your saved Delegates.' : 'Saved. See all your saved Delegates on the candidates page.'); };
     document.getElementById('pdfBtn').onclick = function () { window.print(); };
     try { var rv = JSON.parse(localStorage.getItem('dlg-recent') || '[]').filter(function (x) { return x !== c.slug; }); rv.unshift(c.slug); localStorage.setItem('dlg-recent', JSON.stringify(rv.slice(0, 8))); } catch (e) {}
     document.getElementById('copyBtn').onclick = function () { navigator.clipboard.writeText(link).then(function () { T.toast('Link copied.'); }, function () { T.toast(link); }); };
