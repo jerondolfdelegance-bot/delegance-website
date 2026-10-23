@@ -36,7 +36,7 @@ header.site.scrolled{border-bottom-color:var(--line);box-shadow:0 6px 18px -14px
 .nav{display:flex;align-items:center;justify-content:space-between;height:70px;gap:16px}
 .brand img{height:30px;width:auto}
 .links{display:flex;gap:6px;font-size:14px;color:var(--muted);padding:5px;border:1px solid var(--line);border-radius:999px;background:rgba(var(--ink),.02)}
-.links a{padding:7px 14px;border-radius:999px;transition:background .2s,color .2s}
+.links a{padding:7px 14px;border-radius:999px;transition:background .2s,color .2s;white-space:nowrap;display:inline-flex;align-items:center}
 .links a:hover{color:var(--text);background:rgba(var(--ink),.06)}
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;border-radius:999px;font-weight:600;font-size:14.5px;transition:transform .2s,border-color .2s,box-shadow .2s;white-space:nowrap}
 .btn svg{width:17px;height:17px;transition:transform .2s}
@@ -455,7 +455,7 @@ footer.site{border-top:1px solid var(--line);padding:64px 0 40px;color:var(--dim
 @media (max-width:760px){
   .links,.nav .btn-silver{display:none}
   .menu-btn{display:block}
-  .mobile-menu{position:fixed;inset:70px 0 auto;background:rgba(var(--base),.97);border-bottom:1px solid var(--line);padding:12px 20px 24px;display:flex;flex-direction:column;transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+  .mobile-menu{position:fixed;inset:70px 0 auto;background:rgb(var(--base));border-bottom:1px solid var(--line);padding:12px 20px 24px;display:flex;flex-direction:column;transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
   .mobile-menu a{padding:14px 0;border-bottom:1px solid var(--line);font-size:17px}
   .mobile-menu .btn{margin-top:18px;border-bottom:0}
   body.open .mobile-menu{opacity:1;transform:none;pointer-events:auto}
@@ -596,3 +596,16 @@ section{padding:130px 0}
 /* Smooth scrolling (16 Oct 2026): sections off screen are not drawn until they come close; photo zoom only on mouse devices */
 main>section:not(.hero){content-visibility:auto;contain-intrinsic-size:auto 900px}
 @media (hover:none){.tile.photo:hover>img{transform:none}}
+
+/* Top menu: switch to the menu button before the links run out of room (23 Oct 2026) */
+@media (max-width:1279px) and (min-width:761px){
+  .links{display:none}
+  .menu-btn{display:block}
+  .mobile-menu{position:fixed;inset:70px 0 auto;background:rgb(var(--base));border-bottom:1px solid var(--line);padding:12px 24px 24px;display:flex;flex-direction:column;transform:translateY(-8px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+  .mobile-menu a{padding:14px 0;border-bottom:1px solid var(--line);font-size:17px}
+  .mobile-menu .btn{margin-top:18px;border-bottom:0}
+  body.open .mobile-menu{opacity:1;transform:none;pointer-events:auto}
+  body.open .menu-btn span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+  body.open .menu-btn span:nth-child(2){opacity:0}
+  body.open .menu-btn span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+}
