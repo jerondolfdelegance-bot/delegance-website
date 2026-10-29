@@ -1,0 +1,22 @@
+/* Website packages with public starting prices (30 Oct 2026) */
+.pk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.pk{position:relative;display:flex;flex-direction:column;gap:6px;padding:28px 26px;border:1px solid var(--line);border-radius:20px;background:var(--card)}
+.pk-gold{border-color:var(--goldline,rgba(226,194,122,.4));background:radial-gradient(120% 80% at 100% 0%,var(--goldbg,rgba(226,194,122,.14)),transparent 60%),var(--card)}
+.pk-k{font:600 12px Montserrat,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:var(--gold,#e2c27a)}
+.pk-for{color:var(--muted);font-size:15px;min-height:3.2em}
+.pk-price{font:700 clamp(30px,3vw,40px)/1.1 Montserrat,sans-serif;color:var(--strong,var(--text));margin-top:6px}
+.pk-price small{display:block;font:500 13px Inter,sans-serif;color:var(--muted);letter-spacing:.02em}
+.pk-time{font-size:13px;color:var(--muted);padding-bottom:14px;border-bottom:1px solid var(--line)}
+.pk-list{list-style:none;display:grid;gap:9px;margin:14px 0 6px;font-size:14.5px}
+.pk-list li{display:flex;gap:10px;align-items:flex-start}
+.pk-list svg{flex:0 0 16px;width:16px;height:16px;margin-top:4px;color:var(--gold,#e2c27a)}
+.pk-note{font-size:13px;color:var(--muted);margin-top:auto;padding-top:10px}
+.pk-care{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:12px;margin-top:16px;padding:22px 24px;border:1px solid var(--line);border-radius:20px;background:var(--card);align-items:center}
+.pk-care-h b{font:600 17px Montserrat,sans-serif}.pk-care-h p{color:var(--muted);font-size:14px}
+.pk-care-p{padding:12px 14px;border:1px solid var(--line);border-radius:12px;text-align:center}
+.pk-care-p span{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pk-care-p b{font:700 22px Montserrat,sans-serif;color:var(--strong,var(--text))}.pk-care-p small{font:500 13px Inter,sans-serif;color:var(--muted)}
+.pk-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:14px;font-weight:600;color:var(--gold,#e2c27a)}
+.pk-link svg{width:15px;height:15px}.pk-link:hover{text-decoration:underline}
+@media (max-width:980px){.pk-grid{grid-template-columns:1fr}.pk-for{min-height:0}.pk-care{grid-template-columns:repeat(3,1fr)}.pk-care-h{grid-column:1/-1}}
+@media (max-width:520px){.pk-care{grid-template-columns:1fr}.pk{padding:24px 20px}}
