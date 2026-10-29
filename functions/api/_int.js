@@ -2,6 +2,7 @@
 import { now, uid, token, sha256, json, bad, clean, cleanEmail, parse, body, can, audit, limited, humanOk, emailHtml } from './_lib.js';
 import { notify, adminIds, logActivity, newDeal } from './_crm.js';
 import { emit } from './_auto.js';
+import { desk } from './_v4.js';
 
 const keyOut = k => ({ id: k.id, name: k.name, prefix: k.prefix, scope: k.scope, created_at: k.created_at, last_used: k.last_used, revoked: !!k.revoked_at, owner: k.owner || null });
 
@@ -133,6 +134,19 @@ export const MCP_TOOLS = [
   T('list_requests', 'List service requests from the website, members and clients.'),
   T('pipeline_report', 'Sales report: won revenue, win rate, average deal, open pipeline and weighted forecast, sources and leaderboard.', { days: N }),
   T('list_bookings', 'Upcoming booked calls.'),
+  // Social (through Delegance Desk, which holds the page tokens; tokens never leave Desk)
+  T('social_accounts', 'List connected social accounts (Facebook Pages, Instagram, LinkedIn, TikTok, YouTube) with their ids and status.'),
+  T('social_posts_list', 'Recent published posts (21 days), scheduled posts and drafts, with permalinks, per-page status and errors. Times are shown in Philippine time too.', { status: { type: 'string', enum: ['draft', 'review', 'scheduled', 'publishing', 'published', 'partial', 'failed'] }, limit: N }),
+  T('social_post_create', 'Create a social post as a draft (default) or scheduled. scheduled_at: ISO time, or "YYYY-MM-DD HH:MM" / "YYYY-MM-DD 7:00 PM" read as Philippine time. One photo per post (public https image link).', { text: S, account_ids: { type: 'array', items: S }, status: { type: 'string', enum: ['draft', 'scheduled'] }, scheduled_at: S, image_url: S, link_url: S, first_comment: S }, ['text'], true),
+  T('social_post_update', 'Change a draft or scheduled post. Only the fields you pass change. Published posts cannot be changed.', { id: S, text: S, account_ids: { type: 'array', items: S }, status: { type: 'string', enum: ['draft', 'scheduled'] }, scheduled_at: S, image_url: S, link_url: S, first_comment: S }, ['id'], true),
+  T('social_post_cancel', 'Stop a scheduled post: it goes back to draft. Never deletes anything; published posts stay up.', { id: S }, ['id'], true),
+  T('social_post_publish_now', 'Publish an existing post right away. Only for posts Eron has approved: set eron_approved to true.', { id: S, eron_approved: B }, ['id', 'eron_approved'], true),
+  T('social_comments_list', 'Live comments (and replies) on the latest posts of a Facebook Page.', { account_id: S, limit: N }, ['account_id']),
+  T('social_comment_reply', 'Reply as the Page to a comment on one of its 25 latest posts.', { account_id: S, comment_id: S, message: S }, ['account_id', 'comment_id', 'message'], true),
+  T('social_inbox_list', 'Messenger conversations of a Facebook Page (needs the pages_messaging permission; says so if missing).', { account_id: S, limit: N }, ['account_id']),
+  T('social_inbox_reply', 'Reply in Messenger as the Page (within Meta\'s 24-hour window). psid comes from social_inbox_list.', { account_id: S, psid: S, message: S }, ['account_id', 'psid', 'message'], true),
+  T('social_insights', 'Facebook Page followers, views/reach and engagement for the last 7 and 28 days, plus reactions, comments, shares and reach for recent posts.', { account_id: S, limit: N }, ['account_id']),
+  T('social_page_profile_update', 'Update a Facebook Page: profile picture or cover from a public https image link, about text, website, or hide the street address. Call with only account_id to check whether the permission is there.', { account_id: S, picture_url: S, cover_url: S, about: S, website: S, hide_street_address: B }, ['account_id'], true),
 ];
 export async function mcp(req, env, me, ctx, call) {
   if (req.method === 'GET') return new Response(null, { status: 405, headers: { Allow: 'POST' } });
@@ -142,7 +156,7 @@ export async function mcp(req, env, me, ctx, call) {
     if (!x || x.jsonrpc !== '2.0' || typeof x.method !== 'string') return { jsonrpc: '2.0', id: x && x.id || null, error: { code: -32600, message: 'Invalid request' } };
     const id = x.id, ok = result => ({ jsonrpc: '2.0', id, result });
     if (x.method.startsWith('notifications/')) return null;
-    if (x.method === 'initialize') return ok({ protocolVersion: (x.params && x.params.protocolVersion) || '2025-06-18', capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'delegance-crm', title: 'Delegance CRM', version: '1.0.0' }, instructions: `You are connected to the Delegance CRM as ${me.name} (${me.role}${me.readonly ? ', read-only' : ''}). Money is in USD. Deal stages: new, contacted, call (discovery call), proposal, negotiation, won, lost. Search before creating to avoid duplicates.` });
+    if (x.method === 'initialize') return ok({ protocolVersion: (x.params && x.params.protocolVersion) || '2025-06-18', capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'delegance-crm', title: 'Delegance CRM', version: '1.0.0' }, instructions: `You are connected to the Delegance CRM as ${me.name} (${me.role}${me.readonly ? ', read-only' : ''}). Money is in USD. Deal stages: new, contacted, call (discovery call), proposal, negotiation, won, lost. Search before creating to avoid duplicates. Social tools (social_*) work through Delegance Desk: create posts as drafts unless Eron asked to schedule, and publish now only what Eron approved.` });
     if (x.method === 'ping') return ok({});
     if (x.method === 'tools/list') return ok({ tools: MCP_TOOLS.filter(t => !(me.readonly && t.write)).map(({ write, ...t }) => ({ ...t, annotations: { readOnlyHint: !write } })) });
     if (x.method === 'tools/call') {
@@ -151,7 +165,7 @@ export async function mcp(req, env, me, ctx, call) {
       if (tool.write && me.readonly) return ok({ content: [{ type: 'text', text: 'This key is read-only. Create a read and write key in Delegance → Integrations.' }], isError: true });
       if (await limited(env, 'mcp:' + me.id, 300, 3600)) return ok({ content: [{ type: 'text', text: 'Rate limit reached. Try again in a few minutes.' }], isError: true });
       try {
-        const r = await runTool(name, a, call, me);
+        const r = await runTool(name, a, call, me, env);
         return ok({ content: [{ type: 'text', text: JSON.stringify(r, null, 1).slice(0, 60000) }], structuredContent: r && typeof r === 'object' && !Array.isArray(r) ? r : { result: r } });
       } catch (e) { return ok({ content: [{ type: 'text', text: 'Error: ' + (e && e.message || 'failed') }], isError: true }); }
     }
@@ -161,8 +175,51 @@ export async function mcp(req, env, me, ctx, call) {
   const r = await one(msg);
   return r ? json(r) : new Response(null, { status: 202 });
 }
+// Philippine time (UTC+8, no daylight saving) for times without a zone.
+function phTime(v) {
+  if (v === undefined || v === null || v === '') return undefined;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?$/);
+  if (m) { let h = +m[2]; if (m[4]) { if (h < 1 || h > 12) throw new Error('Use a time like 7:00 PM.'); h = (h % 12) + (/p/i.test(m[4]) ? 12 : 0); } if (h > 23 || +m[3] > 59) throw new Error('That time is not valid.'); return new Date(`${m[1]}T${String(h).padStart(2, '0')}:${m[3]}:00+08:00`).toISOString(); }
+  if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(s)) throw new Error('Give scheduled_at as an ISO time or "YYYY-MM-DD HH:MM" (Philippine time).');
+  const d = new Date(s); if (isNaN(d)) throw new Error('That date is not valid.'); return d.toISOString();
+}
+const inPH = iso => iso ? new Date(Date.parse(iso) + 8 * 3600_000).toISOString().slice(0, 16).replace('T', ' ') + ' PHT' : null;
+async function socialTool(name, a, call, me, env) {
+  const view = await call('GET', 'social'), live = new Set(view.accounts.filter(x => x.enabled).map(x => x.id)), names = Object.fromEntries(view.accounts.map(x => [x.id, x.name + ' (' + x.network + ')']));
+  if (name === 'social_accounts') return { accounts: view.accounts.map(x => ({ id: x.id, network: x.network, name: x.name, handle: x.handle, client: x.client, enabled: !!x.enabled, status: x.status, note: x.status_note })), scheduler_last_run: view.last_tick };
+  if (name === 'social_posts_list') return { posts: view.posts.filter(p => !a.status || p.status === a.status).slice(0, Math.min(80, +a.limit || 40)).map(p => ({ id: p.id, status: p.status, scheduled_at: p.scheduled_at, scheduled_ph: inPH(p.scheduled_at), published_at: p.published_at, text: String(p.body || '').slice(0, 280), image: p.media, link: p.link_url, review_note: p.review_note, by: p.created_by,
+    targets: p.targets.map(t => ({ account_id: t.account_id, account: names[t.account_id], status: t.status, permalink: t.permalink, error: t.error })) })) };
+  const tool = MCP_TOOLS.find(t => t.name === name);
+  if (a.account_ids !== undefined && (!Array.isArray(a.account_ids) || !a.account_ids.every(id => live.has(String(id))))) throw new Error('Use account ids from social_accounts (switched-on accounts only).');
+  if (a.account_id !== undefined && !names[a.account_id]) throw new Error('Unknown account_id. Use social_accounts.');
+  if (tool.write) {
+    if (await limited(env, 'mcpsocial:' + me.id, 60, 3600)) throw new Error('Social write limit reached (60 an hour). Try again later.');
+    await audit(env, me.email, 'mcp.' + name, String(a.id || a.account_id || (a.account_ids || []).join(',')).slice(0, 200));
+  }
+  const img = a.image_url ? (await desk(env, 'social/media-import', { url: a.image_url }, me)).media_id : undefined;
+  const fields = { body: a.text, account_ids: a.account_ids, link_url: a.link_url, first_comment: a.first_comment, media_id: img, scheduled_at: phTime(a.scheduled_at), status: a.status };
+  switch (name) {
+    case 'social_post_create': {
+      if (fields.status === 'scheduled' && !fields.scheduled_at) throw new Error('A scheduled post needs scheduled_at.');
+      const r = await desk(env, 'posts', { ...fields, status: fields.status || 'draft', account_ids: fields.account_ids || [] }, me);
+      return { ...r, scheduled_ph: inPH(fields.scheduled_at) };
+    }
+    case 'social_post_update': { const b = { id: a.id }; for (const [k, v] of Object.entries(fields)) if (v !== undefined) b[k] = v; return desk(env, 'social/post-update', b, me); }
+    case 'social_post_cancel': return desk(env, 'social/post-cancel', { id: a.id }, me);
+    case 'social_post_publish_now': if (a.eron_approved !== true) throw new Error('Only publish posts Eron has approved.'); return desk(env, 'social/post-publish', { id: a.id }, me);
+    case 'social_comments_list': return desk(env, 'social/comments', { account_id: a.account_id, limit: a.limit }, me);
+    case 'social_comment_reply': return desk(env, 'social/comment-reply', { account_id: a.account_id, comment_id: a.comment_id, message: a.message }, me);
+    case 'social_inbox_list': return desk(env, 'social/inbox', { account_id: a.account_id, limit: a.limit }, me);
+    case 'social_inbox_reply': return desk(env, 'social/inbox-reply', { account_id: a.account_id, psid: a.psid, message: a.message }, me);
+    case 'social_insights': return desk(env, 'social/insights', { account_id: a.account_id, limit: a.limit }, me);
+    case 'social_page_profile_update': { const { account_id, picture_url, cover_url, about, website, hide_street_address } = a; return desk(env, 'social/page-update', { account_id, picture_url, cover_url, about, website, hide_street_address }, me); }
+  }
+  throw new Error('Unknown tool');
+}
 const qs = o => { const u = new URLSearchParams(); for (const [k, v] of Object.entries(o)) if (v !== undefined && v !== null && v !== '') u.set(k, v); const s = u.toString(); return s ? '?' + s : ''; };
-async function runTool(name, a, call) {
+async function runTool(name, a, call, me, env) {
+  if (name.startsWith('social_')) return socialTool(name, a, call, me, env);
   const id = encodeURIComponent(String(a.id || ''));
   switch (name) {
     case 'search_crm': return call('GET', 'search' + qs({ q: a.query }));
