@@ -3,13 +3,14 @@ pages_build_output_dir = "."
 compatibility_date = "2026-10-02"
 
 # Same database as Delegance Desk: candidates, chats and the CRM live together.
+# Delegance Cloudflare account (4796b315...) D1 "delegance-desk".
 [[d1_databases]]
 binding = "DB"
 database_name = "delegance-desk"
-database_id = "097da0af-d866-4776-b262-035190467e52"
+database_id = "4cd7f516-4659-46bc-b5e9-79b666699aeb"
 
 [vars]
 # Public Turnstile site key (the secret lives in Cloudflare as TURNSTILE_SECRET)
-TURNSTILE_SITE_KEY = "0x4AAAAAAFW0NxS7dcQAqtRn"
+TURNSTILE_SITE_KEY = "0x4AAAAAAFtu8IwMCMy-I19g"
 MAIL_FROM = "Delegance <noreply@delegance.app>"
 TEAM_INBOX = "admin@delegance.app"
